@@ -56,7 +56,7 @@ tower = { workspace = true, features = ["util"] }
 tracing = { version = "0.1", features = ["log"] }
 
 [dev-dependencies]
-httpmock = "0.7.0"
+httpmock = "0.8.0"
 hyper-util = { workspace = true, features = [
     "client",
     "client-legacy",
