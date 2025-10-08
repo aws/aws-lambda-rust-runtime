@@ -126,24 +126,28 @@ mod tests {
     }
 
     fn get_s3_event() -> S3ObjectLambdaEvent {
-        S3ObjectLambdaEvent {
-            x_amz_request_id: ("ID".to_string()),
-            head_object_context: (Some(HeadObjectContext::default())),
-            list_objects_context: (Some(ListObjectsContext::default())),
-            get_object_context: (Some(GetObjectContext {
-                input_s3_url: ("S3_URL".to_string()),
-                output_route: ("O_ROUTE".to_string()),
-                output_token: ("O_TOKEN".to_string()),
-            })),
-            list_objects_v2_context: (Some(ListObjectsV2Context::default())),
-            protocol_version: ("VERSION".to_string()),
-            user_identity: (UserIdentity::default()),
-            user_request: (UserRequest::default()),
-            configuration: (Configuration {
-                access_point_arn: ("APRN".to_string()),
-                supporting_access_point_arn: ("SAPRN".to_string()),
-                payload: (json!(null)),
-            }),
-        }
+        let mut event = S3ObjectLambdaEvent::default();
+        event.x_amz_request_id = "ID".to_string();
+        event.head_object_context = Some(HeadObjectContext::default());
+        event.list_objects_context = Some(ListObjectsContext::default());
+        event.get_object_context = Some({
+            let mut context = GetObjectContext::default();
+            context.input_s3_url = "S3_URL".to_string();
+            context.output_route = "O_ROUTE".to_string();
+            context.output_token = "O_TOKEN".to_string();
+            context
+        });
+        event.list_objects_v2_context = Some(ListObjectsV2Context::default());
+        event.protocol_version = "VERSION".to_string();
+        event.user_identity = UserIdentity::default();
+        event.user_request = UserRequest::default();
+        event.configuration = {
+            let mut configuration = Configuration::default();
+            configuration.access_point_arn = "APRN".to_string();
+            configuration.supporting_access_point_arn = "SAPRN".to_string();
+            configuration.payload = json!(null);
+            configuration
+        };
+        event
     }
 }

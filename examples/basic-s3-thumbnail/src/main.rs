@@ -185,46 +185,53 @@ mod tests {
     }
 
     fn get_s3_event(event_name: &str, bucket_name: &str, object_key: &str) -> S3Event {
-        S3Event {
-            records: (vec![get_s3_event_record(event_name, bucket_name, object_key)]),
-        }
+        let mut event = S3Event::default();
+        event.records = vec![get_s3_event_record(event_name, bucket_name, object_key)];
+        event
     }
 
     fn get_s3_event_record(event_name: &str, bucket_name: &str, object_key: &str) -> S3EventRecord {
-        let s3_entity = S3Entity {
-            schema_version: (Some(String::default())),
-            configuration_id: (Some(String::default())),
-            bucket: (S3Bucket {
-                name: (Some(bucket_name.to_string())),
-                owner_identity: Some(S3UserIdentity {
-                    principal_id: (Some(String::default())),
-                }),
-                arn: (Some(String::default())),
-            }),
-            object: (S3Object {
-                key: (Some(object_key.to_string())),
-                size: (Some(1)),
-                url_decoded_key: (Some(String::default())),
-                version_id: (Some(String::default())),
-                e_tag: (Some(String::default())),
-                sequencer: (Some(String::default())),
-            }),
+        let mut s3_bucket = S3Bucket::default();
+        s3_bucket.name = (Some(bucket_name.to_string()));
+        s3_bucket.owner_identity = {
+            let mut s3_user_identity = S3UserIdentity::default();
+            s3_user_identity.principal_id = Some(String::default());
+            Some(s3_user_identity)
         };
+        s3_bucket.arn = Some(String::default());
 
-        S3EventRecord {
-            event_version: (Some(String::default())),
-            event_source: (Some(String::default())),
-            aws_region: (Some(String::default())),
-            event_time: (chrono::DateTime::default()),
-            event_name: (Some(event_name.to_string())),
-            principal_id: (S3UserIdentity {
-                principal_id: (Some("X".to_string())),
-            }),
-            request_parameters: (S3RequestParameters {
-                source_ip_address: (Some(String::default())),
-            }),
-            response_elements: (HashMap::new()),
-            s3: (s3_entity),
-        }
+        let mut s3_object = S3Object::default();
+        s3_object.key = Some(object_key.to_string());
+        s3_object.size = Some(1);
+        s3_object.url_decoded_key = Some(String::default());
+        s3_object.version_id = Some(String::default());
+        s3_object.e_tag = Some(String::default());
+        s3_object.sequencer = Some(String::default());
+
+        let mut s3_entity = S3Entity::default();
+        s3_entity.schema_version = Some(String::default());
+        s3_entity.configuration_id = Some(String::default());
+        s3_entity.bucket = s3_bucket;
+        s3_entity.object = s3_object;
+
+        let mut s3_event_record = S3EventRecord::default();
+        s3_event_record.event_version = Some(String::default());
+        s3_event_record.event_source = Some(String::default());
+        s3_event_record.aws_region = Some(String::default());
+        s3_event_record.event_time = chrono::DateTime::default();
+        s3_event_record.event_name = Some(event_name.to_string());
+        s3_event_record.principal_id = {
+            let mut s3_user_identity = S3UserIdentity::default();
+            s3_user_identity.principal_id = Some("X".to_string());
+            s3_user_identity
+        };
+        s3_event_record.request_parameters = {
+            let mut s3_request_parameters = S3RequestParameters::default();
+            s3_request_parameters.source_ip_address = Some(String::default());
+            s3_request_parameters
+        };
+        s3_event_record.response_elements = HashMap::new();
+        s3_event_record.s3 = s3_entity;
+        s3_event_record
     }
 }

@@ -96,11 +96,17 @@ where
                 }
             },
         )
-        .map(|id| BatchItemFailure { item_identifier: id })
+        .map(|id| {
+            let mut failure_item =  BatchItemFailure::default();
+            failure_item.item_identifier = id;
+            failure_item
+        })
         .collect();
 
-    Ok(SqsBatchResponse {
-        batch_item_failures: failure_items,
+    Ok({
+        let mut response = SqsBatchResponse::default();
+        response.batch_item_failures = failure_items;
+        response
     })
 }
 
@@ -140,8 +146,10 @@ mod test {
         .unwrap();
 
         let lambda_event = LambdaEvent {
-            payload: SqsEventObj {
-                records: vec![msg_to_fail, msg_to_succeed],
+            payload: {
+                let mut event_object = SqsEventObj::default();
+                event_object.records = vec![msg_to_fail, msg_to_succeed];
+                event_object
             },
             context: Context::default(),
         };
