@@ -2,7 +2,7 @@
 name = "lambda_runtime_api_client"
 version = "0.12.4"
 edition = "2021"
-rust-version = "1.81.0"
+rust-version = "1.82.0"
 authors = [
     "David Calavera <dcalaver@amazon.com>",
     "Harold Sun <sunhua@amazon.com>",

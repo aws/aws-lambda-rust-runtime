@@ -6,7 +6,7 @@ authors = [
     "Harold Sun <sunhua@amazon.com>",
 ]
 edition = "2021"
-rust-version = "1.81.0"
+rust-version = "1.82.0"
 description = "Application Load Balancer and API Gateway event types for AWS Lambda"
 keywords = ["AWS", "Lambda", "APIGateway", "ALB", "API"]
 license = "Apache-2.0"
