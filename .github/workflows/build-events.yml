@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - "1.81.0" # Current MSRV
+          - "1.82.0" # Current MSRV
           - stable
     env:
       RUST_BACKTRACE: 1
