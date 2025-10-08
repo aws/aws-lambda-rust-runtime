@@ -12,6 +12,7 @@ use serde_json::Value;
 /// You probably want to use `CloudWatchMetricAlarm` or `CloudWatchCompositeAlarm` if you know which kind of alarm your function is receiving.
 /// For examples of events that come via CloudWatch Alarms,
 /// see <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#Lambda-action-payload>
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchAlarm<C = Value, R = CloudWatchAlarmStateReasonData>
@@ -50,6 +51,7 @@ pub type CloudWatchMetricAlarm<R = CloudWatchAlarmStateReasonData> =
 pub type CloudWatchCompositeAlarm<R = CloudWatchAlarmStateReasonData> =
     CloudWatchAlarm<CloudWatchCompositeAlarmConfiguration, R>;
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchAlarmData<C = Value, R = CloudWatchAlarmStateReasonData>
@@ -75,6 +77,7 @@ where
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchAlarmState<R = Value>
@@ -99,6 +102,7 @@ where
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchMetricAlarmConfiguration {
@@ -115,6 +119,7 @@ pub struct CloudWatchMetricAlarmConfiguration {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchMetricDefinition {
@@ -131,6 +136,7 @@ pub struct CloudWatchMetricDefinition {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchMetricStatDefinition {
@@ -149,6 +155,7 @@ pub struct CloudWatchMetricStatDefinition {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchMetricStatMetricDefinition {
@@ -165,6 +172,7 @@ pub struct CloudWatchMetricStatMetricDefinition {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchCompositeAlarmConfiguration {
@@ -181,6 +189,7 @@ pub struct CloudWatchCompositeAlarmConfiguration {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CloudWatchAlarmStateValue {
@@ -190,6 +199,7 @@ pub enum CloudWatchAlarmStateValue {
     InsufficientData,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
 pub enum CloudWatchAlarmStateReasonData {
     Metric(CloudWatchAlarmStateReasonDataMetric),
@@ -203,6 +213,7 @@ impl Default for CloudWatchAlarmStateReasonData {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchAlarmStateReasonDataMetric {
@@ -234,6 +245,7 @@ pub struct CloudWatchAlarmStateReasonDataMetric {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchAlarmStateEvaluatedDatapoint {
@@ -253,6 +265,7 @@ pub struct CloudWatchAlarmStateEvaluatedDatapoint {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClodWatchAlarmStateReasonDataComposite {
@@ -267,6 +280,7 @@ pub struct ClodWatchAlarmStateReasonDataComposite {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchAlarmStateTriggeringAlarm {
@@ -281,6 +295,7 @@ pub struct CloudWatchAlarmStateTriggeringAlarm {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchAlarmStateTriggeringAlarmState {

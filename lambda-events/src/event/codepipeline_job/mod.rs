@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// `CodePipelineJobEvent` contains data from an event sent from AWS CodePipeline
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineJobEvent {
@@ -18,6 +19,7 @@ pub struct CodePipelineJobEvent {
 }
 
 /// `CodePipelineJob` represents a job from an AWS CodePipeline event
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineJob {
@@ -36,6 +38,7 @@ pub struct CodePipelineJob {
 }
 
 /// `CodePipelineData` represents a job from an AWS CodePipeline event
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineData {
@@ -56,6 +59,7 @@ pub struct CodePipelineData {
 }
 
 /// `CodePipelineActionConfiguration` represents an Action Configuration
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineActionConfiguration {
@@ -70,6 +74,7 @@ pub struct CodePipelineActionConfiguration {
 }
 
 /// `CodePipelineConfiguration` represents a configuration for an Action Configuration
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineConfiguration {
@@ -89,6 +94,7 @@ pub struct CodePipelineConfiguration {
 }
 
 /// `CodePipelineInputArtifact` represents an input artifact
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineInputArtifact {
@@ -106,6 +112,7 @@ pub struct CodePipelineInputArtifact {
 }
 
 /// `CodePipelineInputLocation` represents a input location
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineInputLocation {
@@ -123,6 +130,7 @@ pub struct CodePipelineInputLocation {
 }
 
 /// `CodePipelineS3Location` represents an s3 input location
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineS3Location {
@@ -140,6 +148,7 @@ pub struct CodePipelineS3Location {
 }
 
 /// `CodePipelineOutputArtifact` represents an output artifact
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineOutputArtifact {
@@ -157,6 +166,7 @@ pub struct CodePipelineOutputArtifact {
 }
 
 /// `CodePipelineOutputLocation` represents a output location
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineOutputLocation {
@@ -174,6 +184,7 @@ pub struct CodePipelineOutputLocation {
 }
 
 /// `CodePipelineArtifactCredentials` represents CodePipeline artifact credentials
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodePipelineArtifactCredentials {

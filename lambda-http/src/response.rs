@@ -62,6 +62,7 @@ impl LambdaResponse {
             Body::Empty => (false, None),
             b @ Body::Text(_) => (false, Some(b)),
             b @ Body::Binary(_) => (true, Some(b)),
+            _ => (false, None),
         };
 
         let headers = parts.headers;
@@ -79,7 +80,7 @@ impl LambdaResponse {
                 multi_value_headers: headers,
                 // Today, this implementation doesn't provide any additional fields
                 #[cfg(feature = "catch-all-fields")]
-                other: Default::default(),
+                other: Default::default()
             }),
             #[cfg(feature = "apigw_http")]
             RequestOrigin::ApiGatewayV2 => {

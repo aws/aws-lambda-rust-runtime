@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// `S3BatchJobEvent` encapsulates the detail of a s3 batch job
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct S3BatchJobEvent {
@@ -22,6 +23,7 @@ pub struct S3BatchJobEvent {
 }
 
 /// `S3BatchJob` whichs have the job id
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct S3BatchJob {
@@ -37,6 +39,7 @@ pub struct S3BatchJob {
 }
 
 /// `S3BatchJobTask` represents one task in the s3 batch job and have all task details
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct S3BatchJobTask {
@@ -58,6 +61,7 @@ pub struct S3BatchJobTask {
 }
 
 /// `S3BatchJobResponse` is the response of a iven s3 batch job with the results
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct S3BatchJobResponse {
@@ -78,6 +82,7 @@ pub struct S3BatchJobResponse {
 }
 
 /// `S3BatchJobResult` represents the result of a given task
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct S3BatchJobResult {

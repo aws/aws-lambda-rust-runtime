@@ -6,6 +6,7 @@ use serde_json::Value;
 use crate::custom_serde::deserialize_nullish_boolean;
 
 /// `CodeCommitEvent` represents a CodeCommit event
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeCommitEvent {
@@ -23,6 +24,7 @@ pub struct CodeCommitEvent {
 pub type CodeCommitEventTime = DateTime<Utc>;
 
 /// `CodeCommitRecord` represents a CodeCommit record
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeCommitRecord {
@@ -63,6 +65,7 @@ pub struct CodeCommitRecord {
 }
 
 /// `CodeCommitCodeCommit` represents a CodeCommit object in a record
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeCommitCodeCommit {
@@ -80,6 +83,7 @@ pub struct CodeCommitCodeCommit {
 }
 
 /// `CodeCommitReference` represents a Reference object in a CodeCommit object
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeCommitReference {

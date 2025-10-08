@@ -7,6 +7,7 @@ pub type CodeDeployDeploymentState = String;
 
 /// `CodeDeployEvent` is documented at:
 /// <https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/EventTypes.html#acd_event_types>
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeDeployEvent {
@@ -49,6 +50,7 @@ pub struct CodeDeployEvent {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeDeployEventDetail {
@@ -81,6 +83,7 @@ pub struct CodeDeployEventDetail {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct CodeDeployLifecycleEvent {

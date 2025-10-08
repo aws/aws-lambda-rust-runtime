@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use crate::custom_serde::deserialize_lambda_map;
 
 /// `AutoScalingEvent` struct is used to parse the json for auto scaling event types //
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AutoScalingEvent<T1 = Value>

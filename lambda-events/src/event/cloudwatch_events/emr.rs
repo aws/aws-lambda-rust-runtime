@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AutoScalingPolicyStateChange {
@@ -19,6 +20,7 @@ pub struct AutoScalingPolicyStateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClusterStateChange {
@@ -37,6 +39,7 @@ pub struct ClusterStateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstanceGroupStateChange {
@@ -59,6 +62,7 @@ pub struct InstanceGroupStateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StepStatusChange {

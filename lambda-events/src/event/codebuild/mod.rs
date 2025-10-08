@@ -12,6 +12,7 @@ pub type CodeBuildPhaseType = String;
 
 /// `CodeBuildEvent` is documented at:
 /// <https://docs.aws.amazon.com/codebuild/latest/userguide/sample-build-notifications.html#sample-build-notifications-ref>
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeBuildEvent {
@@ -54,6 +55,7 @@ pub struct CodeBuildEvent {
 }
 
 /// `CodeBuildEventDetail` represents the all details related to the code build event
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeBuildEventDetail {
@@ -101,6 +103,7 @@ pub struct CodeBuildEventDetail {
 }
 
 /// `CodeBuildEventAdditionalInformation` represents additional information to the code build event
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeBuildEventAdditionalInformation {
@@ -133,6 +136,7 @@ pub struct CodeBuildEventAdditionalInformation {
 }
 
 /// `CodeBuildArtifact` represents the artifact provided to build
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeBuildArtifact {
@@ -154,6 +158,7 @@ pub struct CodeBuildArtifact {
 }
 
 /// `CodeBuildEnvironment` represents the environment for a build
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeBuildEnvironment {
@@ -178,6 +183,7 @@ pub struct CodeBuildEnvironment {
 }
 
 /// `CodeBuildEnvironmentVariable` encapsulate environment variables for the code build
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeBuildEnvironmentVariable {
@@ -200,6 +206,7 @@ pub struct CodeBuildEnvironmentVariable {
 }
 
 /// `CodeBuildSource` represent the code source will be build
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeBuildSource {
@@ -217,6 +224,7 @@ pub struct CodeBuildSource {
 }
 
 /// `CodeBuildLogs` gives the log details of a code build
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeBuildLogs {
@@ -239,6 +247,7 @@ pub struct CodeBuildLogs {
 }
 
 /// `CodeBuildPhase` represents the phase of a build and its details
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeBuildPhase<T1 = Value>

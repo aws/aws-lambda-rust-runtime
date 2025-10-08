@@ -7,6 +7,7 @@ use crate::custom_serde::deserialize_lambda_map;
 
 /// `IoTOneClickEvent` represents a click event published by clicking button type
 /// device.
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickEvent {
@@ -22,6 +23,7 @@ pub struct IoTOneClickEvent {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickDeviceEvent {
@@ -35,6 +37,7 @@ pub struct IoTOneClickDeviceEvent {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickButtonClicked {
@@ -51,6 +54,7 @@ pub struct IoTOneClickButtonClicked {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickDeviceInfo {
@@ -71,6 +75,7 @@ pub struct IoTOneClickDeviceInfo {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickPlacementInfo {

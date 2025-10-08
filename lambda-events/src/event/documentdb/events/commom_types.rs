@@ -5,6 +5,7 @@ use serde_json::Value;
 
 pub type AnyDocument = HashMap<String, Value>;
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseCollection {
@@ -20,6 +21,7 @@ pub struct DatabaseCollection {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct DocumentId {
     #[serde(rename = "_data")]
@@ -33,6 +35,7 @@ pub struct DocumentId {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct DocumentKeyIdOid {
     #[serde(rename = "$oid")]
@@ -46,6 +49,7 @@ pub struct DocumentKeyIdOid {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct DocumentKeyId {
     #[serde(rename = "_id")]
@@ -59,6 +63,7 @@ pub struct DocumentKeyId {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct InnerTimestamp {
     t: usize,
@@ -72,6 +77,7 @@ pub struct InnerTimestamp {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Timestamp {
     #[serde(rename = "$timestamp")]

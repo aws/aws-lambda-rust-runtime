@@ -7,6 +7,7 @@ use crate::custom_serde::{deserialize_headers, serialize_headers};
 
 /// `S3ObjectLambdaEvent` contains data coming from S3 object lambdas
 /// See: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/olap-writing-lambda.html>
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct S3ObjectLambdaEvent<P = Value>
@@ -35,6 +36,7 @@ where
 
 /// `GetObjectContext` contains the input and output details
 /// for connections to Amazon S3 and S3 Object Lambda
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetObjectContext {
@@ -52,6 +54,7 @@ pub struct GetObjectContext {
 
 /// `HeadObjectContext`
 /// for connections to Amazon S3 and S3 Object Lambda
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HeadObjectContext {
@@ -67,6 +70,7 @@ pub struct HeadObjectContext {
 
 /// `ListObjectsContext`
 /// for connections to Amazon S3 and S3 Object Lambda
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListObjectsContext {
@@ -82,6 +86,7 @@ pub struct ListObjectsContext {
 
 /// `ListObjectsV2Context`
 /// for connections to Amazon S3 and S3 Object Lambda
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListObjectsV2Context {
@@ -96,6 +101,7 @@ pub struct ListObjectsV2Context {
 }
 
 /// `Configuration` contains information about the Object Lambda access point
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Configuration<P = Value>
@@ -117,6 +123,7 @@ where
 }
 
 /// `UserRequest` contains information about the original call to S3 Object Lambda
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserRequest {
@@ -134,6 +141,7 @@ pub struct UserRequest {
 }
 
 /// `UserIdentity` contains details about the identity that made the call to S3 Object Lambda
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserIdentity {
@@ -152,6 +160,7 @@ pub struct UserIdentity {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionContext {
@@ -167,6 +176,7 @@ pub struct SessionContext {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionIssuer {

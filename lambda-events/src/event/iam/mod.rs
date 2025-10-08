@@ -8,6 +8,7 @@ use serde::{
 };
 
 /// `IamPolicyDocument` represents an IAM policy document.
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct IamPolicyDocument {
@@ -47,6 +48,7 @@ pub struct IamPolicyStatement {
 
 pub type IamPolicyCondition = HashMap<String, HashMap<String, Vec<String>>>;
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub enum IamPolicyEffect {
     #[default]

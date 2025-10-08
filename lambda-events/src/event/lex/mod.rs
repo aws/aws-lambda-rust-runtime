@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use crate::custom_serde::deserialize_lambda_map;
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LexEvent {
@@ -31,6 +32,7 @@ pub struct LexEvent {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LexBot {
@@ -46,6 +48,7 @@ pub struct LexBot {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LexCurrentIntent {
@@ -65,6 +68,7 @@ pub struct LexCurrentIntent {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LexAlternativeIntents {
@@ -84,6 +88,7 @@ pub struct LexAlternativeIntents {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SlotDetail {
@@ -98,6 +103,7 @@ pub struct SlotDetail {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LexDialogAction {
@@ -123,6 +129,7 @@ pub type SessionAttributes = HashMap<String, String>;
 
 pub type Slots = HashMap<String, Option<String>>;
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LexResponse {
@@ -137,6 +144,7 @@ pub struct LexResponse {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LexResponseCard {
@@ -152,6 +160,7 @@ pub struct LexResponseCard {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Attachment {

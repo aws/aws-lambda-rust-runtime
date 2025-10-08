@@ -60,6 +60,7 @@ use std::{borrow::Cow, mem::take, ops::Deref, pin::Pin, task::Poll};
 ///
 /// For more information about API Gateway's body types,
 /// refer to [this documentation](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-payload-encodings.html).
+#[non_exhaustive]
 #[derive(Debug, Default, Eq, PartialEq)]
 pub enum Body {
     /// An empty body

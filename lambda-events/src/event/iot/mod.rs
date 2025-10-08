@@ -6,6 +6,7 @@ use serde_json::Value;
 
 /// `IoTCoreCustomAuthorizerRequest` represents the request to an IoT Core custom authorizer.
 /// See <https://docs.aws.amazon.com/iot/latest/developerguide/config-custom-auth.html>
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreCustomAuthorizerRequest {
@@ -24,6 +25,7 @@ pub struct IoTCoreCustomAuthorizerRequest {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreProtocolData {
@@ -39,6 +41,7 @@ pub struct IoTCoreProtocolData {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreTlsContext {
@@ -53,6 +56,7 @@ pub struct IoTCoreTlsContext {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreHttpContext {
@@ -70,6 +74,7 @@ pub struct IoTCoreHttpContext {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreMqttContext {
@@ -87,6 +92,7 @@ pub struct IoTCoreMqttContext {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreConnectionMetadata {
@@ -103,6 +109,7 @@ pub struct IoTCoreConnectionMetadata {
 
 /// `IoTCoreCustomAuthorizerResponse` represents the response from an IoT Core custom authorizer.
 /// See <https://docs.aws.amazon.com/iot/latest/developerguide/config-custom-auth.html>
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreCustomAuthorizerResponse {

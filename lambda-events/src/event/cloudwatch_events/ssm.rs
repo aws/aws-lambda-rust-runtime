@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EC2AutomationStepStatusChange {
@@ -33,6 +34,7 @@ pub struct EC2AutomationStepStatusChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EC2AutomationExecutionStatusChange {
@@ -61,6 +63,7 @@ pub struct EC2AutomationExecutionStatusChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StateChange {
@@ -76,6 +79,7 @@ pub struct StateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigurationComplianceStateChange {
@@ -101,6 +105,7 @@ pub struct ConfigurationComplianceStateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MaintenanceWindowTargetRegistration {
@@ -118,6 +123,7 @@ pub struct MaintenanceWindowTargetRegistration {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MaintenanceWindowExecutionStateChange {
@@ -139,6 +145,7 @@ pub struct MaintenanceWindowExecutionStateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MaintenanceWindowTaskExecutionStateChange {
@@ -162,6 +169,7 @@ pub struct MaintenanceWindowTaskExecutionStateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MaintenanceWindowTaskTargetInvocationStateChange {
@@ -189,6 +197,7 @@ pub struct MaintenanceWindowTaskTargetInvocationStateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MaintenanceWindowStateChange {
@@ -204,6 +213,7 @@ pub struct MaintenanceWindowStateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ParameterStoreStateChange {
@@ -220,6 +230,7 @@ pub struct ParameterStoreStateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EC2CommandStatusChange {
@@ -242,6 +253,7 @@ pub struct EC2CommandStatusChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EC2CommandInvocationStatusChange {
@@ -263,6 +275,7 @@ pub struct EC2CommandInvocationStatusChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EC2StateManagerAssociationStateChange {
@@ -299,6 +312,7 @@ pub struct EC2StateManagerAssociationStateChange {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EC2StateManagerInstanceAssociationStateChange {

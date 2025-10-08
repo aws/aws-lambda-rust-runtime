@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "operationType", rename_all = "camelCase")]
 pub enum ChangeEvent {
@@ -22,6 +23,7 @@ pub enum ChangeEvent {
     Rename(ChangeRenameEvent),
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct DocumentDbInnerEvent {
     pub event: ChangeEvent,
@@ -34,6 +36,7 @@ pub struct DocumentDbInnerEvent {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentDbEvent {

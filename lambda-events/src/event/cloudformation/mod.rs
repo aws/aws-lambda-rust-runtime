@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 pub mod provider;
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "RequestType")]
 pub enum CloudFormationCustomResourceRequest<P1 = Value, P2 = Value>
@@ -25,6 +26,7 @@ impl Default for CloudFormationCustomResourceRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CreateRequest<P2 = Value>
@@ -50,6 +52,7 @@ where
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct UpdateRequest<P1 = Value, P2 = Value>
@@ -79,6 +82,7 @@ where
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct DeleteRequest<P2 = Value>
@@ -105,6 +109,7 @@ where
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudFormationCustomResourceResponse {
@@ -125,6 +130,7 @@ pub struct CloudFormationCustomResourceResponse {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CloudFormationCustomResourceResponseStatus {

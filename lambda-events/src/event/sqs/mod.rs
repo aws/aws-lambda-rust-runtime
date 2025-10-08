@@ -5,6 +5,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 /// The Event sent to Lambda from SQS. Contains 1 or more individual SQS Messages
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsEvent {
@@ -20,6 +21,7 @@ pub struct SqsEvent {
 }
 
 /// An individual SQS Message, its metadata, and Message Attributes
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsMessage {
@@ -57,6 +59,7 @@ pub struct SqsMessage {
 }
 
 /// Alternative to `SqsEvent` to be used alongside `SqsMessageObj<T>` when you need to deserialize a nested object into a struct of type `T` within the SQS Message rather than just using the raw SQS Message string
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -74,6 +77,7 @@ pub struct SqsEventObj<T: Serialize> {
 }
 
 /// Alternative to `SqsMessage` to be used alongside `SqsEventObj<T>` when you need to deserialize a nested object into a struct of type `T` within the SQS Message rather than just using the raw SQS Message string
+#[non_exhaustive]
 #[serde_with::serde_as]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -115,6 +119,7 @@ pub struct SqsMessageObj<T: Serialize> {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsMessageAttribute {
@@ -135,6 +140,7 @@ pub struct SqsMessageAttribute {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsBatchResponse {
@@ -148,6 +154,7 @@ pub struct SqsBatchResponse {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BatchItemFailure {
@@ -162,6 +169,7 @@ pub struct BatchItemFailure {
 }
 
 /// The Event sent to Lambda from the SQS API. Contains 1 or more individual SQS Messages
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -178,6 +186,7 @@ pub struct SqsApiEventObj<T: Serialize> {
 }
 
 /// The Event sent to Lambda from SQS API. Contains 1 or more individual SQS Messages
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsApiEvent {
@@ -194,6 +203,7 @@ pub struct SqsApiEvent {
 /// Alternative to SqsApiEvent to be used alongside `SqsApiMessageObj<T>` when you need to
 /// deserialize a nested object into a struct of type T within the SQS Message rather
 /// than just using the raw SQS Message string
+#[non_exhaustive]
 #[serde_with::serde_as]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -228,6 +238,7 @@ pub struct SqsApiMessageObj<T: Serialize> {
 }
 
 /// An individual SQS API Message, its metadata, and Message Attributes
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SqsApiMessage {

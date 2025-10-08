@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// `AlbTargetGroupRequest` contains data originating from the ALB Lambda target group integration
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AlbTargetGroupRequest {
@@ -44,6 +45,7 @@ pub struct AlbTargetGroupRequest {
 }
 
 /// `AlbTargetGroupRequestContext` contains the information to identify the load balancer invoking the lambda
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AlbTargetGroupRequestContext {
@@ -58,6 +60,7 @@ pub struct AlbTargetGroupRequestContext {
 }
 
 /// `ElbContext` contains the information to identify the ARN invoking the lambda
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ElbContext {

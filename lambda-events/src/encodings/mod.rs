@@ -17,6 +17,7 @@ pub use self::http::*;
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
 /// Binary data encoded in base64.
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Base64Data(
     #[serde(deserialize_with = "deserialize_base64")]

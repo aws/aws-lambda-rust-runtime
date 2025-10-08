@@ -12,8 +12,8 @@ use std::fmt;
 #[cfg(test)]
 mod attributes;
 
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[non_exhaustive]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum StreamViewType {
     NewImage,
@@ -35,8 +35,8 @@ impl fmt::Display for StreamViewType {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[non_exhaustive]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum StreamStatus {
     Enabling,
@@ -58,8 +58,8 @@ impl fmt::Display for StreamStatus {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[non_exhaustive]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SharedIteratorType {
     TrimHorizon,
@@ -81,8 +81,8 @@ impl fmt::Display for SharedIteratorType {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[non_exhaustive]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OperationType {
     #[default]
@@ -102,8 +102,8 @@ impl fmt::Display for OperationType {
     }
 }
 
-#[derive(Clone, Default, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[non_exhaustive]
+#[derive(Clone, Default, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum KeyType {
     #[default]
@@ -123,6 +123,7 @@ impl fmt::Display for KeyType {
 
 /// The `Event` stream event handled to Lambda
 /// <http://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-ddb-update>
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct Event {
     #[serde(rename = "Records")]
@@ -138,6 +139,7 @@ pub struct Event {
 
 /// `TimeWindowEvent` represents an Amazon Dynamodb event when using time windows
 /// ref. <https://docs.aws.amazon.com/lambda/latest/dg/with-ddb.html#services-ddb-windows>
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeWindowEvent {
@@ -157,6 +159,7 @@ pub struct TimeWindowEvent {
 }
 
 /// `TimeWindowEventResponse` is the outer structure to report batch item failures for DynamoDBTimeWindowEvent.
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeWindowEventResponse {
@@ -174,6 +177,7 @@ pub struct TimeWindowEventResponse {
 }
 
 /// EventRecord stores information about each record of a DynamoDb stream event
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EventRecord {
@@ -240,6 +244,7 @@ pub struct EventRecord {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserIdentity {
@@ -258,6 +263,7 @@ pub struct UserIdentity {
 
 /// `DynamoDbStreamRecord` represents a description of a single data modification that was performed on an item
 /// in a DynamoDB table.
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StreamRecord {

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// `KinesisEventResponse` is the outer structure to report batch item failures for KinesisEvent.
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct KinesisEventResponse {
@@ -17,6 +18,7 @@ pub struct KinesisEventResponse {
 }
 
 /// `KinesisBatchItemFailure` is the individual record which failed processing.
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct KinesisBatchItemFailure {
@@ -32,6 +34,7 @@ pub struct KinesisBatchItemFailure {
 }
 
 /// `DynamoDbEventResponse` is the outer structure to report batch item failures for DynamoDBEvent.
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DynamoDbEventResponse {
@@ -46,6 +49,7 @@ pub struct DynamoDbEventResponse {
 }
 
 /// `DynamoDbBatchItemFailure` is the individual record which failed processing.
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DynamoDbBatchItemFailure {
@@ -61,6 +65,7 @@ pub struct DynamoDbBatchItemFailure {
 }
 
 /// `SqsEventResponse` is the outer structure to report batch item failures for SQSEvent.
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsEventResponse {
@@ -75,6 +80,7 @@ pub struct SqsEventResponse {
 }
 
 /// `SqsBatchItemFailure` is the individual record which failed processing.
+#[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsBatchItemFailure {

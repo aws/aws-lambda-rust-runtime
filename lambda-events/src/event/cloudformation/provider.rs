@@ -7,6 +7,7 @@
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "RequestType")]
 pub enum CloudFormationCustomResourceRequest<P1 = Value, P2 = Value>
@@ -28,6 +29,7 @@ impl Default for CloudFormationCustomResourceRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CreateRequest<P2 = Value>
@@ -39,6 +41,7 @@ where
     // No `other` catch-all here; any additional fields will be caught in `common.other` instead
 }
 
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct UpdateRequest<P1 = Value, P2 = Value>
@@ -56,6 +59,7 @@ where
     // No `other` catch-all here; any additional fields will be caught in `common.other` instead
 }
 
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct DeleteRequest<P2 = Value>
@@ -69,6 +73,7 @@ where
     // No `other` catch-all here; any additional fields will be caught in `common.other` instead
 }
 
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CommonRequestParams<P2 = Value>
@@ -90,6 +95,7 @@ where
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudFormationCustomResourceResponse<D = Value>

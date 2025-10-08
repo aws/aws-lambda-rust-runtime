@@ -21,6 +21,7 @@ pub mod trustedadvisor;
 
 /// `CloudWatchEvent` is the outer structure of an event sent via CloudWatch Events.
 /// For examples of events that come via CloudWatch Events, see <https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/EventTypes.html>
+#[non_exhaustive]
 #[derive(Clone, Default, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchEvent<T1 = Value>

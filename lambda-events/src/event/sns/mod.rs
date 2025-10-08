@@ -9,6 +9,7 @@ use crate::custom_serde::{deserialize_lambda_map, deserialize_nullish_boolean};
 /// The `Event` notification event handled by Lambda
 ///
 /// [https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html](https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html)
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SnsEvent {
@@ -24,6 +25,7 @@ pub struct SnsEvent {
 }
 
 /// SnsRecord stores information about each record of a SNS event
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SnsRecord {
@@ -49,6 +51,7 @@ pub struct SnsRecord {
 }
 
 /// SnsMessage stores information about each record of a SNS event
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SnsMessage {
@@ -107,6 +110,7 @@ pub struct SnsMessage {
 /// An alternate `Event` notification event to use alongside `SnsRecordObj<T>` and `SnsMessageObj<T>` if you want to deserialize an object inside your SNS messages rather than getting an `Option<String>` message
 ///
 /// [https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html](https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html)
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -123,6 +127,7 @@ pub struct SnsEventObj<T: Serialize> {
 }
 
 /// Alternative to `SnsRecord`, used alongside `SnsEventObj<T>` and `SnsMessageObj<T>` when deserializing nested objects from within SNS messages)
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -149,6 +154,7 @@ pub struct SnsRecordObj<T: Serialize> {
 }
 
 /// Alternate version of `SnsMessage` to use in conjunction with `SnsEventObj<T>` and `SnsRecordObj<T>` for deserializing the message into a struct of type `T`
+#[non_exhaustive]
 #[serde_with::serde_as]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -213,6 +219,7 @@ pub struct SnsMessageObj<T: Serialize> {
 /// Message attributes are optional and separate from—but are sent together with—the message body. The receiver can use this information to decide how to handle the message without having to process the message body first.
 ///
 /// Additional details can be found in the [SNS Developer Guide](https://docs.aws.amazon.com/sns/latest/dg/sns-message-attributes.html)
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct MessageAttribute {
     /// The data type of the attribute. Per the [SNS Developer Guide](https://docs.aws.amazon.com/sns/latest/dg/sns-message-attributes.html), lambda notifications, this will only be **String** or **Binary**.
@@ -232,6 +239,7 @@ pub struct MessageAttribute {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudWatchAlarmPayload {
@@ -255,6 +263,7 @@ pub struct CloudWatchAlarmPayload {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudWatchAlarmTrigger {
@@ -282,6 +291,7 @@ pub struct CloudWatchAlarmTrigger {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudWatchMetricDataQuery {
@@ -301,6 +311,7 @@ pub struct CloudWatchMetricDataQuery {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudWatchMetricStat {
@@ -317,6 +328,7 @@ pub struct CloudWatchMetricStat {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudWatchMetric {
@@ -333,6 +345,7 @@ pub struct CloudWatchMetric {
     pub other: serde_json::Map<String, Value>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CloudWatchDimension {
     pub name: String,
