@@ -39,6 +39,7 @@ use url::Url;
 ///
 /// This is not intended to be a type consumed by crate users directly. The order
 /// of the variants are notable. Serde will try to deserialize in this order.
+#[non_exhaustive]
 #[doc(hidden)]
 #[derive(Debug)]
 pub enum LambdaRequest {
@@ -85,6 +86,7 @@ impl LambdaRequest {
 pub type RequestFuture<'a, R, E> = Pin<Box<dyn Future<Output = Result<R, E>> + Send + 'a>>;
 
 /// Represents the origin from which the lambda was requested from.
+#[non_exhaustive]
 #[doc(hidden)]
 #[derive(Debug, Clone)]
 pub enum RequestOrigin {
@@ -388,6 +390,7 @@ fn apigw_path_with_stage(stage: &Option<String>, path: &str) -> String {
 
 /// Event request context as an enumeration of request contexts
 /// for both ALB and API Gateway and HTTP API events
+#[non_exhaustive]
 #[derive(Deserialize, Debug, Clone, Serialize)]
 #[serde(untagged)]
 pub enum RequestContext {

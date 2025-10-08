@@ -12,8 +12,8 @@ use crate::Body;
 /// Request payload deserialization errors
 ///
 /// Returned by [`RequestPayloadExt::payload()`]
-#[derive(Debug)]
 #[non_exhaustive]
+#[derive(Debug)]
 pub enum PayloadError {
     /// Returned when `application/json` bodies fail to deserialize a payload
     Json(serde_json::Error),
@@ -22,16 +22,16 @@ pub enum PayloadError {
 }
 
 /// Indicates a problem processing a JSON payload.
-#[derive(Debug)]
 #[non_exhaustive]
+#[derive(Debug)]
 pub enum JsonPayloadError {
     /// Problem deserializing a JSON payload.
     Parsing(serde_json::Error),
 }
 
 /// Indicates a problem processing an x-www-form-urlencoded payload.
-#[derive(Debug)]
 #[non_exhaustive]
+#[derive(Debug)]
 pub enum FormUrlEncodedPayloadError {
     /// Problem deserializing an x-www-form-urlencoded payload.
     Parsing(SerdeError),

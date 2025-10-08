@@ -25,6 +25,7 @@ pub struct IamPolicyDocument {
 }
 
 /// `IamPolicyStatement` represents one statement from IAM policy with action, effect and resource
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct IamPolicyStatement {

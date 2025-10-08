@@ -40,6 +40,7 @@ const TEXT_ENCODING_PREFIXES: [&str; 5] = [
 const TEXT_ENCODING_SUFFIXES: [&str; 3] = ["+xml", "+yaml", "+json"];
 
 /// Representation of Lambda response
+#[non_exhaustive]
 #[doc(hidden)]
 #[derive(Serialize, Debug)]
 #[serde(untagged)]
@@ -70,17 +71,22 @@ impl LambdaResponse {
 
         match request_origin {
             #[cfg(feature = "apigw_rest")]
-            RequestOrigin::ApiGatewayV1 => LambdaResponse::ApiGatewayV1(ApiGatewayProxyResponse {
-                body,
-                is_base64_encoded,
-                status_code: status_code as i64,
+            RequestOrigin::ApiGatewayV1 => LambdaResponse::ApiGatewayV1({
+                let mut response = ApiGatewayProxyResponse::default();
+
+                response.body = body;
+                response.is_base64_encoded = is_base64_encoded;
+                response.status_code = status_code as i64;
                 // Explicitly empty, as API gateway v1 will merge "headers" and
                 // "multi_value_headers" fields together resulting in duplicate response headers.
-                headers: HeaderMap::new(),
-                multi_value_headers: headers,
+                response.headers = HeaderMap::new();
+                response.multi_value_headers = headers;
                 // Today, this implementation doesn't provide any additional fields
                 #[cfg(feature = "catch-all-fields")]
-                other: Default::default()
+                {
+                    response.other = Default::default();
+                }
+                response
             }),
             #[cfg(feature = "apigw_http")]
             RequestOrigin::ApiGatewayV2 => {
@@ -96,51 +102,64 @@ impl LambdaResponse {
                     .collect();
                 headers.remove(SET_COOKIE);
 
-                LambdaResponse::ApiGatewayV2(ApiGatewayV2httpResponse {
-                    body,
-                    is_base64_encoded,
-                    status_code: status_code as i64,
-                    cookies,
+                LambdaResponse::ApiGatewayV2({
+                    let mut response = ApiGatewayV2httpResponse::default();
+                    response.body = body;
+                    response.is_base64_encoded = is_base64_encoded;
+                    response.status_code = status_code as i64;
+                    response.cookies = cookies;
                     // API gateway v2 doesn't have "multi_value_headers" field. Duplicate headers
                     // are combined with commas and included in the headers field.
-                    headers,
-                    multi_value_headers: HeaderMap::new(),
+                    response.headers = headers;
+                    response.multi_value_headers = HeaderMap::new();
                     // Today, this implementation doesn't provide any additional fields
                     #[cfg(feature = "catch-all-fields")]
-                    other: Default::default(),
+                    {
+                        response.other = Default::default();
+                    }
+                    response
                 })
             }
             #[cfg(feature = "alb")]
-            RequestOrigin::Alb => LambdaResponse::Alb(AlbTargetGroupResponse {
-                body,
-                status_code: status_code as i64,
-                is_base64_encoded,
+            RequestOrigin::Alb => LambdaResponse::Alb({
+                let mut response = AlbTargetGroupResponse::default();
+
+                response.body = body;
+                response.is_base64_encoded = is_base64_encoded;
+                response.status_code = status_code as i64;
                 // ALB responses are used for ALB integration, which can be configured to use
                 // either "headers" or "multi_value_headers" field. We need to return both fields
                 // to ensure both configuration work correctly.
-                headers: headers.clone(),
-                multi_value_headers: headers,
-                status_description: Some(format!(
+                response.headers = headers.clone();
+                response.multi_value_headers = headers;
+                response.status_description = Some(format!(
                     "{} {}",
                     status_code,
                     parts.status.canonical_reason().unwrap_or_default()
-                )),
+                ));
                 // Today, this implementation doesn't provide any additional fields
                 #[cfg(feature = "catch-all-fields")]
-                other: Default::default(),
+                {
+                    response.other = Default::default();
+                }
+                response
             }),
             #[cfg(feature = "apigw_websockets")]
-            RequestOrigin::WebSocket => LambdaResponse::ApiGatewayV1(ApiGatewayProxyResponse {
-                body,
-                is_base64_encoded,
-                status_code: status_code as i64,
+            RequestOrigin::WebSocket => LambdaResponse::ApiGatewayV1({
+                let mut response = ApiGatewayProxyResponse::default();
+                response.body = body;
+                response.is_base64_encoded = is_base64_encoded;
+                response.status_code = status_code as i64;
                 // Explicitly empty, as API gateway v1 will merge "headers" and
                 // "multi_value_headers" fields together resulting in duplicate response headers.
-                headers: HeaderMap::new(),
-                multi_value_headers: headers,
+                response.headers = HeaderMap::new();
+                response.multi_value_headers = headers;
                 // Today, this implementation doesn't provide any additional fields
                 #[cfg(feature = "catch-all-fields")]
-                other: Default::default(),
+                {
+                    response.other = Default::default();
+                }
+                response
             }),
             #[cfg(feature = "pass_through")]
             RequestOrigin::PassThrough => {

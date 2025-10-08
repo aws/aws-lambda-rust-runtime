@@ -21,6 +21,7 @@ use std::{future::Future, marker::PhantomData};
 /// An adapter that lifts a standard [`Service<Request>`] into a
 /// [`Service<LambdaEvent<LambdaRequest>>`] which produces streaming Lambda HTTP
 /// responses.
+#[non_exhaustive]
 pub struct StreamAdapter<'a, S, B> {
     service: S,
     _phantom_data: PhantomData<&'a B>,
@@ -147,6 +148,7 @@ where
 }
 
 pin_project_lite::pin_project! {
+#[non_exhaustive]
 pub struct BodyStream<B> {
     #[pin]
     pub(crate) body: B,

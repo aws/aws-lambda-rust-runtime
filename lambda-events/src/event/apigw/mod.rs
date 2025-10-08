@@ -58,6 +58,7 @@ pub struct ApiGatewayProxyRequest {
 }
 
 /// `ApiGatewayProxyResponse` configures the response to be returned by API Gateway for the request
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayProxyResponse {
@@ -349,6 +350,7 @@ pub struct ApiGatewayV2httpRequestContextHttpDescription {
 }
 
 /// `ApiGatewayV2httpResponse` configures the response to be returned by API Gateway V2 for the request
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2httpResponse {
@@ -897,6 +899,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
 }
 
 /// `ApiGatewayCustomAuthorizerResponse` represents the expected format of an API Gateway authorization response.
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayCustomAuthorizerResponse<T1 = Value>
@@ -963,6 +966,7 @@ where
 }
 
 /// `ApiGatewayCustomAuthorizerPolicy` represents an IAM policy
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ApiGatewayCustomAuthorizerPolicy {

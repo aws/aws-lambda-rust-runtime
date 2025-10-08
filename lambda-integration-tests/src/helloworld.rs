@@ -16,14 +16,18 @@ async fn main() -> Result<(), Error> {
 async fn func(_event: LambdaEvent<ApiGatewayProxyRequest>) -> Result<ApiGatewayProxyResponse, Error> {
     let mut headers = HeaderMap::new();
     headers.insert("content-type", "text/html".parse().unwrap());
-    let resp = ApiGatewayProxyResponse {
-        status_code: 200,
-        multi_value_headers: headers.clone(),
-        is_base64_encoded: false,
-        body: Some("Hello world!".into()),
-        headers,
+    let resp = {
+        let mut response = ApiGatewayProxyResponse::default();
+        response.status_code = 200;
+        response.multi_value_headers = headers.clone();
+        response.is_base64_encoded = false;
+        response.body = Some("Hello world!".into());
+        response.headers = headers;
         #[cfg(feature = "catch-all-fields")]
-        other: Default::default(),
+        {
+            response.other = Default::default();
+        }
+        response
     };
     Ok(resp)
 }

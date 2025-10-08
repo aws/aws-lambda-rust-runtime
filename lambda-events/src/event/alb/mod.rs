@@ -77,6 +77,7 @@ pub struct ElbContext {
 }
 
 /// `AlbTargetGroupResponse` configures the response to be returned by the ALB Lambda target group for the request
+#[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AlbTargetGroupResponse {

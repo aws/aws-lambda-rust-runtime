@@ -110,6 +110,7 @@ pub type Request = http::Request<Body>;
 /// Future that will convert an [`IntoResponse`] into an actual [`LambdaResponse`]
 ///
 /// This is used by the `Adapter` wrapper and is completely internal to the `lambda_http::run` function.
+#[non_exhaustive]
 #[doc(hidden)]
 pub enum TransformResponse<'a, R, E> {
     Request(RequestOrigin, RequestFuture<'a, R, E>),
@@ -143,6 +144,7 @@ where
 /// Wraps a `Service<Request>` in a `Service<LambdaEvent<Request>>`
 ///
 /// This is completely internal to the `lambda_http::run` function.
+#[non_exhaustive]
 #[doc(hidden)]
 pub struct Adapter<'a, R, S> {
     service: S,

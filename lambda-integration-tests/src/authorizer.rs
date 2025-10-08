@@ -34,26 +34,36 @@ async fn func(
 }
 
 fn allow(method_arn: &str) -> ApiGatewayCustomAuthorizerResponse {
-    let stmt = IamPolicyStatement {
-        action: vec!["execute-api:Invoke".to_string()],
-        resource: vec![method_arn.to_owned()],
-        effect: aws_lambda_events::iam::IamPolicyEffect::Allow,
-        condition: None,
+    let stmt = {
+        let mut statement = IamPolicyStatement::default();
+        statement.action = vec!["execute-api:Invoke".to_string()];
+        statement.resource = vec![method_arn.to_owned()];
+        statement.effect = aws_lambda_events::iam::IamPolicyEffect::Allow;
+        statement.condition = None;
         #[cfg(feature = "catch-all-fields")]
-        other: Default::default(),
+        {
+            statement.other = Default::default();
+        }
+        statement
     };
-    let policy = ApiGatewayCustomAuthorizerPolicy {
-        version: Some("2012-10-17".to_string()),
-        statement: vec![stmt],
+    let policy = {
+        let mut policy = ApiGatewayCustomAuthorizerPolicy::default();
+        policy.version = Some("2012-10-17".to_string());
+        policy.statement = vec![stmt];
         #[cfg(feature = "catch-all-fields")]
-        other: Default::default(),
+        {
+            policy.other = Default::default();
+        }
+        policy
     };
-    ApiGatewayCustomAuthorizerResponse {
-        principal_id: Some("user".to_owned()),
-        policy_document: policy,
-        context: json!({ "hello": "world" }),
-        usage_identifier_key: None,
-        #[cfg(feature = "catch-all-fields")]
-        other: Default::default(),
+    let mut response = ApiGatewayCustomAuthorizerResponse::default();
+    response.principal_id = Some("user".to_owned());
+    response.policy_document = policy;
+    response.context = json!({ "hello": "world" });
+    response.usage_identifier_key = None;
+    #[cfg(feature = "catch-all-fields")]
+    {
+        response.other = Default::default();
     }
+    response
 }
