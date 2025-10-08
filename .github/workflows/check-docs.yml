@@ -29,11 +29,11 @@ jobs:
       RUST_BACKTRACE: 1
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
 
       - name: Check documentation
         shell: bash
         env:
             RUSTFLAGS: --cfg docsrs 
-            RUSTDOCFLAGS: --cfg docsrs --cfg doc_cfg -Dwarnings
+            RUSTDOCFLAGS: --cfg docsrs -Dwarnings
         run: cargo doc --no-deps --document-private-items --all-features
