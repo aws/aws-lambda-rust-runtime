@@ -1,6 +1,6 @@
 [package]
 name = "aws_lambda_events"
-version = "0.18.0"
+version = "1.0.0"
 rust-version = "1.82.0"
 description = "AWS Lambda event definitions"
 authors = [

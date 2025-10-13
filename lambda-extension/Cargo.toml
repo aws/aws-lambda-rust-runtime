@@ -1,6 +1,6 @@
 [package]
 name = "lambda-extension"
-version = "0.12.2"
+version = "1.0.0"
 edition = "2021"
 rust-version = "1.82.0"
 authors = [
@@ -25,7 +25,7 @@ http = { workspace = true }
 http-body-util = { workspace = true }
 hyper = { workspace = true, features = ["http1", "client", "server"] }
 hyper-util = { workspace = true }
-lambda_runtime_api_client = { version = "0.12.3", path = "../lambda-runtime-api-client" }
+lambda_runtime_api_client = { version = "1.0", path = "../lambda-runtime-api-client" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "^1"
 tokio = { version = "1.0", features = [
