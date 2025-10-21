@@ -16,6 +16,9 @@ on:
       - 'Cargo.toml'
 
 
+permissions:
+  contents: read
+
 jobs:
   build-runtime:
     runs-on: ubuntu-latest
