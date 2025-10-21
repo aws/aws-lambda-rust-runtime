@@ -10,6 +10,9 @@ on:
       - "lambda-events/**"
       - "Cargo.toml"
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
