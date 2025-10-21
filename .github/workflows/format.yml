@@ -2,6 +2,9 @@ name: Formatting and Linting
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   fmt:
     name: Cargo fmt
