@@ -1,8 +1,11 @@
 use base64::Engine;
+#[cfg(feature = "appsync_events")]
+use serde::{de::DeserializeOwned, ser::Error as SerError, Serialize};
 use serde::{
     de::{Deserialize, Deserializer, Error as DeError},
     ser::Serializer,
 };
+
 use std::collections::HashMap;
 
 #[cfg(feature = "codebuild")]
@@ -16,7 +19,8 @@ pub type CodeBuildNumber = f32;
     feature = "apigw",
     feature = "s3",
     feature = "iot",
-    feature = "lambda_function_urls"
+    feature = "lambda_function_urls",
+    feature = "appsync_events"
 ))]
 mod headers;
 #[cfg(any(
@@ -24,7 +28,8 @@ mod headers;
     feature = "apigw",
     feature = "s3",
     feature = "iot",
-    feature = "lambda_function_urls"
+    feature = "lambda_function_urls",
+    feature = "appsync_events"
 ))]
 pub(crate) use self::headers::*;
 
@@ -98,6 +103,28 @@ where
     // https://github.com/serde-rs/serde/issues/1098
     let opt = Option::deserialize(deserializer)?;
     Ok(opt.unwrap_or_default())
+}
+
+#[cfg(feature = "appsync_events")]
+pub(crate) fn serialize_stringified_json<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
+where
+    T: Serialize,
+    S: Serializer,
+{
+    let json_str = serde_json::to_string(value).map_err(S::Error::custom)?;
+
+    json_str.serialize(serializer)
+}
+
+#[cfg(feature = "appsync_events")]
+pub(crate) fn deserialize_stringified_json<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+where
+    T: DeserializeOwned,
+    D: Deserializer<'de>,
+{
+    let json_str = String::deserialize(deserializer)?;
+
+    serde_json::from_str(&json_str).map_err(D::Error::custom)
 }
 
 #[cfg(test)]

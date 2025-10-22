@@ -17,6 +17,10 @@ pub mod apigw;
 #[cfg_attr(docsrs, doc(cfg(feature = "appsync")))]
 pub mod appsync;
 
+/// AWS Lambda event definitions for appsync.
+#[cfg(feature = "appsync_events")]
+pub mod appsync_events;
+
 /// AWS Lambda event definitions for autoscaling.
 #[cfg(feature = "autoscaling")]
 #[cfg_attr(docsrs, doc(cfg(feature = "autoscaling")))]
