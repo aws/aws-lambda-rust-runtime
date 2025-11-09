@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "aws-cdk-lib": "2.193.0",
-    "cargo-lambda-cdk": "^0.0.22",
+    "cargo-lambda-cdk": "^0.0.35",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21"
   }
