@@ -1,0 +1,11 @@
+{
+  "statusCode": 200,
+  "statusDescription": "200 OK",
+  "headers": {
+    "content-type": "application/json",
+    "x-request-id": "req-123456789",
+    "cache-control": "no-cache"
+  },
+  "body": "{\"orderId\": \"order-789\", \"status\": \"created\", \"message\": \"Order successfully created\"}",
+  "isBase64Encoded": false
+}

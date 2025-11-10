@@ -1,0 +1,37 @@
+{
+  "version": "2.0",
+  "path": "/api/external/data-sync",
+  "method": "POST",
+  "headers": {
+    "content-type": ["application/json"],
+    "user-agent": ["ExternalDataSync/2.1.0"],
+    "x-forwarded-for": ["203.45.67.89"],
+    "x-client-cert": ["present"],
+    "authorization": ["X509-Cert"]
+  },
+  "queryStringParameters": {
+    "sync-type": ["incremental"],
+    "validate": ["true"]
+  },
+  "body": "{\"timestamp\": \"2025-08-28T14:30:00Z\", \"records\": [{\"id\": \"ext-001\", \"data\": \"sample-data\"}], \"source\": \"external-partner-system\"}",
+  "isBase64Encoded": false,
+  "requestContext": {
+    "serviceNetworkArn": "arn:aws:vpc-lattice:ap-southeast-2:123456789012:servicenetwork/sn-0bf3f2882e9cc805a",
+    "serviceArn": "arn:aws:vpc-lattice:ap-southeast-2:123456789012:service/svc-0a40eebed65f8d69c",
+    "targetGroupArn": "arn:aws:vpc-lattice:ap-southeast-2:123456789012:targetgroup/tg-6d0ecf831eec9f09",
+    "identity": {
+      "sourceVpcArn": "arn:aws:ec2:ap-southeast-2:123456789012:vpc/vpc-0b8276c84697e7339",
+      "type": "AWS_IAM",
+      "principal": "arn:aws:iam::123456789012:role/ExternalPartnerAccessRole",
+      "principalOrgID": "o-50dc6c495c0c9188",
+      "sessionName": "external-data-sync-session",
+      "x509IssuerOu": "Engineering Department",
+      "x509SanDns": "partner-system.external-company.com",
+      "x509SanNameCn": "Data Sync Service",
+      "x509SanUri": "https://partner-system.external-company.com/sync",
+      "x509SubjectCn": "external-partner-data-sync.external-company.com"
+    },
+    "region": "ap-southeast-2",
+    "timeEpoch": "1724875199177430"
+  }
+}

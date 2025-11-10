@@ -1,0 +1,19 @@
+{
+  "raw_path": "/api/product",
+  "method": "POST",
+  "headers": {
+    "accept": "*/*",
+    "user-agent": "curl/7.68.0",
+    "x-forwarded-for": "10.0.2.100",
+    "authorization": "Bearer abc123def456",
+    "multi": "abcd, DEF"
+  },
+  "query_string_parameters": {
+    "category": "electronics",
+    "sort": "price",
+    "limit": "10",
+    "tags": "tv"
+  },
+  "body": "{\"id\": 5, \"description\": \"TV\"}",
+  "is_base64_encoded": false
+}

@@ -1,0 +1,30 @@
+{
+  "version": "2.0",
+  "path": "/health",
+  "method": "GET",
+  "headers": {
+    "accept": ["*/*"],
+    "user-agent": ["curl/7.68.0"],
+    "x-forwarded-for": ["10.0.2.100"],
+    "multi": ["x", "y"]
+  },
+  "queryStringParameters": {
+    "state": ["prod"],
+    "multi": ["a", "DEF", "g"]
+  },
+  "body": null,
+  "isBase64Encoded": false,
+  "requestContext": {
+    "serviceNetworkArn": "arn:aws:vpc-lattice:ap-southeast-2:123456789012:servicenetwork/sn-0bf3f2882e9cc805a",
+    "serviceArn": "arn:aws:vpc-lattice:ap-southeast-2:123456789012:service/svc-0a40eebed65f8d69c",
+    "targetGroupArn": "arn:aws:vpc-lattice:ap-southeast-2:123456789012:targetgroup/tg-6d0ecf831eec9f09",
+    "identity": {
+      "sourceVpcArn": "arn:aws:ec2:ap-southeast-2:123456789012:vpc/vpc-0b8276c84697e7339",
+      "type": "AWS_IAM",
+      "principal": "arn:aws:iam::123456789012:role/service-role/HealthChecker",
+      "principalOrgID": "o-50dc6c495c0c9188"
+    },
+    "region": "ap-southeast-2",
+    "timeEpoch": "1724875399456789"
+  }
+}

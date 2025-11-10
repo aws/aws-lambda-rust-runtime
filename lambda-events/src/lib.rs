@@ -226,3 +226,8 @@ pub use event::documentdb;
 #[cfg(feature = "eventbridge")]
 #[cfg_attr(docsrs, doc(cfg(feature = "eventbridge")))]
 pub use event::eventbridge;
+
+/// AWS Lambda event definitions for VPC lattice.
+#[cfg(feature = "vpc_lattice")]
+#[cfg_attr(docsrs, doc(cfg(feature = "vpc_lattice")))]
+pub use event::vpc_lattice;
