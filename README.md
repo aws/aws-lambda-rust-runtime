@@ -492,6 +492,7 @@ The AWS Lambda Rust Runtime requires a minimum of Rust 1.82.0, and is not guaran
 
 ### Is the runtime leaking?
 
+No.
 We began an investigation into the matter due to a [GitHub issue](https://github.com/awslabs/aws-lambda-rust-runtime/issues/972). User noticed an increase in `used_memory_max` subsequent invocations.
 
 <img width="1062" height="307" alt="image" src="https://github.com/user-attachments/assets/6b2a1b19-ea24-412a-aff6-590e77867646" />
