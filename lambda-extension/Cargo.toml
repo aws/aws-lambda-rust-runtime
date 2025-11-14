@@ -1,6 +1,6 @@
 [package]
 name = "lambda-extension"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 rust-version = "1.82.0"
 authors = [
@@ -9,7 +9,7 @@ authors = [
 ]
 description = "AWS Lambda Extension API"
 license = "Apache-2.0"
-repository = "https://github.com/awslabs/aws-lambda-rust-runtime"
+repository = "https://github.com/aws/aws-lambda-rust-runtime"
 categories = ["web-programming::http-server"]
 keywords = ["AWS", "Lambda", "API"]
 readme = "README.md"

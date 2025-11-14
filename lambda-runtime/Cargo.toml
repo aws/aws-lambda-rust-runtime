@@ -1,6 +1,6 @@
 [package]
 name = "lambda_runtime"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
     "David Calavera <dcalaver@amazon.com>",
     "Harold Sun <sunhua@amazon.com>",
@@ -9,7 +9,7 @@ description = "AWS Lambda Runtime"
 edition = "2021"
 rust-version = "1.82.0"
 license = "Apache-2.0"
-repository = "https://github.com/awslabs/aws-lambda-rust-runtime"
+repository = "https://github.com/aws/aws-lambda-rust-runtime"
 categories = ["web-programming::http-server"]
 keywords = ["AWS", "Lambda", "API"]
 readme = "../README.md"
@@ -23,7 +23,7 @@ eyre = ["dep:eyre"] # enables From<T> for Diagnostic for eyre error types, see R
 miette = ["dep:miette"] # enables From<T> for Diagnostic for miette error types, see README.md for more info
 # TODO: remove tokio/rt and rt-multi-thread from non-feature-flagged dependencies in new breaking version, since they are unused:
 # as well as default features
-# https://github.com/awslabs/aws-lambda-rust-runtime/issues/984
+# https://github.com/aws/aws-lambda-rust-runtime/issues/984
 graceful-shutdown = ["tokio/rt", "tokio/signal", "dep:lambda-extension"]
 
 [dependencies]

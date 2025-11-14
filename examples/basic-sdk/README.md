@@ -1,7 +1,7 @@
 
 ## basic-sdk example
 
-This is an sample function that uses the [AWS SDK](https://github.com/awslabs/aws-sdk-rust) to
+This is an sample function that uses the [AWS SDK](https://github.com/aws/aws-sdk-rust) to
 list the contents of an S3 bucket specified by the invoker.  It uses standard credentials as defined
 in the function's execution role to make calls against S3.
 

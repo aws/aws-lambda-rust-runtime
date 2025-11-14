@@ -1,6 +1,6 @@
 [package]
 name = "lambda_http"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
     "David Calavera <dcalaver@amazon.com>",
     "Harold Sun <sunhua@amazon.com>",
@@ -10,8 +10,8 @@ rust-version = "1.82.0"
 description = "Application Load Balancer and API Gateway event types for AWS Lambda"
 keywords = ["AWS", "Lambda", "APIGateway", "ALB", "API"]
 license = "Apache-2.0"
-homepage = "https://github.com/awslabs/aws-lambda-rust-runtime"
-repository = "https://github.com/awslabs/aws-lambda-rust-runtime"
+homepage = "https://github.com/aws/aws-lambda-rust-runtime"
+repository = "https://github.com/aws/aws-lambda-rust-runtime"
 documentation = "https://docs.rs/lambda_runtime"
 categories = ["web-programming::http-server"]
 readme = "README.md"

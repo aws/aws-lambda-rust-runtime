@@ -1,6 +1,6 @@
 [package]
 name = "aws_lambda_events"
-version = "1.0.0"
+version = "1.0.1"
 rust-version = "1.82.0"
 description = "AWS Lambda event definitions"
 authors = [
@@ -9,8 +9,8 @@ authors = [
   "David Calavera <dcalaver@amazon.com>",
 ]
 license = "MIT"
-homepage = "https://github.com/awslabs/aws-lambda-rust-runtime"
-repository = "https://github.com/awslabs/aws-lambda-rust-runtime"
+homepage = "https://github.com/aws/aws-lambda-rust-runtime"
+repository = "https://github.com/aws/aws-lambda-rust-runtime"
 readme = "README.md"
 keywords = ["lambda", "aws", "amazon", "events", "S3"]
 categories = ["api-bindings", "encoding", "web-programming"]

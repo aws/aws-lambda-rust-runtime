@@ -121,7 +121,7 @@ fn into_api_gateway_v2_request(ag: ApiGatewayV2httpRequest) -> http::Request<Bod
     // don't use the query_string_parameters from API GW v2 to
     // populate the QueryStringParameters extension because
     // the value is not compatible with the whatgw specification.
-    // See: https://github.com/awslabs/aws-lambda-rust-runtime/issues/470
+    // See: https://github.com/aws/aws-lambda-rust-runtime/issues/470
     // See: https://url.spec.whatwg.org/#urlencoded-parsing
     let query_string_parameters = if let Some(query) = &ag.raw_query_string {
         query.parse().unwrap() // this is Infallible

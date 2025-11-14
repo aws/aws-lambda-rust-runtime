@@ -269,7 +269,7 @@ pub struct UserIdentity {
 pub struct StreamRecord {
     /// The approximate date and time when the stream record was created, in UNIX
     /// epoch time (<http://www.epochconverter.com/>) format. Might not be present in
-    /// the record: <https://github.com/awslabs/aws-lambda-rust-runtime/issues/889>
+    /// the record: <https://github.com/aws/aws-lambda-rust-runtime/issues/889>
     #[serde(rename = "ApproximateCreationDateTime")]
     #[serde(with = "float_unix_epoch")]
     #[serde(default)]
