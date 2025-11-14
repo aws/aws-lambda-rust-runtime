@@ -497,13 +497,13 @@ We began an investigation into the matter due to a [GitHub issue](https://github
 
 <img width="1062" height="307" alt="image" src="https://github.com/user-attachments/assets/6b2a1b19-ea24-412a-aff6-590e77867646" />
 
-**Understanding** **the** `used_memory_max` **metric**: the metric indicates the peak memory provided to the underlying Lambda function during the last invocation. When a function executes, it **may** request memory from the underlying operating system. The operating system keeps tracks of how much memory has been allocated to the underlying function, and reports the maximum as `used_memory_max`.  This metric however does not represent how much memory is allocated to objects and structures within the function. It merely represents the maximum memory the program (usually via an **allocator library**) **** has requested.
+**Understanding** **the** `used_memory_max` **metric**: the metric indicates the peak memory provided to the underlying Lambda function during the last invocation. When a function executes, it **may** request memory from the underlying operating system. The operating system keeps tracks of how much memory has been allocated to the underlying function, and reports the maximum as `used_memory_max`.  This metric however does not represent how much memory is allocated to objects and structures within the function. It merely represents the maximum memory the program (usually via an **allocator library**) has requested.
 
 **How does a memory leak look like in a rust Lambda function?** 
 
-A lambda function runs on an indefinite loop, accepts requests and passes them to the handler. Memory is allocated initially for the surrounding scaffolding needed to run the handler and remains allocated for the entire duration of the function. This makes memory allocated for the scaffolding have a `‘static` lifetime as it lives as long as the function lives.
+A lambda function runs on an indefinite loop, accepts requests and passes them to the handler. Memory is allocated initially for the surrounding scaffolding needed to run the handler and remains allocated for the entire duration of the function. This makes memory allocated for the scaffolding have an effectively `‘static` lifetime as it lives as long as the function lives.
 
-During an invocation, the scaffolding code sends a request, deserializes it, and then passes it to the handler, the handler executes, deallocates objects that reached the end of their lifetime, and returns a response, the scaffolding code then serializes the response and sends it back to the Lambda dataplane.
+During an invocation, the scaffolding code receives a request, deserializes it, and then passes it to the handler, the handler executes, deallocates objects that reached the end of their lifetime, and returns a response, the scaffolding code then serializes the response and sends it back to the Lambda dataplane.
 
 When memory is leaked, its lifetime becomes `‘static` as it lives as long as the program does. Having a memory leak during invocations implies that we keep requesting more memory from the allocator, and we don’t deallocate all of it, so the net bytes allocated during the invocations are positive.
 
