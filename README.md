@@ -487,6 +487,49 @@ fn main() -> Result<(), Box<Error>> {
 
 The AWS Lambda Rust Runtime requires a minimum of Rust 1.82.0, and is not guaranteed to build on compiler versions earlier than that.
 
+
+## FAQ
+
+### Is the runtime leaking?
+
+We began an investigation into the matter due to a [GitHub issue](https://github.com/awslabs/aws-lambda-rust-runtime/issues/972). User noticed an increase in `used_memory_max` subsequent invocations.
+
+<img width="1062" height="307" alt="image" src="https://github.com/user-attachments/assets/6b2a1b19-ea24-412a-aff6-590e77867646" />
+
+**Understanding** **the** `used_memory_max` **metric**: the metric indicates the peak memory provided to the underlying Lambda function during the last invocation. When a function executes, it **may** request memory from the underlying operating system. The operating system keeps tracks of how much memory has been allocated to the underlying function, and reports the maximum as `used_memory_max`.  This metric however does not represent how much memory is allocated to objects and structures within the function. It merely represents the maximum memory the program (usually via an **allocator library**) **** has requested.
+
+**How does a memory leak look like in a rust Lambda function?** 
+
+A lambda function runs on an indefinite loop, accepts requests and passes them to the handler. Memory is allocated initially for the surrounding scaffolding needed to run the handler and remains allocated for the entire duration of the function. This makes memory allocated for the scaffolding have a `‘static` lifetime as it lives as long as the function lives.
+
+During an invocation, the scaffolding code sends a request, deserializes it, and then passes it to the handler, the handler executes, deallocates objects that reached the end of their lifetime, and returns a response, the scaffolding code then serializes the response and sends it back to the Lambda dataplane.
+
+When memory is leaked, its lifetime becomes `‘static` as it lives as long as the program does. Having a memory leak during invocations implies that we keep requesting more memory from the allocator, and we don’t deallocate all of it, so the net bytes allocated during the invocations are positive.
+
+**Does the runtime leak memory during invokes?**
+
+We tracked net allocated bytes on Lambda across ~**15k invokes** on the same handler as the github issue above, using [tracking-allocator](https://crates.io/crates/tracking-allocator) and observed that the net bytes remain the same across the invocations, indicating that all memory allocated during invocations is accounted for.
+
+<img width="2276" height="622" alt="image" src="https://github.com/user-attachments/assets/47bef210-a13a-4ea2-8756-9bcad3e8e97b" />
+
+In addition, we tracked allocations locally via Heaptrack, and observed that the peak heap memory consumption remains the same across 15k, 45k, and 70k invokes.
+
+**Why does the metric increase then?**
+
+The metric `used_memory_max` increases because the allocator keeps requesting more memory pages from the operating system because memory gets fragmented and we end up with lots of small objects allocated in non-contiguous blocks. This means that we may have sufficient free memory to handle the request, but we don’t necessarily have enough contiguous memory marked as “safely deallocated” to be able to reuse it.
+
+The culprit of these allocations according to our investigation is serde::deserialize
+
+<img width="2036" height="1177" alt="image" src="https://github.com/user-attachments/assets/778e2857-8c1a-49f4-968b-47739f445858" />
+
+**What can I do about it?**
+
+You can experiment with different allocators like `jemalloc`, along with different environment flags. For example setting a single arena for `glibc` via `MALLOC_ARENA_MAX=1`. In `jemalloc` enabling a background thread with a short decay for dirty memory sweeps will induce more frequent sweeps.
+
+We recommend that you don’t mess with your allocator settings until you start seeing degradation / getting closer to max memory for your function.
+
+Finally, we note that sandboxes have a finite lifespan, and will recycle over time and as needed, thus ameliorating the accumulated fragmentation.
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
