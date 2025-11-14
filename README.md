@@ -10,8 +10,6 @@ This package makes it easy to run AWS Lambda Functions written in Rust. This wor
 - [![Docs](https://docs.rs/aws_lambda_events/badge.svg)](https://docs.rs/aws_lambda_events) **`lambda-events`** is a library with strongly-typed Lambda event structs in Rust.
 - [![Docs](https://docs.rs/lambda_runtime_api_client/badge.svg)](https://docs.rs/lambda_runtime_api_client) **`lambda-runtime-api-client`** is a shared library between the lambda runtime and lambda extension libraries that includes a common API client to talk with the AWS Lambda Runtime API.
 
-The Rust runtime client is an experimental package. It is subject to change and intended only for evaluation purposes.
-
 ## Getting started
 
 The easiest way to start writing Lambda functions with Rust is by using [Cargo Lambda](https://www.cargo-lambda.info/), a related project. Cargo Lambda is a Cargo plugin, or subcommand, that provides several commands to help you in your journey with Rust on AWS Lambda.
