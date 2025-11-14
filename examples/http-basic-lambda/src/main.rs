@@ -3,7 +3,7 @@ use lambda_http::{run, service_fn, tracing, Body, Error, Request, Response};
 /// This is the main body for the function.
 /// Write your code inside it.
 /// There are some code examples in the Runtime repository:
-/// - <https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples>
+/// - <https://github.com/aws/aws-lambda-rust-runtime/tree/main/examples>
 async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
     // Extract some useful information from the request
 

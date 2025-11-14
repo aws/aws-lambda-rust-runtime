@@ -1,4 +1,4 @@
-/// See <https://github.com/awslabs/aws-lambda-rust-runtime> for more info on Rust runtime for AWS Lambda
+/// See <https://github.com/aws/aws-lambda-rust-runtime> for more info on Rust runtime for AWS Lambda
 use lambda_runtime::{service_fn, tracing, Error, LambdaEvent};
 use serde::{Deserialize, Serialize};
 use serde_json::json;

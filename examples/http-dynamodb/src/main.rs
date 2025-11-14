@@ -15,7 +15,7 @@ pub struct Item {
 /// This is the main body for the function.
 /// Write your code inside it.
 /// You can see more examples in Runtime's repository:
-/// - <https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples>
+/// - <https://github.com/aws/aws-lambda-rust-runtime/tree/main/examples>
 async fn handle_request(db_client: &Client, event: Request) -> Result<Response<Body>, Error> {
     // Extract some useful information from the request
     let body = event.body();

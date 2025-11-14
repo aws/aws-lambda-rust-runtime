@@ -169,7 +169,7 @@ pub fn custom_authorizer_response(effect: &str, principal: &str, method_arn: &st
     ApiGatewayCustomAuthorizerResponse {
         principal_id: Some(principal.to_owned()),
         policy_document: policy,
-        context: json!({ "email": principal }), // https://github.com/awslabs/aws-lambda-rust-runtime/discussions/548
+        context: json!({ "email": principal }), // https://github.com/aws/aws-lambda-rust-runtime/discussions/548
         usage_identifier_key: None,
     }
 }
