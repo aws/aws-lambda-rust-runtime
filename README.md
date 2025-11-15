@@ -35,7 +35,7 @@ Or PiP on any system with Python 3 installed:
 ```bash
 pip3 install cargo-lambda
 ```
-Alternative, install the pip package as an executable using [uv](https://docs.astral.sh/uv/)
+Alternatively, you can install the pip package as an executable using [uv](https://docs.astral.sh/uv/)
 
 ```bash
 uv tool install cargo-lambda
