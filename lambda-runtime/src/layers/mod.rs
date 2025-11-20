@@ -4,7 +4,7 @@ mod api_response;
 mod panic;
 
 // Publicly available services.
-mod trace;
+pub mod trace;
 
 pub(crate) use api_client::RuntimeApiClientService;
 pub(crate) use api_response::RuntimeApiResponseService;

@@ -72,14 +72,26 @@ where
     }
 
     fn call(&mut self, req: LambdaInvocation) -> Self::Future {
-        let span = tracing::info_span!(
-            "Lambda function invocation",
-            "otel.name" = req.context.env_config.function_name,
-            "otel.kind" = field::Empty,
-            { attribute::FAAS_TRIGGER } = &self.otel_attribute_trigger,
-            { attribute::FAAS_INVOCATION_ID } = req.context.request_id,
-            { attribute::FAAS_COLDSTART } = self.coldstart
-        );
+        let span = if let Some(tenant_id) = &req.context.tenant_id {
+            tracing::info_span!(
+                "Lambda function invocation",
+                "otel.name" = req.context.env_config.function_name,
+                "otel.kind" = field::Empty,
+                { attribute::FAAS_TRIGGER } = &self.otel_attribute_trigger,
+                { attribute::FAAS_INVOCATION_ID } = req.context.request_id,
+                { attribute::FAAS_COLDSTART } = self.coldstart,
+                "tenant_id" = tenant_id
+            )
+        } else {
+            tracing::info_span!(
+                "Lambda function invocation",
+                "otel.name" = req.context.env_config.function_name,
+                "otel.kind" = field::Empty,
+                { attribute::FAAS_TRIGGER } = &self.otel_attribute_trigger,
+                { attribute::FAAS_INVOCATION_ID } = req.context.request_id,
+                { attribute::FAAS_COLDSTART } = self.coldstart
+            )
+        };
 
         // After the first execution, we can set 'coldstart' to false
         self.coldstart = false;

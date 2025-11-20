@@ -41,6 +41,18 @@ Resources:
             Path: /hello
             Method: get
 
+  TenantIdTestFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: rust-cargolambda
+      BuildProperties:
+        Binary: tenant-id-test
+    Properties:
+      CodeUri: ./
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Role: !Ref LambdaRole
+
   AuthorizerFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -60,3 +72,6 @@ Outputs:
   HelloApiEndpoint:
     Description: "API Gateway endpoint URL for HelloWorld"
     Value: !Sub "https://${API}.execute-api.${AWS::Region}.amazonaws.com/integ-test/hello/"
+  TenantIdTestFunction:
+    Description: "Tenant ID test function name"
+    Value: !Ref TenantIdTestFunction
