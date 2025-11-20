@@ -3,9 +3,9 @@ use serde_json::{json, Value};
 
 async fn function_handler(event: LambdaEvent<Value>) -> Result<Value, Error> {
     let (event, context) = event.into_parts();
-    
+
     tracing::info!("Processing request with tenant ID: {:?}", context.tenant_id);
-    
+
     let response = json!({
         "statusCode": 200,
         "body": json!({
