@@ -155,7 +155,54 @@ pub struct SqsBatchResponse {
 }
 
 impl SqsBatchResponse {
-    /// Add a failed message ID to the batch response
+    /// Add a failed message ID to the batch response.
+    ///
+    /// When processing SQS messages in batches, you can use this helper method to
+    /// register individual message failures. Lambda will automatically return failed
+    /// messages to the queue for reprocessing while successfully processed messages
+    /// will be deleted.
+    ///
+    /// **Important**: This feature requires `FunctionResponseTypes: ReportBatchItemFailures`
+    /// to be enabled in your Lambda function's SQS event source mapping configuration.
+    /// Without this setting, Lambda will retry the entire batch on any failure.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use aws_lambda_events::event::sqs::{SqsEvent, SqsBatchResponse};
+    /// use lambda_runtime::{service_fn, Error, LambdaEvent};
+    ///
+    /// async fn function_handler(
+    ///     event: LambdaEvent<SqsEvent>,
+    /// ) -> Result<SqsBatchResponse, Error> {
+    ///     // Start from a default response
+    ///     let mut response = SqsBatchResponse::default();
+    ///
+    ///     for record in event.payload.records {
+    ///         let message_id = record.message_id.clone().unwrap_or_default();
+    ///
+    ///         // Try to process the message
+    ///         if let Err(e) = process_record(&record).await {
+    ///             println!("Failed to process message {}: {}", message_id, e);
+    ///
+    ///             // Use the helper to register the failure
+    ///             response.add_failure(message_id);
+    ///         }
+    ///     }
+    ///
+    ///     Ok(response)
+    /// }
+    ///
+    /// async fn process_record(record: &aws_lambda_events::event::sqs::SqsMessage) -> Result<(), Error> {
+    ///     // Your message processing logic here
+    ///     Ok(())
+    /// }
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Error> {
+    ///     lambda_runtime::run(service_fn(function_handler)).await
+    /// }
+    /// ```
     pub fn add_failure(&mut self, message_id: String) {
         self.batch_item_failures.push(BatchItemFailure {
             item_identifier: message_id,
