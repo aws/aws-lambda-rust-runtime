@@ -154,6 +154,17 @@ pub struct SqsBatchResponse {
     pub other: serde_json::Map<String, Value>,
 }
 
+impl SqsBatchResponse {
+    /// Add a failed message ID to the batch response
+    pub fn add_failure(&mut self, message_id: String) -> () {
+        self.batch_item_failures.push(BatchItemFailure {
+            item_identifier: message_id,
+            #[cfg(feature = "catch-all-fields")]
+            other: serde_json::Map::new(),
+        });
+    }
+}
+
 #[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -334,5 +345,17 @@ mod test {
         let output: String = serde_json::to_string(&parsed).unwrap();
         let reparsed: SqsApiEventObj<CustStruct> = serde_json::from_slice(output.as_bytes()).unwrap();
         assert_eq!(parsed, reparsed);
+    }
+
+    #[test]
+    #[cfg(feature = "sqs")]
+    fn example_sqs_batch_response_add_failure() {
+        let mut response = SqsBatchResponse::default();
+        response.add_failure("msg-1".to_string());
+        response.add_failure("msg-2".to_string());
+
+        assert_eq!(response.batch_item_failures.len(), 2);
+        assert_eq!(response.batch_item_failures[0].item_identifier, "msg-1");
+        assert_eq!(response.batch_item_failures[1].item_identifier, "msg-2");
     }
 }
