@@ -156,7 +156,7 @@ pub struct SqsBatchResponse {
 
 impl SqsBatchResponse {
     /// Add a failed message ID to the batch response
-    pub fn add_failure(&mut self, message_id: String) -> () {
+    pub fn add_failure(&mut self, message_id: String) {
         self.batch_item_failures.push(BatchItemFailure {
             item_identifier: message_id,
             #[cfg(feature = "catch-all-fields")]
