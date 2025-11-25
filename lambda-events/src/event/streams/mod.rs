@@ -17,6 +17,48 @@ pub struct KinesisEventResponse {
     pub other: serde_json::Map<String, Value>,
 }
 
+impl KinesisEventResponse {
+    /// Add a failed item identifier to the batch response.
+    ///
+    /// When processing Kinesis records in batches, you can use this helper method to
+    /// register individual record failures. Lambda will automatically retry failed
+    /// records while successfully processed records will be checkpointed.
+    ///
+    /// **Important**: This feature requires `FunctionResponseTypes: ReportBatchItemFailures`
+    /// to be enabled in your Lambda function's Kinesis event source mapping configuration.
+    /// Without this setting, Lambda will retry the entire batch on any failure.
+    pub fn add_failure(&mut self, item_identifier: impl Into<String>) {
+        self.batch_item_failures.push(KinesisBatchItemFailure {
+            item_identifier: Some(item_identifier.into()),
+            #[cfg(feature = "catch-all-fields")]
+            other: serde_json::Map::new(),
+        });
+    }
+
+    /// Set multiple failed item identifiers at once.
+    ///
+    /// This is a convenience method for setting all batch item failures in one call.
+    /// It replaces any previously registered failures.
+    ///
+    /// **Important**: This feature requires `FunctionResponseTypes: ReportBatchItemFailures`
+    /// to be enabled in your Lambda function's Kinesis event source mapping configuration.
+    /// Without this setting, Lambda will retry the entire batch on any failure.
+    pub fn set_failures<I, S>(&mut self, item_identifiers: I)
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.batch_item_failures = item_identifiers
+            .into_iter()
+            .map(|id| KinesisBatchItemFailure {
+                item_identifier: Some(id.into()),
+                #[cfg(feature = "catch-all-fields")]
+                other: serde_json::Map::new(),
+            })
+            .collect();
+    }
+}
+
 /// `KinesisBatchItemFailure` is the individual record which failed processing.
 #[non_exhaustive]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
@@ -93,4 +135,54 @@ pub struct SqsBatchItemFailure {
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
     pub other: serde_json::Map<String, Value>,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn kinesis_event_response_add_failure() {
+        let mut response = KinesisEventResponse::default();
+        response.add_failure("seq-1");
+        response.add_failure("seq-2".to_string());
+
+        assert_eq!(response.batch_item_failures.len(), 2);
+        assert_eq!(
+            response.batch_item_failures[0].item_identifier,
+            Some("seq-1".to_string())
+        );
+        assert_eq!(
+            response.batch_item_failures[1].item_identifier,
+            Some("seq-2".to_string())
+        );
+    }
+
+    #[test]
+    fn kinesis_event_response_set_failures() {
+        let mut response = KinesisEventResponse::default();
+        response.set_failures(vec!["seq-1", "seq-2", "seq-3"]);
+
+        assert_eq!(response.batch_item_failures.len(), 3);
+        assert_eq!(
+            response.batch_item_failures[0].item_identifier,
+            Some("seq-1".to_string())
+        );
+        assert_eq!(
+            response.batch_item_failures[1].item_identifier,
+            Some("seq-2".to_string())
+        );
+        assert_eq!(
+            response.batch_item_failures[2].item_identifier,
+            Some("seq-3".to_string())
+        );
+
+        // Test that set_failures replaces existing failures
+        response.set_failures(vec!["seq-4".to_string()]);
+        assert_eq!(response.batch_item_failures.len(), 1);
+        assert_eq!(
+            response.batch_item_failures[0].item_identifier,
+            Some("seq-4".to_string())
+        );
+    }
 }
