@@ -203,12 +203,74 @@ impl SqsBatchResponse {
     ///     lambda_runtime::run(service_fn(function_handler)).await
     /// }
     /// ```
-    pub fn add_failure(&mut self, message_id: String) {
+    pub fn add_failure(&mut self, message_id: impl Into<String>) {
         self.batch_item_failures.push(BatchItemFailure {
-            item_identifier: message_id,
+            item_identifier: message_id.into(),
             #[cfg(feature = "catch-all-fields")]
             other: serde_json::Map::new(),
         });
+    }
+
+    /// Set multiple failed message IDs at once.
+    ///
+    /// This is a convenience method for setting all batch item failures in one call.
+    /// It replaces any previously registered failures.
+    ///
+    /// **Important**: This feature requires `FunctionResponseTypes: ReportBatchItemFailures`
+    /// to be enabled in your Lambda function's SQS event source mapping configuration.
+    /// Without this setting, Lambda will retry the entire batch on any failure.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use aws_lambda_events::event::sqs::{SqsEvent, SqsBatchResponse};
+    /// use lambda_runtime::{service_fn, Error, LambdaEvent};
+    ///
+    /// async fn function_handler(
+    ///     event: LambdaEvent<SqsEvent>,
+    /// ) -> Result<SqsBatchResponse, Error> {
+    ///     let mut failed_ids = Vec::new();
+    ///
+    ///     for record in event.payload.records {
+    ///         let message_id = record.message_id.clone().unwrap_or_default();
+    ///
+    ///         // Try to process the message
+    ///         if let Err(e) = process_record(&record).await {
+    ///             println!("Failed to process message {}: {}", message_id, e);
+    ///             failed_ids.push(message_id);
+    ///         }
+    ///     }
+    ///
+    ///     // Set all failures at once
+    ///     let mut response = SqsBatchResponse::default();
+    ///     response.set_failures(failed_ids);
+    ///
+    ///     Ok(response)
+    /// }
+    ///
+    /// async fn process_record(record: &aws_lambda_events::event::sqs::SqsMessage) -> Result<(), Error> {
+    ///     // Your message processing logic here
+    ///     Ok(())
+    /// }
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Error> {
+    ///     lambda_runtime::run(service_fn(function_handler)).await
+    /// }
+    /// ```
+    pub fn set_failures<I, S>(&mut self, message_ids: I)
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.batch_item_failures = message_ids
+            .into_iter()
+            .map(|id| BatchItemFailure {
+                item_identifier: id.into(),
+                #[cfg(feature = "catch-all-fields")]
+                other: serde_json::Map::new(),
+            })
+            .collect();
     }
 }
 
@@ -404,5 +466,22 @@ mod test {
         assert_eq!(response.batch_item_failures.len(), 2);
         assert_eq!(response.batch_item_failures[0].item_identifier, "msg-1");
         assert_eq!(response.batch_item_failures[1].item_identifier, "msg-2");
+    }
+
+    #[test]
+    #[cfg(feature = "sqs")]
+    fn example_sqs_batch_response_set_failures() {
+        let mut response = SqsBatchResponse::default();
+        response.set_failures(vec!["msg-1", "msg-2", "msg-3"]);
+
+        assert_eq!(response.batch_item_failures.len(), 3);
+        assert_eq!(response.batch_item_failures[0].item_identifier, "msg-1");
+        assert_eq!(response.batch_item_failures[1].item_identifier, "msg-2");
+        assert_eq!(response.batch_item_failures[2].item_identifier, "msg-3");
+
+        // Test that set_failures replaces existing failures
+        response.set_failures(vec!["msg-4".to_string()]);
+        assert_eq!(response.batch_item_failures.len(), 1);
+        assert_eq!(response.batch_item_failures[0].item_identifier, "msg-4");
     }
 }
