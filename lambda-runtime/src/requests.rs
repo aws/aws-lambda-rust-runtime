@@ -3,7 +3,7 @@ use bytes::Bytes;
 use http::{header::CONTENT_TYPE, Method, Request, Uri};
 use lambda_runtime_api_client::{body::Body, build_request};
 use serde::Serialize;
-use std::{fmt::Debug, marker::PhantomData, str::FromStr};
+use std::{fmt::Debug, marker::PhantomData, str::FromStr, time::Duration};
 use tokio_stream::{Stream, StreamExt};
 
 pub(crate) trait IntoRequest {
@@ -109,11 +109,13 @@ where
                 let (mut tx, rx) = Body::channel();
 
                 tokio::spawn(async move {
-                    if tx.send_data(metadata_prelude.clone().into()).await.is_err() {
+                    if tx.send_data(metadata_prelude.into()).await.is_err() {
+                        tracing::error!("Error sending metadata prelude, response channel closed");
                         return;
                     }
 
                     if tx.send_data("\u{0}".repeat(8).into()).await.is_err() {
+                        tracing::error!("Error sending metadata prelude delimiter, response channel closed");
                         return;
                     }
 
@@ -124,8 +126,8 @@ where
                         };
 
                         if tx.send_data(chunk).await.is_err() {
-                            // Consumer has gone away; nothing else to do.
-                            break;
+                            tracing::error!("Error sending response body chunk, response channel closed");
+                            return;
                         }
                     }
                 });
@@ -219,6 +221,18 @@ mod tests {
     #[tokio::test]
     async fn streaming_send_data_error_is_ignored() {
         use crate::StreamResponse;
+        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::sync::Arc;
+
+        // Track if a panic occurred in any spawned task
+        let panicked = Arc::new(AtomicBool::new(false));
+        let panicked_clone = panicked.clone();
+
+        // Set a custom panic hook to detect panics in spawned tasks
+        let old_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |_| {
+            panicked_clone.store(true, Ordering::SeqCst);
+        }));
 
         let stream = tokio_stream::iter(vec![Ok::<Bytes, Error>(Bytes::from_static(b"chunk"))]);
 
@@ -232,9 +246,15 @@ mod tests {
         // immediate drop simulates client disconnection
         drop(http_req);
 
-        // force the task to run
-        tokio::task::yield_now().await;
+        // give the spawned task time to run and potentially panic
+        tokio::time::sleep(Duration::from_millis(10)).await;
 
-        // at this point the inner task will panic if errors are unwrapped.
+        // Restore the old panic hook
+        std::panic::set_hook(old_hook);
+
+        assert!(
+            !panicked.load(Ordering::SeqCst),
+            "spawned task panicked - send_data errors should be ignored, not unwrapped"
+        );
     }
 }
