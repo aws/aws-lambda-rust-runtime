@@ -3,7 +3,7 @@ use bytes::Bytes;
 use http::{header::CONTENT_TYPE, Method, Request, Uri};
 use lambda_runtime_api_client::{body::Body, build_request};
 use serde::Serialize;
-use std::{fmt::Debug, marker::PhantomData, str::FromStr, time::Duration};
+use std::{fmt::Debug, marker::PhantomData, str::FromStr};
 use tokio_stream::{Stream, StreamExt};
 
 pub(crate) trait IntoRequest {
@@ -221,8 +221,10 @@ mod tests {
     #[tokio::test]
     async fn streaming_send_data_error_is_ignored() {
         use crate::StreamResponse;
-        use std::sync::atomic::{AtomicBool, Ordering};
-        use std::sync::Arc;
+        use std::sync::{
+            atomic::{AtomicBool, Ordering},
+            Arc,
+        };
 
         // Track if a panic occurred in any spawned task
         let panicked = Arc::new(AtomicBool::new(false));
