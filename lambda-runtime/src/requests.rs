@@ -109,15 +109,24 @@ where
                 let (mut tx, rx) = Body::channel();
 
                 tokio::spawn(async move {
-                    tx.send_data(metadata_prelude.into()).await.unwrap();
-                    tx.send_data("\u{0}".repeat(8).into()).await.unwrap();
+                    if tx.send_data(metadata_prelude.clone().into()).await.is_err() {
+                        return;
+                    }
+
+                    if tx.send_data("\u{0}".repeat(8).into()).await.is_err() {
+                        return;
+                    }
 
                     while let Some(chunk) = response.stream.next().await {
                         let chunk = match chunk {
                             Ok(chunk) => chunk.into(),
                             Err(err) => err.into().to_tailer().into(),
                         };
-                        tx.send_data(chunk).await.unwrap();
+
+                        if tx.send_data(chunk).await.is_err() {
+                            // Consumer has gone away; nothing else to do.
+                            break;
+                        }
                     }
                 });
 
@@ -205,5 +214,27 @@ mod tests {
             Some(header) => header.to_str().unwrap().starts_with("aws-lambda-rust/"),
             None => false,
         });
+    }
+
+    #[tokio::test]
+    async fn streaming_send_data_error_is_ignored() {
+        use crate::StreamResponse;
+
+        let stream = tokio_stream::iter(vec![Ok::<Bytes, Error>(Bytes::from_static(b"chunk"))]);
+
+        let stream_response: StreamResponse<_> = stream.into();
+        let response = FunctionResponse::StreamingResponse(stream_response);
+
+        let req: EventCompletionRequest<'_, _, (), _, _, _> = EventCompletionRequest::new("id", response);
+
+        let http_req = req.into_req().expect("into_req should succeed");
+
+        // immediate drop simulates client disconnection
+        drop(http_req);
+
+        // force the task to run
+        tokio::task::yield_now().await;
+
+        // at this point the inner task will panic if errors are unwrapped.
     }
 }
