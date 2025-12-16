@@ -24,6 +24,8 @@ impl KinesisEventResponse {
     /// register individual record failures. Lambda will automatically retry failed
     /// records while successfully processed records will be checkpointed.
     ///
+    /// Besides `item_identifiers`, the generated struct will use default field values for [`KinesisBatchItemFailure`].
+    ///
     /// **Important**: This feature requires `FunctionResponseTypes: ReportBatchItemFailures`
     /// to be enabled in your Lambda function's Kinesis event source mapping configuration.
     /// Without this setting, Lambda will retry the entire batch on any failure.
@@ -32,6 +34,7 @@ impl KinesisEventResponse {
             item_identifier: Some(item_identifier.into()),
             #[cfg(feature = "catch-all-fields")]
             other: serde_json::Map::new(),
+            ..Default::default(),
         });
     }
 
