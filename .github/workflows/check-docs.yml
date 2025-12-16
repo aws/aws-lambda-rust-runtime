@@ -37,6 +37,5 @@ jobs:
       - name: Check documentation
         shell: bash
         env:
-            RUSTFLAGS: --cfg docsrs 
             RUSTDOCFLAGS: --cfg docsrs -Dwarnings
-        run: cargo doc --no-deps --document-private-items --all-features
+        run: cargo doc --workspace --no-deps --document-private-items --all-features
