@@ -97,7 +97,6 @@ impl LambdaResponse {
                 let cookies = headers
                     .get_all(SET_COOKIE)
                     .iter()
-                    .cloned()
                     .map(|v| v.to_str().ok().unwrap_or_default().to_string())
                     .collect();
                 headers.remove(SET_COOKIE);
