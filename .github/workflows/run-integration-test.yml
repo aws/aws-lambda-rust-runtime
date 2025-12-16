@@ -55,7 +55,7 @@ jobs:
             TEST_ENDPOINT: ${{ steps.deploy_stack.outputs.TEST_ENDPOINT }}
           run: cd lambda-integration-tests && cargo test
         - name: cleanup
-          if: always()
+          if: always() && steps.deploy_stack.outputs.STACK_NAME
           env:
             AWS_REGION: ${{ secrets.AWS_REGION }}
             STACK_NAME: ${{ steps.deploy_stack.outputs.STACK_NAME }}
