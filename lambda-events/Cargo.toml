@@ -129,3 +129,6 @@ catch-all-fields = []
 
 [package.metadata.docs.rs]
 all-features = true
+
+[dev-dependencies]
+lambda_runtime = { path = "../lambda-runtime" }

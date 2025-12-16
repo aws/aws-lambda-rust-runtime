@@ -197,11 +197,6 @@ impl SqsBatchResponse {
     ///     // Your message processing logic here
     ///     Ok(())
     /// }
-    ///
-    /// #[tokio::main]
-    /// async fn main() -> Result<(), Error> {
-    ///     lambda_runtime::run(service_fn(function_handler)).await
-    /// }
     /// ```
     pub fn add_failure(&mut self, message_id: impl Into<String>) {
         self.batch_item_failures.push(BatchItemFailure {
@@ -250,11 +245,6 @@ impl SqsBatchResponse {
     /// async fn process_record(record: &aws_lambda_events::event::sqs::SqsMessage) -> Result<(), Error> {
     ///     // Your message processing logic here
     ///     Ok(())
-    /// }
-    ///
-    /// #[tokio::main]
-    /// async fn main() -> Result<(), Error> {
-    ///     lambda_runtime::run(service_fn(function_handler)).await
     /// }
     /// ```
     pub fn set_failures<I, S>(&mut self, message_ids: I)
