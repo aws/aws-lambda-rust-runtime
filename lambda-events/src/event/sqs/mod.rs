@@ -168,7 +168,7 @@ impl SqsBatchResponse {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// use aws_lambda_events::event::sqs::{SqsEvent, SqsBatchResponse};
     /// use lambda_runtime::{service_fn, Error, LambdaEvent};
     ///
@@ -206,8 +206,7 @@ impl SqsBatchResponse {
     pub fn add_failure(&mut self, message_id: impl Into<String>) {
         self.batch_item_failures.push(BatchItemFailure {
             item_identifier: message_id.into(),
-            #[cfg(feature = "catch-all-fields")]
-            other: serde_json::Map::new(),
+            ..Default::default()
         });
     }
 
@@ -222,7 +221,7 @@ impl SqsBatchResponse {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust
     /// use aws_lambda_events::event::sqs::{SqsEvent, SqsBatchResponse};
     /// use lambda_runtime::{service_fn, Error, LambdaEvent};
     ///
@@ -267,8 +266,7 @@ impl SqsBatchResponse {
             .into_iter()
             .map(|id| BatchItemFailure {
                 item_identifier: id.into(),
-                #[cfg(feature = "catch-all-fields")]
-                other: serde_json::Map::new(),
+                ..Default::default()
             })
             .collect();
     }
