@@ -40,6 +40,8 @@ impl KinesisEventResponse {
     /// This is a convenience method for setting all batch item failures in one call.
     /// It replaces any previously registered failures.
     ///
+    /// Besides `item_identifiers`, the generated struct will use default field values for [`KinesisBatchItemFailure`].
+    ///
     /// **Important**: This feature requires `FunctionResponseTypes: ReportBatchItemFailures`
     /// to be enabled in your Lambda function's Kinesis event source mapping configuration.
     /// Without this setting, Lambda will retry the entire batch on any failure.
@@ -54,6 +56,7 @@ impl KinesisEventResponse {
                 item_identifier: Some(id.into()),
                 #[cfg(feature = "catch-all-fields")]
                 other: serde_json::Map::new(),
+                ..Default::default()
             })
             .collect();
     }
