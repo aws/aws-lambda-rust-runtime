@@ -34,7 +34,7 @@ impl KinesisEventResponse {
             item_identifier: Some(item_identifier.into()),
             #[cfg(feature = "catch-all-fields")]
             other: serde_json::Map::new(),
-            ..Default::default(),
+            ..Default::default()
         });
     }
 
