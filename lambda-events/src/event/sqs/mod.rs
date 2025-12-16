@@ -162,6 +162,8 @@ impl SqsBatchResponse {
     /// messages to the queue for reprocessing while successfully processed messages
     /// will be deleted.
     ///
+    /// Besides `item_identifiers`, the generated struct will use default field values for [`BatchItemFailure`].
+    ///
     /// **Important**: This feature requires `FunctionResponseTypes: ReportBatchItemFailures`
     /// to be enabled in your Lambda function's SQS event source mapping configuration.
     /// Without this setting, Lambda will retry the entire batch on any failure.
@@ -209,6 +211,8 @@ impl SqsBatchResponse {
     ///
     /// This is a convenience method for setting all batch item failures in one call.
     /// It replaces any previously registered failures.
+    ///
+    /// Besides `item_identifiers`, the generated struct will use default field values for [`BatchItemFailure`].
     ///
     /// **Important**: This feature requires `FunctionResponseTypes: ReportBatchItemFailures`
     /// to be enabled in your Lambda function's SQS event source mapping configuration.
