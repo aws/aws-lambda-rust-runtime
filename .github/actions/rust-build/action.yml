@@ -28,4 +28,6 @@ runs:
     - name: Run tests
       if: ${{ inputs.run-tests == 'true' }}
       shell: bash
+      env:
+        RUSTFLAGS: ${{ inputs.package == 'lambda_runtime' && '--cfg tokio_unstable' || '' }}
       run: cargo test --all-features --verbose --package ${{ inputs.package }}

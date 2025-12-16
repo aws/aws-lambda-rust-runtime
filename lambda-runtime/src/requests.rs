@@ -218,45 +218,41 @@ mod tests {
         });
     }
 
-    #[tokio::test]
-    async fn streaming_send_data_error_is_ignored() {
+    #[test]
+    #[cfg(tokio_unstable)]
+    fn streaming_send_data_error_is_ignored() {
         use crate::StreamResponse;
-        use std::sync::{
-            atomic::{AtomicBool, Ordering},
-            Arc,
-        };
 
-        // Track if a panic occurred in any spawned task
-        let panicked = Arc::new(AtomicBool::new(false));
-        let panicked_clone = panicked.clone();
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .unhandled_panic(tokio::runtime::UnhandledPanic::ShutdownRuntime)
+            .enable_all()
+            .build()
+            .unwrap();
 
-        // Set a custom panic hook to detect panics in spawned tasks
-        let old_hook = std::panic::take_hook();
-        std::panic::set_hook(Box::new(move |_| {
-            panicked_clone.store(true, Ordering::SeqCst);
+        // We don't want to use a global panic hook to avoid shared state across tests, but we need to know
+        // if a background task panics. We accomplish this by using UnhandledPanic::ShutdownRuntime
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            runtime.block_on(async {
+                let stream = tokio_stream::iter(vec![Ok::<Bytes, Error>(Bytes::from_static(b"chunk"))]);
+
+                let stream_response: StreamResponse<_> = stream.into();
+                let response = FunctionResponse::StreamingResponse(stream_response);
+
+                let req: EventCompletionRequest<'_, _, (), _, _, _> = EventCompletionRequest::new("id", response);
+
+                let http_req = req.into_req().expect("into_req should succeed");
+
+                // immediate drop simulates client disconnection
+                drop(http_req);
+
+                // give the spawned task time to complete
+                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+            })
         }));
 
-        let stream = tokio_stream::iter(vec![Ok::<Bytes, Error>(Bytes::from_static(b"chunk"))]);
-
-        let stream_response: StreamResponse<_> = stream.into();
-        let response = FunctionResponse::StreamingResponse(stream_response);
-
-        let req: EventCompletionRequest<'_, _, (), _, _, _> = EventCompletionRequest::new("id", response);
-
-        let http_req = req.into_req().expect("into_req should succeed");
-
-        // immediate drop simulates client disconnection
-        drop(http_req);
-
-        // give the spawned task time to run and potentially panic
-        tokio::time::sleep(Duration::from_millis(10)).await;
-
-        // Restore the old panic hook
-        std::panic::set_hook(old_hook);
-
         assert!(
-            !panicked.load(Ordering::SeqCst),
-            "spawned task panicked - send_data errors should be ignored, not unwrapped"
+            result.is_ok(),
+            "spawned task panicked - send_data errors should be ignored"
         );
     }
 }
