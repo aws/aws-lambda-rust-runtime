@@ -4,6 +4,7 @@ version = 0.1
 [default.build.parameters]
 cached = true
 parallel = true
+build_in_source = true
 
 [default.validate.parameters]
 lint = true
@@ -11,7 +12,7 @@ lint = true
 [default.deploy.parameters]
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
-s3_bucket = "aws-lambda-rust-runtime-integration-testing"
+resolve_s3 = true
 
 [default.sync.parameters]
 watch = true
