@@ -56,6 +56,10 @@ where
 
 /* ------------------------------------------- UTILS ------------------------------------------- */
 
+/// Creates a tracing span for a Lambda request with context information.
+///
+/// This function creates a span that includes the request ID and optionally
+/// the X-Ray trace ID and tenant ID if they are available in the context.
 pub fn request_span(ctx: &Context) -> tracing::Span {
     match (&ctx.xray_trace_id, &ctx.tenant_id) {
         (Some(trace_id), Some(tenant_id)) => {

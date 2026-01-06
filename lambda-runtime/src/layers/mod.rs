@@ -4,6 +4,7 @@ mod api_response;
 mod panic;
 
 // Publicly available services.
+/// Tracing utilities for Lambda runtime.
 pub mod trace;
 
 pub(crate) use api_client::RuntimeApiClientService;
