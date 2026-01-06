@@ -1,11 +1,11 @@
-use lambda_runtime::Context;
 use http::HeaderMap;
+use lambda_runtime::Context;
 use std::sync::Arc;
 
 #[test]
 fn test_context_tenant_id_extraction() {
     let config = Arc::new(lambda_runtime::Config::default());
-    
+
     // Test with tenant ID
     let mut headers = HeaderMap::new();
     headers.insert("lambda-runtime-aws-request-id", "test-id".parse().unwrap());
@@ -27,21 +27,27 @@ fn test_context_tenant_id_extraction() {
 #[test]
 fn test_context_tenant_id_with_special_characters() {
     let config = Arc::new(lambda_runtime::Config::default());
-    
+
     // Test with tenant ID containing special characters
     let mut headers = HeaderMap::new();
     headers.insert("lambda-runtime-aws-request-id", "test-id".parse().unwrap());
     headers.insert("lambda-runtime-deadline-ms", "123456789".parse().unwrap());
-    headers.insert("lambda-runtime-aws-tenant-id", "tenant-with-dashes_and_underscores.123".parse().unwrap());
+    headers.insert(
+        "lambda-runtime-aws-tenant-id",
+        "tenant-with-dashes_and_underscores.123".parse().unwrap(),
+    );
 
     let context = Context::new("test-id", config, &headers).unwrap();
-    assert_eq!(context.tenant_id, Some("tenant-with-dashes_and_underscores.123".to_string()));
+    assert_eq!(
+        context.tenant_id,
+        Some("tenant-with-dashes_and_underscores.123".to_string())
+    );
 }
 
 #[test]
 fn test_context_tenant_id_empty_value() {
     let config = Arc::new(lambda_runtime::Config::default());
-    
+
     // Test with empty tenant ID
     let mut headers = HeaderMap::new();
     headers.insert("lambda-runtime-aws-request-id", "test-id".parse().unwrap());
