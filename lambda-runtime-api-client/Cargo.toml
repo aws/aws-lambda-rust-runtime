@@ -1,6 +1,6 @@
 [package]
 name = "lambda_runtime_api_client"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 rust-version = "1.84.0"
 authors = [

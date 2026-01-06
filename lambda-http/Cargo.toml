@@ -1,6 +1,6 @@
 [package]
 name = "lambda_http"
-version = "1.0.2"
+version = "1.1.0-rc1"
 authors = [
     "David Calavera <dcalaver@amazon.com>",
     "Harold Sun <sunhua@amazon.com>",
@@ -39,7 +39,7 @@ http = { workspace = true }
 http-body = { workspace = true }
 http-body-util = { workspace = true }
 hyper = { workspace = true }
-lambda_runtime = { version = "1.0", path = "../lambda-runtime" }
+lambda_runtime = { version = "1.1.0-rc1", path = "../lambda-runtime" }
 mime = "0.3"
 percent-encoding = "2.2"
 pin-project-lite = { workspace = true }
@@ -58,7 +58,7 @@ features = ["alb", "apigw"]
 [dev-dependencies]
 axum-core = "0.5.4"
 axum-extra = { version = "0.10.2", features = ["query"] }
-lambda_runtime_api_client = { version = "1.0", path = "../lambda-runtime-api-client" }
+lambda_runtime_api_client = { version = "1.0.2", path = "../lambda-runtime-api-client" }
 log = "^0.4"
 maplit = "1.0"
 tokio = { version = "1.0", features = ["macros"] }
