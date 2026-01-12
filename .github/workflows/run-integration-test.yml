@@ -47,12 +47,15 @@ jobs:
             echo "STACK_NAME=$stackName" >> "$GITHUB_OUTPUT"
             echo "Stack name = $stackName"
             sam deploy --stack-name "${stackName}" --parameter-overrides "ParameterKey=SecretToken,ParameterValue=${{ secrets.SECRET_TOKEN }}" "ParameterKey=LambdaRole,ParameterValue=${{ secrets.AWS_LAMBDA_ROLE }}" --no-confirm-changeset  --no-progressbar  > disable_output
-            TEST_ENDPOINT=$(sam list stack-outputs --stack-name "${stackName}" --output json | jq -r '.[] | .OutputValue')
+            TEST_ENDPOINT=$(sam list stack-outputs --stack-name "${stackName}" --output json | jq -r '.[] | select(.OutputKey=="HelloApiEndpoint") | .OutputValue')
+            TENANT_ID_TEST_FUNCTION=$(sam list stack-outputs --stack-name "${stackName}" --output json | jq -r '.[] | select(.OutputKey=="TenantIdTestFunction") | .OutputValue')
             echo "TEST_ENDPOINT=$TEST_ENDPOINT" >> "$GITHUB_OUTPUT"
+            echo "TENANT_ID_TEST_FUNCTION=$TENANT_ID_TEST_FUNCTION" >> "$GITHUB_OUTPUT"
         - name: run test
           env:
             SECRET_TOKEN: ${{ secrets.SECRET_TOKEN }}
             TEST_ENDPOINT: ${{ steps.deploy_stack.outputs.TEST_ENDPOINT }}
+            TENANT_ID_TEST_FUNCTION: ${{ steps.deploy_stack.outputs.TENANT_ID_TEST_FUNCTION }}
           run: cd lambda-integration-tests && cargo test
         - name: cleanup
           if: always() && steps.deploy_stack.outputs.STACK_NAME

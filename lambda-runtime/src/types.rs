@@ -79,6 +79,8 @@ pub struct Context {
     /// unless the invocation request to the Lambda APIs was made using AWS
     /// credentials issues by Amazon Cognito Identity Pools.
     pub identity: Option<CognitoIdentity>,
+    /// The tenant ID for the current invocation.
+    pub tenant_id: Option<String>,
     /// Lambda function configuration from the local environment variables.
     /// Includes information such as the function name, memory allocation,
     /// version, and log streams.
@@ -94,6 +96,7 @@ impl Default for Context {
             xray_trace_id: None,
             client_context: None,
             identity: None,
+            tenant_id: None,
             env_config: std::sync::Arc::new(crate::Config::default()),
         }
     }
@@ -144,6 +147,9 @@ impl Context {
                 .map(|v| String::from_utf8_lossy(v.as_bytes()).to_string()),
             client_context,
             identity,
+            tenant_id: headers
+                .get("lambda-runtime-aws-tenant-id")
+                .map(|v| String::from_utf8_lossy(v.as_bytes()).to_string()),
             env_config,
         };
 
@@ -505,5 +511,28 @@ mod test {
         let deserialized: MetadataPrelude = serde_json::from_str(&serialized).unwrap();
 
         assert_eq!(metadata_prelude, deserialized);
+    }
+
+    #[test]
+    fn context_with_tenant_id_resolves() {
+        let config = Arc::new(Config::default());
+        let mut headers = HeaderMap::new();
+        headers.insert("lambda-runtime-aws-request-id", HeaderValue::from_static("my-id"));
+        headers.insert("lambda-runtime-deadline-ms", HeaderValue::from_static("123"));
+        headers.insert("lambda-runtime-aws-tenant-id", HeaderValue::from_static("tenant-123"));
+
+        let context = Context::new("id", config, &headers).unwrap();
+        assert_eq!(context.tenant_id, Some("tenant-123".to_string()));
+    }
+
+    #[test]
+    fn context_without_tenant_id_resolves() {
+        let config = Arc::new(Config::default());
+        let mut headers = HeaderMap::new();
+        headers.insert("lambda-runtime-aws-request-id", HeaderValue::from_static("my-id"));
+        headers.insert("lambda-runtime-deadline-ms", HeaderValue::from_static("123"));
+
+        let context = Context::new("id", config, &headers).unwrap();
+        assert_eq!(context.tenant_id, None);
     }
 }

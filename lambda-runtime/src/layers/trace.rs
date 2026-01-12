@@ -56,16 +56,35 @@ where
 
 /* ------------------------------------------- UTILS ------------------------------------------- */
 
-fn request_span(ctx: &Context) -> tracing::Span {
-    match &ctx.xray_trace_id {
-        Some(trace_id) => {
+/// Creates a tracing span for a Lambda request with context information.
+///
+/// This function creates a span that includes the request ID and optionally
+/// the X-Ray trace ID and tenant ID if they are available in the context.
+pub fn request_span(ctx: &Context) -> tracing::Span {
+    match (&ctx.xray_trace_id, &ctx.tenant_id) {
+        (Some(trace_id), Some(tenant_id)) => {
+            tracing::info_span!(
+                "Lambda runtime invoke",
+                requestId = &ctx.request_id,
+                xrayTraceId = trace_id,
+                tenantId = tenant_id
+            )
+        }
+        (Some(trace_id), None) => {
             tracing::info_span!(
                 "Lambda runtime invoke",
                 requestId = &ctx.request_id,
                 xrayTraceId = trace_id
             )
         }
-        None => {
+        (None, Some(tenant_id)) => {
+            tracing::info_span!(
+                "Lambda runtime invoke",
+                requestId = &ctx.request_id,
+                tenantId = tenant_id
+            )
+        }
+        (None, None) => {
             tracing::info_span!("Lambda runtime invoke", requestId = &ctx.request_id)
         }
     }
