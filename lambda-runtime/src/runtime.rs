@@ -912,8 +912,10 @@ mod endpoint_tests {
     #[tokio::test]
     #[cfg(feature = "experimental-concurrency")]
     async fn test_concurrent_structured_logging_isolation() -> Result<(), Error> {
-        use std::collections::{HashMap, HashSet};
-        use std::sync::Mutex;
+        use std::{
+            collections::{HashMap, HashSet},
+            sync::Mutex,
+        };
         use tracing::{info, subscriber::set_global_default};
         use tracing_subscriber::{layer::SubscriberExt, Layer};
 
@@ -939,7 +941,10 @@ mod endpoint_tests {
                 struct FieldVisitor<'a>(&'a mut HashMap<String, String>);
                 impl<'a> tracing::field::Visit for FieldVisitor<'a> {
                     fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
-                        self.0.insert(field.name().to_string(), format!("{:?}", value).trim_matches('"').to_string());
+                        self.0.insert(
+                            field.name().to_string(),
+                            format!("{:?}", value).trim_matches('"').to_string(),
+                        );
                     }
                 }
                 event.record(&mut FieldVisitor(&mut fields));
@@ -974,7 +979,8 @@ mod endpoint_tests {
                                 let _ = body.collect().await;
                             }
 
-                            if parts.method == Method::GET && parts.uri.path() == "/2018-06-01/runtime/invocation/next" {
+                            if parts.method == Method::GET && parts.uri.path() == "/2018-06-01/runtime/invocation/next"
+                            {
                                 let count = request_count.fetch_add(1, Ordering::SeqCst);
                                 if count < 300 {
                                     let request_id = format!("test-request-{}", count + 1);
@@ -1012,7 +1018,9 @@ mod endpoint_tests {
 
                     let io = TokioIo::new(tcp);
                     tokio::spawn(async move {
-                        let _ = ServerBuilder::new(TokioExecutor::new()).serve_connection(io, service).await;
+                        let _ = ServerBuilder::new(TokioExecutor::new())
+                            .serve_connection(io, service)
+                            .await;
                     });
                 }
             })
@@ -1050,23 +1058,38 @@ mod endpoint_tests {
                 break;
             }
         }
-        
+
         runtime_handle.abort();
         server_handle.abort();
 
         let logs = log_capture.logs.lock().unwrap();
         let relevant_logs: Vec<_> = logs.iter().filter(|l| l.contains_key("observed_request_id")).collect();
 
-        assert!(relevant_logs.len() >= 300, "Should have at least 300 log entries, got {}", relevant_logs.len());
+        assert!(
+            relevant_logs.len() >= 300,
+            "Should have at least 300 log entries, got {}",
+            relevant_logs.len()
+        );
 
         let mut seen_ids = HashSet::new();
         for log in &relevant_logs {
             let observed_id = log.get("observed_request_id").unwrap();
-            assert!(observed_id.starts_with("test-request-"), "Request ID should match pattern: {}", observed_id);
-            assert!(seen_ids.insert(observed_id.clone()), "Request ID should be unique: {}", observed_id);
+            assert!(
+                observed_id.starts_with("test-request-"),
+                "Request ID should match pattern: {}",
+                observed_id
+            );
+            assert!(
+                seen_ids.insert(observed_id.clone()),
+                "Request ID should be unique: {}",
+                observed_id
+            );
         }
 
-        println!("✅ Concurrent structured logging test passed with {} unique request IDs", seen_ids.len());
+        println!(
+            "✅ Concurrent structured logging test passed with {} unique request IDs",
+            seen_ids.len()
+        );
         Ok(())
     }
 }
