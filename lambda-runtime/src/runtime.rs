@@ -922,12 +922,14 @@ mod endpoint_tests {
         #[derive(Clone)]
         struct LogCapture {
             logs: Arc<Mutex<Vec<HashMap<String, String>>>>,
+            span_fields: Arc<Mutex<HashMap<tracing::Id, HashMap<String, String>>>>,
         }
 
         impl LogCapture {
             fn new() -> Self {
                 Self {
                     logs: Arc::new(Mutex::new(Vec::new())),
+                    span_fields: Arc::new(Mutex::new(HashMap::new())),
                 }
             }
         }
@@ -936,7 +938,29 @@ mod endpoint_tests {
         where
             S: tracing::Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>,
         {
-            fn on_event(&self, event: &tracing::Event<'_>, _ctx: tracing_subscriber::layer::Context<'_, S>) {
+            fn on_new_span(
+                &self,
+                attrs: &tracing::span::Attributes<'_>,
+                id: &tracing::Id,
+                _ctx: tracing_subscriber::layer::Context<'_, S>,
+            ) {
+                if attrs.metadata().name() == "Lambda runtime invoke" {
+                    let mut fields = HashMap::new();
+                    struct FieldVisitor<'a>(&'a mut HashMap<String, String>);
+                    impl<'a> tracing::field::Visit for FieldVisitor<'a> {
+                        fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
+                            self.0.insert(
+                                field.name().to_string(),
+                                format!("{:?}", value).trim_matches('"').to_string(),
+                            );
+                        }
+                    }
+                    attrs.record(&mut FieldVisitor(&mut fields));
+                    self.span_fields.lock().unwrap().insert(id.clone(), fields);
+                }
+            }
+
+            fn on_event(&self, event: &tracing::Event<'_>, ctx: tracing_subscriber::layer::Context<'_, S>) {
                 let mut fields = HashMap::new();
                 struct FieldVisitor<'a>(&'a mut HashMap<String, String>);
                 impl<'a> tracing::field::Visit for FieldVisitor<'a> {
@@ -948,6 +972,16 @@ mod endpoint_tests {
                     }
                 }
                 event.record(&mut FieldVisitor(&mut fields));
+
+                // Add span requestId if we're in a Lambda runtime invoke span
+                if let Some(span) = ctx.lookup_current() {
+                    if let Some(span_fields) = self.span_fields.lock().unwrap().get(&span.id()) {
+                        if let Some(request_id) = span_fields.get("requestId") {
+                            fields.insert("span_request_id".to_string(), request_id.clone());
+                        }
+                    }
+                }
+
                 self.logs.lock().unwrap().push(fields);
             }
         }
@@ -1035,6 +1069,14 @@ mod endpoint_tests {
 
         let handler = crate::service_fn(test_handler);
         let client = Arc::new(Client::builder().with_endpoint(base).build()?);
+
+        // Add tracing layer to capture span fields
+        use crate::layers::trace::TracingLayer;
+        use tower::ServiceBuilder;
+        let service = ServiceBuilder::new()
+            .layer(TracingLayer::new())
+            .service(wrap_handler(handler, client.clone()));
+
         let runtime = Runtime {
             client: client.clone(),
             config: Arc::new(Config {
@@ -1044,7 +1086,7 @@ mod endpoint_tests {
                 log_stream: "test_stream".to_string(),
                 log_group: "test_log".to_string(),
             }),
-            service: wrap_handler(handler, client),
+            service,
             concurrency_limit: 3,
         };
 
@@ -1074,6 +1116,8 @@ mod endpoint_tests {
         let mut seen_ids = HashSet::new();
         for log in &relevant_logs {
             let observed_id = log.get("observed_request_id").unwrap();
+            let span_request_id = log.get("span_request_id").unwrap();
+
             assert!(
                 observed_id.starts_with("test-request-"),
                 "Request ID should match pattern: {}",
@@ -1083,6 +1127,13 @@ mod endpoint_tests {
                 seen_ids.insert(observed_id.clone()),
                 "Request ID should be unique: {}",
                 observed_id
+            );
+
+            // Verify span request ID matches logged request ID
+            assert_eq!(
+                observed_id, span_request_id,
+                "Span request ID should match logged request ID: span={}, logged={}",
+                span_request_id, observed_id
             );
         }
 
