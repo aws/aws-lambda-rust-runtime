@@ -908,4 +908,165 @@ mod endpoint_tests {
         server_handle.abort();
         Ok(())
     }
+
+    #[tokio::test]
+    #[cfg(feature = "experimental-concurrency")]
+    async fn test_concurrent_structured_logging_isolation() -> Result<(), Error> {
+        use std::collections::{HashMap, HashSet};
+        use std::sync::Mutex;
+        use tracing::{info, subscriber::set_global_default};
+        use tracing_subscriber::{layer::SubscriberExt, Layer};
+
+        #[derive(Clone)]
+        struct LogCapture {
+            logs: Arc<Mutex<Vec<HashMap<String, String>>>>,
+        }
+
+        impl LogCapture {
+            fn new() -> Self {
+                Self {
+                    logs: Arc::new(Mutex::new(Vec::new())),
+                }
+            }
+        }
+
+        impl<S> Layer<S> for LogCapture
+        where
+            S: tracing::Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>,
+        {
+            fn on_event(&self, event: &tracing::Event<'_>, _ctx: tracing_subscriber::layer::Context<'_, S>) {
+                let mut fields = HashMap::new();
+                struct FieldVisitor<'a>(&'a mut HashMap<String, String>);
+                impl<'a> tracing::field::Visit for FieldVisitor<'a> {
+                    fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
+                        self.0.insert(field.name().to_string(), format!("{:?}", value).trim_matches('"').to_string());
+                    }
+                }
+                event.record(&mut FieldVisitor(&mut fields));
+                self.logs.lock().unwrap().push(fields);
+            }
+        }
+
+        let log_capture = LogCapture::new();
+        let subscriber = tracing_subscriber::registry().with(log_capture.clone());
+        set_global_default(subscriber).unwrap();
+
+        let request_count = Arc::new(AtomicUsize::new(0));
+        let listener = TcpListener::bind("127.0.0.1:0").await?;
+        let addr = listener.local_addr()?;
+        let base: http::Uri = format!("http://{addr}").parse()?;
+
+        let server_handle = {
+            let request_count = request_count.clone();
+            tokio::spawn(async move {
+                loop {
+                    let (tcp, _) = match listener.accept().await {
+                        Ok(v) => v,
+                        Err(_) => return,
+                    };
+
+                    let request_count = request_count.clone();
+                    let service = service_fn(move |req: Request<Incoming>| {
+                        let request_count = request_count.clone();
+                        async move {
+                            let (parts, body) = req.into_parts();
+                            if parts.method == Method::POST {
+                                let _ = body.collect().await;
+                            }
+
+                            if parts.method == Method::GET && parts.uri.path() == "/2018-06-01/runtime/invocation/next" {
+                                let count = request_count.fetch_add(1, Ordering::SeqCst);
+                                if count < 300 {
+                                    let request_id = format!("test-request-{}", count + 1);
+                                    let res = Response::builder()
+                                        .status(StatusCode::OK)
+                                        .header("lambda-runtime-aws-request-id", &request_id)
+                                        .header("lambda-runtime-deadline-ms", "9999999999999")
+                                        .body(Full::new(Bytes::from_static(b"{}")))
+                                        .unwrap();
+                                    return Ok::<_, Infallible>(res);
+                                } else {
+                                    let res = Response::builder()
+                                        .status(StatusCode::NO_CONTENT)
+                                        .body(Full::new(Bytes::new()))
+                                        .unwrap();
+                                    return Ok::<_, Infallible>(res);
+                                }
+                            }
+
+                            if parts.method == Method::POST && parts.uri.path().contains("/response") {
+                                let res = Response::builder()
+                                    .status(StatusCode::OK)
+                                    .body(Full::new(Bytes::new()))
+                                    .unwrap();
+                                return Ok::<_, Infallible>(res);
+                            }
+
+                            let res = Response::builder()
+                                .status(StatusCode::NOT_FOUND)
+                                .body(Full::new(Bytes::new()))
+                                .unwrap();
+                            Ok::<_, Infallible>(res)
+                        }
+                    });
+
+                    let io = TokioIo::new(tcp);
+                    tokio::spawn(async move {
+                        let _ = ServerBuilder::new(TokioExecutor::new()).serve_connection(io, service).await;
+                    });
+                }
+            })
+        };
+
+        async fn test_handler(event: crate::LambdaEvent<serde_json::Value>) -> Result<(), Error> {
+            let request_id = &event.context.request_id;
+            info!(observed_request_id = request_id);
+            tokio::time::sleep(Duration::from_millis(100)).await;
+            Ok(())
+        }
+
+        let handler = crate::service_fn(test_handler);
+        let client = Arc::new(Client::builder().with_endpoint(base).build()?);
+        let runtime = Runtime {
+            client: client.clone(),
+            config: Arc::new(Config {
+                function_name: "test_fn".to_string(),
+                memory: 128,
+                version: "1".to_string(),
+                log_stream: "test_stream".to_string(),
+                log_group: "test_log".to_string(),
+            }),
+            service: wrap_handler(handler, client),
+            concurrency_limit: 3,
+        };
+
+        let runtime_handle = tokio::spawn(async move { runtime.run_concurrent().await });
+
+        loop {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+            let count = request_count.load(Ordering::SeqCst);
+            if count >= 300 {
+                tokio::time::sleep(Duration::from_millis(500)).await;
+                break;
+            }
+        }
+        
+        runtime_handle.abort();
+        server_handle.abort();
+
+        let logs = log_capture.logs.lock().unwrap();
+        let relevant_logs: Vec<_> = logs.iter().filter(|l| l.contains_key("observed_request_id")).collect();
+
+        assert!(relevant_logs.len() >= 300, "Should have at least 300 log entries, got {}", relevant_logs.len());
+
+        let mut seen_ids = HashSet::new();
+        for log in &relevant_logs {
+            let observed_id = log.get("observed_request_id").unwrap();
+            assert!(observed_id.starts_with("test-request-"), "Request ID should match pattern: {}", observed_id);
+            assert!(seen_ids.insert(observed_id.clone()), "Request ID should be unique: {}", observed_id);
+        }
+
+        println!("✅ Concurrent structured logging test passed with {} unique request IDs", seen_ids.len());
+        Ok(())
+    }
 }
