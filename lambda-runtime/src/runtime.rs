@@ -922,12 +922,14 @@ mod endpoint_tests {
         tracing::subscriber::set_global_default(subscriber).unwrap();
 
         let request_count = Arc::new(AtomicUsize::new(0));
+        let done = Arc::new(tokio::sync::Notify::new());
         let listener = TcpListener::bind("127.0.0.1:0").await?;
         let addr = listener.local_addr()?;
         let base: http::Uri = format!("http://{addr}").parse()?;
 
         let server_handle = {
             let request_count = request_count.clone();
+            let done = done.clone();
             tokio::spawn(async move {
                 loop {
                     let (tcp, _) = match listener.accept().await {
@@ -936,8 +938,10 @@ mod endpoint_tests {
                     };
 
                     let request_count = request_count.clone();
+                    let done = done.clone();
                     let service = service_fn(move |req: Request<Incoming>| {
                         let request_count = request_count.clone();
+                        let done = done.clone();
                         async move {
                             let (parts, body) = req.into_parts();
                             if parts.method == Method::POST {
@@ -957,6 +961,7 @@ mod endpoint_tests {
                                         .unwrap();
                                     return Ok::<_, Infallible>(res);
                                 } else {
+                                    done.notify_one();
                                     let res = Response::builder()
                                         .status(StatusCode::NO_CONTENT)
                                         .body(Full::new(Bytes::new()))
@@ -1023,14 +1028,9 @@ mod endpoint_tests {
 
         let runtime_handle = tokio::spawn(async move { runtime.run_concurrent().await });
 
-        loop {
-            tokio::time::sleep(Duration::from_millis(100)).await;
-            let count = request_count.load(Ordering::SeqCst);
-            if count >= 300 {
-                tokio::time::sleep(Duration::from_millis(500)).await;
-                break;
-            }
-        }
+        done.notified().await;
+        // Give handlers time to complete after server signals done
+        tokio::time::sleep(Duration::from_millis(500)).await;
 
         runtime_handle.abort();
         server_handle.abort();
