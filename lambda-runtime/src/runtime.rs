@@ -912,83 +912,14 @@ mod endpoint_tests {
     #[tokio::test]
     #[cfg(feature = "experimental-concurrency")]
     async fn test_concurrent_structured_logging_isolation() -> Result<(), Error> {
-        use std::{
-            collections::{HashMap, HashSet},
-            sync::Mutex,
-        };
-        use tracing::{info, subscriber::set_global_default};
-        use tracing_subscriber::{layer::SubscriberExt, Layer};
+        use std::collections::HashSet;
+        use tracing::info;
+        use tracing_capture::{CaptureLayer, SharedStorage};
+        use tracing_subscriber::layer::SubscriberExt;
 
-        #[derive(Clone)]
-        struct LogCapture {
-            logs: Arc<Mutex<Vec<HashMap<String, String>>>>,
-            span_fields: Arc<Mutex<HashMap<tracing::Id, HashMap<String, String>>>>,
-        }
-
-        impl LogCapture {
-            fn new() -> Self {
-                Self {
-                    logs: Arc::new(Mutex::new(Vec::new())),
-                    span_fields: Arc::new(Mutex::new(HashMap::new())),
-                }
-            }
-        }
-
-        impl<S> Layer<S> for LogCapture
-        where
-            S: tracing::Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>,
-        {
-            fn on_new_span(
-                &self,
-                attrs: &tracing::span::Attributes<'_>,
-                id: &tracing::Id,
-                _ctx: tracing_subscriber::layer::Context<'_, S>,
-            ) {
-                if attrs.metadata().name() == "Lambda runtime invoke" {
-                    let mut fields = HashMap::new();
-                    struct FieldVisitor<'a>(&'a mut HashMap<String, String>);
-                    impl<'a> tracing::field::Visit for FieldVisitor<'a> {
-                        fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
-                            self.0.insert(
-                                field.name().to_string(),
-                                format!("{:?}", value).trim_matches('"').to_string(),
-                            );
-                        }
-                    }
-                    attrs.record(&mut FieldVisitor(&mut fields));
-                    self.span_fields.lock().unwrap().insert(id.clone(), fields);
-                }
-            }
-
-            fn on_event(&self, event: &tracing::Event<'_>, ctx: tracing_subscriber::layer::Context<'_, S>) {
-                let mut fields = HashMap::new();
-                struct FieldVisitor<'a>(&'a mut HashMap<String, String>);
-                impl<'a> tracing::field::Visit for FieldVisitor<'a> {
-                    fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
-                        self.0.insert(
-                            field.name().to_string(),
-                            format!("{:?}", value).trim_matches('"').to_string(),
-                        );
-                    }
-                }
-                event.record(&mut FieldVisitor(&mut fields));
-
-                // Add span requestId if we're in a Lambda runtime invoke span
-                if let Some(span) = ctx.lookup_current() {
-                    if let Some(span_fields) = self.span_fields.lock().unwrap().get(&span.id()) {
-                        if let Some(request_id) = span_fields.get("requestId") {
-                            fields.insert("span_request_id".to_string(), request_id.clone());
-                        }
-                    }
-                }
-
-                self.logs.lock().unwrap().push(fields);
-            }
-        }
-
-        let log_capture = LogCapture::new();
-        let subscriber = tracing_subscriber::registry().with(log_capture.clone());
-        set_global_default(subscriber).unwrap();
+        let storage = SharedStorage::default();
+        let subscriber = tracing_subscriber::registry().with(CaptureLayer::new(&storage));
+        tracing::subscriber::set_global_default(subscriber).unwrap();
 
         let request_count = Arc::new(AtomicUsize::new(0));
         let listener = TcpListener::bind("127.0.0.1:0").await?;
@@ -1104,19 +1035,29 @@ mod endpoint_tests {
         runtime_handle.abort();
         server_handle.abort();
 
-        let logs = log_capture.logs.lock().unwrap();
-        let relevant_logs: Vec<_> = logs.iter().filter(|l| l.contains_key("observed_request_id")).collect();
+        let storage = storage.lock();
+        let events: Vec<_> = storage
+            .all_events()
+            .filter(|e| e.value("observed_request_id").is_some())
+            .collect();
 
         assert!(
-            relevant_logs.len() >= 300,
+            events.len() >= 300,
             "Should have at least 300 log entries, got {}",
-            relevant_logs.len()
+            events.len()
         );
 
         let mut seen_ids = HashSet::new();
-        for log in &relevant_logs {
-            let observed_id = log.get("observed_request_id").unwrap();
-            let span_request_id = log.get("span_request_id").unwrap();
+        for event in &events {
+            let observed_id = event["observed_request_id"].as_str().unwrap();
+
+            // Find the parent "Lambda runtime invoke" span and get its requestId
+            let span_request_id = event
+                .ancestors()
+                .find(|s| s.metadata().name() == "Lambda runtime invoke")
+                .and_then(|s| s.value("requestId"))
+                .and_then(|v| v.as_str())
+                .expect("Event should have a Lambda runtime invoke ancestor with requestId");
 
             assert!(
                 observed_id.starts_with("test-request-"),
@@ -1124,7 +1065,7 @@ mod endpoint_tests {
                 observed_id
             );
             assert!(
-                seen_ids.insert(observed_id.clone()),
+                seen_ids.insert(observed_id.to_string()),
                 "Request ID should be unique: {}",
                 observed_id
             );
@@ -1137,10 +1078,6 @@ mod endpoint_tests {
             );
         }
 
-        println!(
-            "✅ Concurrent structured logging test passed with {} unique request IDs",
-            seen_ids.len()
-        );
         Ok(())
     }
 }
