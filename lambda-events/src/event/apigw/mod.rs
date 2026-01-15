@@ -137,18 +137,74 @@ pub struct ApiGatewayProxyRequestContext {
 }
 
 /// `ApiGatewayV2httpRequest` contains data coming from the new HTTP API Gateway
+///
+/// # Important Note
+///
+/// For standard HTTP API v2 requests, the HTTP method is located in `request_context.http.method`,
+/// not in the top-level `http_method` field. The top-level `http_method` field (and other
+/// authorizer-specific fields) are only present in Custom Authorizer v1 payloads.
+///
+/// **For standard HTTP API v2 requests, use `request_context.http.method` to get the correct HTTP method.**
+///
+/// For Custom Authorizer v1 payloads, use the dedicated `ApiGatewayV2CustomAuthorizerV1Request` struct instead.
 #[non_exhaustive]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2httpRequest {
+    /// The type field from Custom Authorizer v1 requests.
+    ///
+    /// This field is not present in standard HTTP API v2 requests.
+    /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
+    #[deprecated(
+        since = "0.14.0",
+        note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
+    )]
     #[serde(default, rename = "type")]
     pub kind: Option<String>,
+    /// The method ARN from Custom Authorizer v1 requests.
+    ///
+    /// This field is not present in standard HTTP API v2 requests.
+    /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
+    #[deprecated(
+        since = "0.14.0",
+        note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
+    )]
     #[serde(default)]
     pub method_arn: Option<String>,
+    /// The HTTP method field.
+    ///
+    /// **Warning**: This field defaults to `GET` if not present in the payload, which may lead to
+    /// incorrect behavior. For standard HTTP API v2 requests, this field is not present in the JSON payload.
+    ///
+    /// **Use `request_context.http.method` instead for standard HTTP API v2 requests**, which contains
+    /// the actual HTTP method for the request.
+    ///
+    /// This top-level `http_method` field is only present in Custom Authorizer v1 requests.
+    /// For those payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
+    #[deprecated(
+        since = "0.14.0",
+        note = "For standard HTTP API v2 requests, use `request_context.http.method` instead. This field defaults to GET when missing and may return incorrect values. For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request`."
+    )]
     #[serde(with = "http_method", default = "default_http_method")]
     pub http_method: Method,
+    /// The identity source from Custom Authorizer v1 requests.
+    ///
+    /// This field is not present in standard HTTP API v2 requests.
+    /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
+    #[deprecated(
+        since = "0.14.0",
+        note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
+    )]
     #[serde(default)]
     pub identity_source: Option<String>,
+    /// The authorization token from Custom Authorizer v1 requests.
+    ///
+    /// This field is not present in standard HTTP API v2 requests.
+    /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
+    #[deprecated(
+        since = "0.14.0",
+        note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
+    )]
     #[serde(default)]
     pub authorization_token: Option<String>,
     #[serde(default)]
@@ -1203,6 +1259,22 @@ mod test {
         let output: String = serde_json::to_string(&parsed).unwrap();
         let reparsed: ApiGatewayV2httpRequest = serde_json::from_slice(output.as_bytes()).unwrap();
         assert_eq!(parsed, reparsed);
+    }
+
+    #[test]
+    #[cfg(feature = "apigw")]
+    fn apigw_v2_correct_http_method_usage() {
+        // This test demonstrates the correct way to access the HTTP method
+        // for standard HTTP API v2 requests: use request_context.http.method
+        let data = include_bytes!("../../fixtures/example-apigw-v2-request-no-authorizer.json");
+        let parsed: ApiGatewayV2httpRequest = serde_json::from_slice(data).unwrap();
+
+        // The correct way to get the HTTP method for standard HTTP API v2 requests
+        assert_eq!(parsed.request_context.http.method, Method::GET);
+
+        // Verify that request_context.http.method contains the actual method from the JSON
+        // In the fixture, requestContext.http.method is "GET"
+        assert_eq!(parsed.request_context.http.method, Method::GET);
     }
 
     #[test]
