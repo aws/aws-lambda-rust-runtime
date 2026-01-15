@@ -33,8 +33,7 @@
 
 #[cfg(feature = "builders")]
 use aws_lambda_events::event::apigw::{
-    ApiGatewayV2CustomAuthorizerSimpleResponse,
-    ApiGatewayV2CustomAuthorizerSimpleResponseBuilder,
+    ApiGatewayV2CustomAuthorizerSimpleResponse, ApiGatewayV2CustomAuthorizerSimpleResponseBuilder,
     ApiGatewayV2CustomAuthorizerV2Request,
 };
 #[cfg(feature = "builders")]

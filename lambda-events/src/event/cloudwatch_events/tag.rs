@@ -1,3 +1,4 @@
+#[cfg(feature = "builders")]
 use derive_builder::Builder;
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;

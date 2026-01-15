@@ -60,22 +60,22 @@ async fn process_record(record: &aws_lambda_events::event::sqs::SqsMessage) -> R
 #[allow(dead_code)]
 async fn function_handler_old_way(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchResponse, Error> {
     let mut batch_item_failures = Vec::new();
-    
+
     for record in event.payload.records {
         match process_record(&record).await {
             Ok(_) => (),
             Err(_) => {
                 let mut item = BatchItemFailure::default();
                 item.item_identifier = record.message_id.unwrap();
-                
+
                 batch_item_failures.push(item)
             }
         }
     }
-    
+
     let mut response = SqsBatchResponse::default();
     response.batch_item_failures = batch_item_failures;
-    
+
     Ok(response)
 }
 
@@ -84,7 +84,7 @@ async fn function_handler_old_way(event: LambdaEvent<SqsEvent>) -> Result<SqsBat
 #[allow(dead_code)]
 async fn function_handler(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchResponse, Error> {
     let mut batch_item_failures = Vec::new();
-    
+
     for record in event.payload.records {
         match process_record(&record).await {
             Ok(_) => (),
@@ -94,18 +94,18 @@ async fn function_handler(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchRespon
                     .item_identifier(record.message_id.unwrap())
                     .build()
                     .unwrap();
-                
+
                 batch_item_failures.push(item)
             }
         }
     }
-    
+
     // ✅ Clean response construction with builder
     let response = SqsBatchResponseBuilder::default()
         .batch_item_failures(batch_item_failures)
         .build()
         .map_err(|e| format!("Failed to build response: {}", e))?;
-    
+
     Ok(response)
 }
 
@@ -128,7 +128,10 @@ fn main() {
         .build()
         .unwrap();
 
-    println!("✅ Built SQS batch response with {} failed items", response.batch_item_failures.len());
+    println!(
+        "✅ Built SQS batch response with {} failed items",
+        response.batch_item_failures.len()
+    );
     for failure in &response.batch_item_failures {
         println!("   Failed message: {}", failure.item_identifier);
     }
