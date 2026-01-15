@@ -156,7 +156,7 @@ pub struct ApiGatewayV2httpRequest {
     /// This field is not present in standard HTTP API v2 requests.
     /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
     #[deprecated(
-        since = "0.14.0",
+        since = "1.1.0",
         note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
     )]
     #[serde(default, rename = "type")]
@@ -166,7 +166,7 @@ pub struct ApiGatewayV2httpRequest {
     /// This field is not present in standard HTTP API v2 requests.
     /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
     #[deprecated(
-        since = "0.14.0",
+        since = "1.1.0",
         note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
     )]
     #[serde(default)]
@@ -182,7 +182,7 @@ pub struct ApiGatewayV2httpRequest {
     /// This top-level `http_method` field is only present in Custom Authorizer v1 requests.
     /// For those payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
     #[deprecated(
-        since = "0.14.0",
+        since = "1.1.0",
         note = "For standard HTTP API v2 requests, use `request_context.http.method` instead. This field defaults to GET when missing and may return incorrect values. For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request`."
     )]
     #[serde(with = "http_method", default = "default_http_method")]
@@ -192,7 +192,7 @@ pub struct ApiGatewayV2httpRequest {
     /// This field is not present in standard HTTP API v2 requests.
     /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
     #[deprecated(
-        since = "0.14.0",
+        since = "1.1.0",
         note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
     )]
     #[serde(default)]
@@ -202,7 +202,7 @@ pub struct ApiGatewayV2httpRequest {
     /// This field is not present in standard HTTP API v2 requests.
     /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
     #[deprecated(
-        since = "0.14.0",
+        since = "1.1.0",
         note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
     )]
     #[serde(default)]
