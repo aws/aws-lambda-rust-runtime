@@ -1,4 +1,6 @@
 use chrono::{DateTime, Utc};
+#[cfg(feature = "builders")]
+use derive_builder::Builder;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 
@@ -22,6 +24,8 @@ pub mod trustedadvisor;
 /// `CloudWatchEvent` is the outer structure of an event sent via CloudWatch Events.
 /// For examples of events that come via CloudWatch Events, see <https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/EventTypes.html>
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
+#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Default, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudWatchEvent<T1 = Value>
@@ -53,5 +57,6 @@ where
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }

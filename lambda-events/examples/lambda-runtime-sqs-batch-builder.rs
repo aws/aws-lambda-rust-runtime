@@ -1,0 +1,141 @@
+// Example showing how builders simplify SQS batch response construction
+// when handling partial batch failures
+//
+// ❌ OLD WAY (with Default):
+//    for record in event.payload.records {
+//        match process_record(&record).await {
+//            Err(_) => {
+//                let mut item = BatchItemFailure::default();
+//                item.item_identifier = record.message_id.unwrap();
+//                batch_item_failures.push(item)
+//            }
+//        }
+//    }
+//    let mut response = SqsBatchResponse::default();
+//    response.batch_item_failures = batch_item_failures;
+//
+// ✅ NEW WAY (with Builder):
+//    for record in event.payload.records {
+//        match process_record(&record).await {
+//            Err(_) => {
+//                let item = BatchItemFailureBuilder::default()
+//                    .item_identifier(record.message_id.unwrap())
+//                    .build()?;
+//                batch_item_failures.push(item)
+//            }
+//        }
+//    }
+//    let response = SqsBatchResponseBuilder::default()
+//        .batch_item_failures(batch_item_failures)
+//        .build()?;
+//
+// Benefits:
+// • Immutable construction (no mut needed)
+// • Cleaner, more functional style
+// • Type-safe field assignment
+// • Works seamlessly with lambda_runtime::LambdaEvent
+
+#[cfg(feature = "builders")]
+use aws_lambda_events::event::sqs::{
+    BatchItemFailure, BatchItemFailureBuilder, SqsBatchResponse, SqsBatchResponseBuilder, SqsEvent,
+};
+#[cfg(feature = "builders")]
+use lambda_runtime::{Error, LambdaEvent};
+
+// Simulate processing a record
+#[cfg(feature = "builders")]
+#[allow(dead_code)]
+async fn process_record(record: &aws_lambda_events::event::sqs::SqsMessage) -> Result<(), String> {
+    // Simulate some processing logic
+    if let Some(body) = &record.body {
+        if body.contains("error") {
+            return Err(format!("Failed to process message: {}", body));
+        }
+    }
+    Ok(())
+}
+
+// ❌ OLD WAY: Using Default and manual field assignment
+#[cfg(feature = "builders")]
+#[allow(dead_code)]
+async fn function_handler_old_way(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchResponse, Error> {
+    let mut batch_item_failures = Vec::new();
+    
+    for record in event.payload.records {
+        match process_record(&record).await {
+            Ok(_) => (),
+            Err(_) => {
+                let mut item = BatchItemFailure::default();
+                item.item_identifier = record.message_id.unwrap();
+                
+                batch_item_failures.push(item)
+            }
+        }
+    }
+    
+    let mut response = SqsBatchResponse::default();
+    response.batch_item_failures = batch_item_failures;
+    
+    Ok(response)
+}
+
+// ✅ NEW WAY: Using Builder pattern
+#[cfg(feature = "builders")]
+#[allow(dead_code)]
+async fn function_handler(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchResponse, Error> {
+    let mut batch_item_failures = Vec::new();
+    
+    for record in event.payload.records {
+        match process_record(&record).await {
+            Ok(_) => (),
+            Err(_) => {
+                // ✅ Clean builder construction
+                let item = BatchItemFailureBuilder::default()
+                    .item_identifier(record.message_id.unwrap())
+                    .build()
+                    .unwrap();
+                
+                batch_item_failures.push(item)
+            }
+        }
+    }
+    
+    // ✅ Clean response construction with builder
+    let response = SqsBatchResponseBuilder::default()
+        .batch_item_failures(batch_item_failures)
+        .build()
+        .map_err(|e| format!("Failed to build response: {}", e))?;
+    
+    Ok(response)
+}
+
+#[cfg(feature = "builders")]
+fn main() {
+    // Demonstrate builder usage with sample data
+    let failures = vec![
+        BatchItemFailureBuilder::default()
+            .item_identifier("msg-123".to_string())
+            .build()
+            .unwrap(),
+        BatchItemFailureBuilder::default()
+            .item_identifier("msg-456".to_string())
+            .build()
+            .unwrap(),
+    ];
+
+    let response = SqsBatchResponseBuilder::default()
+        .batch_item_failures(failures)
+        .build()
+        .unwrap();
+
+    println!("✅ Built SQS batch response with {} failed items", response.batch_item_failures.len());
+    for failure in &response.batch_item_failures {
+        println!("   Failed message: {}", failure.item_identifier);
+    }
+}
+
+#[cfg(not(feature = "builders"))]
+fn main() {
+    println!("This example requires the 'builders' feature to be enabled.");
+    println!("Run with: cargo run --example lambda-runtime-sqs-batch-builder --features builders");
+}
