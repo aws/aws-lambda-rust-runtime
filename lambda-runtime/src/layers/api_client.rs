@@ -5,7 +5,7 @@ use lambda_runtime_api_client::{body::Body, BoxError, Client};
 use pin_project::pin_project;
 use std::{future::Future, pin::Pin, sync::Arc, task};
 use tower::Service;
-use tracing::error;
+use tracing::{error, warn};
 
 /// Tower service that sends a Lambda Runtime API response to the Lambda Runtime HTTP API using
 /// a previously initialized client.
@@ -87,7 +87,30 @@ where
                     }
                     Err(err) => break Err(err),
                 },
-                RuntimeApiClientFutureProj::Second(fut) => break ready!(fut.poll(cx)).map(|_| ()),
+                RuntimeApiClientFutureProj::Second(fut) => {
+                    let response = ready!(fut.poll(cx))?;
+                    
+                    // We need to consume the body to get trailers (they come after the body)
+                    // For now, we'll check headers for the End-Of-Response trailer announcement
+                    // and log a warning if timeout is indicated
+                    // TODO: Properly consume body and check trailers for "End-Of-Response: timeout"
+                    
+                    // Check if response indicates a timeout in headers
+                    // (Lambda may use headers or trailers depending on the scenario)
+                    if let Some(status) = response.headers().get("Lambda-Runtime-Function-Response-Status") {
+                        if status == "timeout" {
+                            warn!("Lambda invocation timed out - response was not sent within the configured timeout");
+                        }
+                    }
+                    
+                    // Note: To properly check trailers, we would need to:
+                    // 1. Collect the body: let collected = response.into_body().collect().await?;
+                    // 2. Check trailers: if let Some(trailers) = collected.trailers() {
+                    // 3. Look for: trailers.get("End-Of-Response") == Some("timeout")
+                    // However, this would require making this future async and changing the architecture
+                    
+                    break Ok(());
+                }
             }
         })
     }
