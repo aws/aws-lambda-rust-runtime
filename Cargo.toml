@@ -9,7 +9,7 @@ members = [
     "lambda-events",
 ]
 
-exclude = ["examples"]
+exclude = ["examples", "test-lmi"]
 
 [workspace.dependencies]
 base64 = "0.22"
@@ -32,5 +32,4 @@ pin-project-lite = "0.2"
 tower = "0.5"
 tower-layer = "0.3"
 tower-service = "0.3"
-
 
