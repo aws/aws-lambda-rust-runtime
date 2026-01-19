@@ -1,5 +1,5 @@
 #[cfg(feature = "builders")]
-use derive_builder::Builder;
+use bon::Builder;
 use http::HeaderMap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
@@ -11,7 +11,6 @@ use crate::custom_serde::{deserialize_headers, serialize_headers};
 /// See: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/olap-writing-lambda.html>
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct S3ObjectLambdaEvent<P = Value>
@@ -43,7 +42,6 @@ where
 /// for connections to Amazon S3 and S3 Object Lambda
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetObjectContext {
@@ -64,7 +62,6 @@ pub struct GetObjectContext {
 /// for connections to Amazon S3 and S3 Object Lambda
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HeadObjectContext {
@@ -83,7 +80,6 @@ pub struct HeadObjectContext {
 /// for connections to Amazon S3 and S3 Object Lambda
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListObjectsContext {
@@ -102,7 +98,6 @@ pub struct ListObjectsContext {
 /// for connections to Amazon S3 and S3 Object Lambda
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListObjectsV2Context {
@@ -120,7 +115,6 @@ pub struct ListObjectsV2Context {
 /// `Configuration` contains information about the Object Lambda access point
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Configuration<P = Value>
@@ -145,7 +139,6 @@ where
 /// `UserRequest` contains information about the original call to S3 Object Lambda
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserRequest {
@@ -166,7 +159,6 @@ pub struct UserRequest {
 /// `UserIdentity` contains details about the identity that made the call to S3 Object Lambda
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserIdentity {
@@ -188,7 +180,6 @@ pub struct UserIdentity {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionContext {
@@ -207,7 +198,6 @@ pub struct SessionContext {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionIssuer {

@@ -1,5 +1,5 @@
 #[cfg(feature = "builders")]
-use derive_builder::Builder;
+use bon::Builder;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -9,7 +9,6 @@ use crate::custom_serde::deserialize_lambda_map;
 /// Deprecated: `AppSyncResolverTemplate` does not represent resolver events sent by AppSync. Instead directly model your input schema, or use `map[string]string`, `json.RawMessage`,` interface{}`, etc..
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSyncResolverTemplate<T1 = Value>
@@ -35,7 +34,6 @@ where
 /// `AppSyncIamIdentity` contains information about the caller authed via IAM.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSyncIamIdentity {
@@ -67,7 +65,6 @@ pub struct AppSyncIamIdentity {
 /// `AppSyncCognitoIdentity` contains information about the caller authed via Cognito.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSyncCognitoIdentity<T1 = Value>
@@ -103,7 +100,6 @@ pub type AppSyncOperation = String;
 /// `AppSyncLambdaAuthorizerRequest` contains an authorization request from AppSync.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSyncLambdaAuthorizerRequest {
@@ -124,7 +120,6 @@ pub struct AppSyncLambdaAuthorizerRequest {
 /// this authorization request.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSyncLambdaAuthorizerRequestContext<T1 = Value>
@@ -160,7 +155,6 @@ where
 /// `AppSyncLambdaAuthorizerResponse` represents the expected format of an authorization response to AppSync.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSyncLambdaAuthorizerResponse<T1 = Value>
@@ -199,7 +193,6 @@ where
 /// - [AppSync resolver mapping template context reference](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-context-reference.html)
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 pub struct AppSyncDirectResolverEvent<TArguments = Value, TSource = Value, TStash = Value>
 where
@@ -232,7 +225,6 @@ where
 /// including client-sent headers and optional custom domain name.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSyncRequest {
@@ -255,7 +247,6 @@ pub struct AppSyncRequest {
 /// `AppSyncInfo` contains metadata about the current GraphQL field being resolved.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSyncInfo<T = Value>
@@ -283,7 +274,6 @@ where
 /// `AppSyncPrevResult` contains the result of the previous step in a pipeline resolver.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 pub struct AppSyncPrevResult<T = Value>
 where
@@ -322,7 +312,6 @@ impl Default for AppSyncIdentity {
 /// `AppSyncIdentityOIDC` represents identity information when using OIDC-based authorization.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 pub struct AppSyncIdentityOIDC<T = Value>
 where
@@ -345,7 +334,6 @@ where
 /// `AppSyncIdentityLambda` represents identity information when using AWS Lambda
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSyncIdentityLambda<T = Value>

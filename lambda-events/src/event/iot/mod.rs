@@ -1,6 +1,6 @@
 use crate::{custom_serde::serialize_headers, encodings::Base64Data, iam::IamPolicyDocument};
 #[cfg(feature = "builders")]
-use derive_builder::Builder;
+use bon::Builder;
 use http::HeaderMap;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
@@ -10,7 +10,6 @@ use serde_json::Value;
 /// See <https://docs.aws.amazon.com/iot/latest/developerguide/config-custom-auth.html>
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreCustomAuthorizerRequest {
@@ -32,7 +31,6 @@ pub struct IoTCoreCustomAuthorizerRequest {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreProtocolData {
@@ -51,7 +49,6 @@ pub struct IoTCoreProtocolData {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreTlsContext {
@@ -69,7 +66,6 @@ pub struct IoTCoreTlsContext {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreHttpContext {
@@ -90,7 +86,6 @@ pub struct IoTCoreHttpContext {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreMqttContext {
@@ -111,7 +106,6 @@ pub struct IoTCoreMqttContext {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreConnectionMetadata {
@@ -131,7 +125,6 @@ pub struct IoTCoreConnectionMetadata {
 /// See <https://docs.aws.amazon.com/iot/latest/developerguide/config-custom-auth.html>
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCoreCustomAuthorizerResponse {

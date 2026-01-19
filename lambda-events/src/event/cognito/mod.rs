@@ -1,5 +1,5 @@
 #[cfg(feature = "builders")]
-use derive_builder::Builder;
+use bon::Builder;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -9,7 +9,6 @@ use crate::custom_serde::{deserialize_lambda_map, deserialize_nullish_boolean};
 /// `CognitoEvent` contains data from an event sent from AWS Cognito Sync
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEvent {
@@ -40,7 +39,6 @@ pub struct CognitoEvent {
 /// `CognitoDatasetRecord` represents a record from an AWS Cognito Sync event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoDatasetRecord {
@@ -64,7 +62,6 @@ pub struct CognitoDatasetRecord {
 /// (sign up), allowing a Lambda to perform custom validation to accept or deny the registration request
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreSignup {
@@ -99,7 +96,6 @@ pub enum CognitoEventUserPoolsPreSignupTriggerSource {
 /// to be authenticated, allowing you to perform custom validations to accept or deny the sign in request.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreAuthentication {
@@ -131,7 +127,6 @@ pub enum CognitoEventUserPoolsPreAuthenticationTriggerSource {
 /// allowing the Lambda to send custom messages or add custom logic.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPostConfirmation<T = CognitoEventUserPoolsPostConfirmationResponse>
@@ -170,7 +165,6 @@ pub enum CognitoEventUserPoolsPostConfirmationTriggerSource {
 /// credentials, allowing a Lambda to perform insert, suppress or override claims
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreTokenGen {
@@ -209,7 +203,6 @@ pub enum CognitoEventUserPoolsPreTokenGenTriggerSource {
 /// allowing the Lambda to add custom logic.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPostAuthentication {
@@ -241,7 +234,6 @@ pub enum CognitoEventUserPoolsPostAuthenticationTriggerSource {
 /// user pool at the time of sign-in with a password, or in the forgot-password flow.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsMigrateUser {
@@ -275,7 +267,6 @@ pub enum CognitoEventUserPoolsMigrateUserTriggerSource {
 /// `CognitoEventUserPoolsCallerContext` contains information about the caller
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsCallerContext {
@@ -297,7 +288,6 @@ pub struct CognitoEventUserPoolsCallerContext {
 /// `CognitoEventUserPoolsHeader` contains common data from events sent by AWS Cognito User Pools
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsHeader<T> {
@@ -320,7 +310,6 @@ pub struct CognitoEventUserPoolsHeader<T> {
 /// `CognitoEventUserPoolsPreSignupRequest` contains the request portion of a PreSignup event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreSignupRequest {
@@ -346,7 +335,6 @@ pub struct CognitoEventUserPoolsPreSignupRequest {
 /// `CognitoEventUserPoolsPreSignupResponse` contains the response portion of a PreSignup event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreSignupResponse {
@@ -366,7 +354,6 @@ pub struct CognitoEventUserPoolsPreSignupResponse {
 /// `CognitoEventUserPoolsPreAuthenticationRequest` contains the request portion of a PreAuthentication event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreAuthenticationRequest {
@@ -389,7 +376,6 @@ pub struct CognitoEventUserPoolsPreAuthenticationRequest {
 /// `CognitoEventUserPoolsPreAuthenticationResponse` contains the response portion of a PreAuthentication event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CognitoEventUserPoolsPreAuthenticationResponse {
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -404,7 +390,6 @@ pub struct CognitoEventUserPoolsPreAuthenticationResponse {
 /// `CognitoEventUserPoolsPostConfirmationRequest` contains the request portion of a PostConfirmation event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPostConfirmationRequest {
@@ -427,7 +412,6 @@ pub struct CognitoEventUserPoolsPostConfirmationRequest {
 /// `CognitoEventUserPoolsPostConfirmationResponse` contains the response portion of a PostConfirmation event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CognitoEventUserPoolsPostConfirmationResponse {
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -443,7 +427,6 @@ pub struct CognitoEventUserPoolsPostConfirmationResponse {
 /// `CognitoEventUserPoolsPreTokenGenRequest` contains request portion of PreTokenGen event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreTokenGenRequest {
@@ -467,7 +450,6 @@ pub struct CognitoEventUserPoolsPreTokenGenRequest {
 /// `CognitoEventUserPoolsPreTokenGenResponse` contains the response portion of  a PreTokenGen event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreTokenGenResponse {
@@ -486,7 +468,6 @@ pub struct CognitoEventUserPoolsPreTokenGenResponse {
 /// credentials, allowing a Lambda to perform insert, suppress or override claims.  This is the Version 2 Payload
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreTokenGenV2 {
@@ -508,7 +489,6 @@ pub struct CognitoEventUserPoolsPreTokenGenV2 {
 /// `CognitoEventUserPoolsPreTokenGenRequestV2` contains request portion of PreTokenGenV2 event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreTokenGenRequestV2 {
@@ -532,7 +512,6 @@ pub struct CognitoEventUserPoolsPreTokenGenRequestV2 {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreTokenGenResponseV2 {
@@ -550,7 +529,6 @@ pub struct CognitoEventUserPoolsPreTokenGenResponseV2 {
 /// `ClaimsAndScopeOverrideDetailsV2` allows lambda to add, suppress or override claims in the token
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClaimsAndScopeOverrideDetailsV2 {
@@ -570,7 +548,6 @@ pub struct ClaimsAndScopeOverrideDetailsV2 {
 /// `CognitoIdTokenGenerationV2` allows lambda to customize the ID Token before generation
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoIdTokenGenerationV2 {
@@ -589,7 +566,6 @@ pub struct CognitoIdTokenGenerationV2 {
 /// `CognitoAccessTokenGenerationV2` allows lambda to customize the Access Token before generation
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoAccessTokenGenerationV2 {
@@ -610,7 +586,6 @@ pub struct CognitoAccessTokenGenerationV2 {
 /// `CognitoEventUserPoolsPostAuthenticationRequest` contains the request portion of a PostAuthentication event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPostAuthenticationRequest {
@@ -634,7 +609,6 @@ pub struct CognitoEventUserPoolsPostAuthenticationRequest {
 /// `CognitoEventUserPoolsPostAuthenticationResponse` contains the response portion of a PostAuthentication event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CognitoEventUserPoolsPostAuthenticationResponse {
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -649,7 +623,6 @@ pub struct CognitoEventUserPoolsPostAuthenticationResponse {
 /// `CognitoEventUserPoolsMigrateUserRequest` contains the request portion of a MigrateUser event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsMigrateUserRequest {
@@ -674,7 +647,6 @@ pub struct CognitoEventUserPoolsMigrateUserRequest {
 /// `CognitoEventUserPoolsMigrateUserResponse` contains the response portion of a MigrateUser event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsMigrateUserResponse {
@@ -702,7 +674,6 @@ pub struct CognitoEventUserPoolsMigrateUserResponse {
 /// `ClaimsOverrideDetails` allows lambda to add, suppress or override claims in the token
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClaimsOverrideDetails {
@@ -724,7 +695,6 @@ pub struct ClaimsOverrideDetails {
 /// `GroupConfiguration` allows lambda to override groups, roles and set a preferred role
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GroupConfiguration {
@@ -745,7 +715,6 @@ pub struct GroupConfiguration {
 /// process that is underway, along with the corresponding result.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsChallengeResult {
@@ -767,7 +736,6 @@ pub struct CognitoEventUserPoolsChallengeResult {
 /// `CognitoEventUserPoolsDefineAuthChallengeRequest` defines auth challenge request parameters
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsDefineAuthChallengeRequest {
@@ -793,7 +761,6 @@ pub struct CognitoEventUserPoolsDefineAuthChallengeRequest {
 /// `CognitoEventUserPoolsDefineAuthChallengeResponse` defines auth challenge response parameters
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsDefineAuthChallengeResponse {
@@ -816,7 +783,6 @@ pub struct CognitoEventUserPoolsDefineAuthChallengeResponse {
 /// `CognitoEventUserPoolsDefineAuthChallenge` sent by AWS Cognito User Pools to initiate custom authentication flow
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsDefineAuthChallenge {
@@ -847,7 +813,6 @@ pub enum CognitoEventUserPoolsDefineAuthChallengeTriggerSource {
 /// `CognitoEventUserPoolsCreateAuthChallengeRequest` defines create auth challenge request parameters
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsCreateAuthChallengeRequest {
@@ -875,7 +840,6 @@ pub struct CognitoEventUserPoolsCreateAuthChallengeRequest {
 /// `CognitoEventUserPoolsCreateAuthChallengeResponse` defines create auth challenge response parameters
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsCreateAuthChallengeResponse {
@@ -900,7 +864,6 @@ pub struct CognitoEventUserPoolsCreateAuthChallengeResponse {
 /// `CognitoEventUserPoolsCreateAuthChallenge` sent by AWS Cognito User Pools to create a challenge to present to the user
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsCreateAuthChallenge {
@@ -931,7 +894,6 @@ pub enum CognitoEventUserPoolsCreateAuthChallengeTriggerSource {
 /// `CognitoEventUserPoolsVerifyAuthChallengeRequest` defines verify auth challenge request parameters
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsVerifyAuthChallengeRequest<T1 = Value>
@@ -965,7 +927,6 @@ where
 /// `CognitoEventUserPoolsVerifyAuthChallengeResponse` defines verify auth challenge response parameters
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsVerifyAuthChallengeResponse {
@@ -985,7 +946,6 @@ pub struct CognitoEventUserPoolsVerifyAuthChallengeResponse {
 /// for a custom Auth Challenge is valid or not
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsVerifyAuthChallenge {
@@ -1017,7 +977,6 @@ pub enum CognitoEventUserPoolsVerifyAuthChallengeTriggerSource {
 /// allowing a user to customize the message dynamically.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsCustomMessage {
@@ -1059,7 +1018,6 @@ pub enum CognitoEventUserPoolsCustomMessageTriggerSource {
 /// `CognitoEventUserPoolsCustomMessageRequest` contains the request portion of a CustomMessage event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsCustomMessageRequest<T1 = Value>
@@ -1091,7 +1049,6 @@ where
 /// `CognitoEventUserPoolsCustomMessageResponse` contains the response portion of a CustomMessage event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsCustomMessageResponse {

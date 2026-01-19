@@ -18,14 +18,14 @@
 //    for record in event.payload.records {
 //        match process_record(&record).await {
 //            Err(_) => {
-//                let item = BatchItemFailureBuilder::default()
+//                let item = BatchItemFailure::builder()
 //                    .item_identifier(record.message_id.unwrap())
 //                    .build()?;
 //                batch_item_failures.push(item)
 //            }
 //        }
 //    }
-//    let response = SqsBatchResponseBuilder::default()
+//    let response = SqsBatchResponse::builder()
 //        .batch_item_failures(batch_item_failures)
 //        .build()?;
 //
@@ -90,7 +90,7 @@ async fn function_handler(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchRespon
             Ok(_) => (),
             Err(_) => {
                 // ✅ Clean builder construction
-                let item = BatchItemFailureBuilder::default()
+                let item = BatchItemFailure::builder()
                     .item_identifier(record.message_id.unwrap())
                     .build()
                     .unwrap();
@@ -101,7 +101,7 @@ async fn function_handler(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchRespon
     }
 
     // ✅ Clean response construction with builder
-    let response = SqsBatchResponseBuilder::default()
+    let response = SqsBatchResponse::builder()
         .batch_item_failures(batch_item_failures)
         .build()
         .map_err(|e| format!("Failed to build response: {}", e))?;
@@ -113,17 +113,17 @@ async fn function_handler(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchRespon
 fn main() {
     // Demonstrate builder usage with sample data
     let failures = vec![
-        BatchItemFailureBuilder::default()
+        BatchItemFailure::builder()
             .item_identifier("msg-123".to_string())
             .build()
             .unwrap(),
-        BatchItemFailureBuilder::default()
+        BatchItemFailure::builder()
             .item_identifier("msg-456".to_string())
             .build()
             .unwrap(),
     ];
 
-    let response = SqsBatchResponseBuilder::default()
+    let response = SqsBatchResponse::builder()
         .batch_item_failures(failures)
         .build()
         .unwrap();

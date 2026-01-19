@@ -1,5 +1,5 @@
 #[cfg(feature = "builders")]
-use derive_builder::Builder;
+use bon::Builder;
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
 use std::collections::HashMap;
@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TagChangeOnResource {

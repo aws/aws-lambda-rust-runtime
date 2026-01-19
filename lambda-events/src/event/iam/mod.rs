@@ -1,5 +1,5 @@
 #[cfg(feature = "builders")]
-use derive_builder::Builder;
+use bon::Builder;
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
 use std::{borrow::Cow, collections::HashMap, fmt};
@@ -12,7 +12,6 @@ use serde::{
 /// `IamPolicyDocument` represents an IAM policy document.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct IamPolicyDocument {
@@ -32,7 +31,6 @@ pub struct IamPolicyDocument {
 /// `IamPolicyStatement` represents one statement from IAM policy with action, effect and resource
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct IamPolicyStatement {

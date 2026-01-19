@@ -1,6 +1,6 @@
 use crate::{custom_serde::deserialize_lambda_map, encodings::Base64Data};
 #[cfg(feature = "builders")]
-use derive_builder::Builder;
+use bon::Builder;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
@@ -9,7 +9,6 @@ use std::collections::HashMap;
 /// The Event sent to Lambda from SQS. Contains 1 or more individual SQS Messages
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsEvent {
@@ -21,14 +20,12 @@ pub struct SqsEvent {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
-    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// An individual SQS Message, its metadata, and Message Attributes
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsMessage {
@@ -69,7 +66,6 @@ pub struct SqsMessage {
 /// Alternative to `SqsEvent` to be used alongside `SqsMessageObj<T>` when you need to deserialize a nested object into a struct of type `T` within the SQS Message rather than just using the raw SQS Message string
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -90,7 +86,6 @@ pub struct SqsEventObj<T: Serialize> {
 /// Alternative to `SqsMessage` to be used alongside `SqsEventObj<T>` when you need to deserialize a nested object into a struct of type `T` within the SQS Message rather than just using the raw SQS Message string
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[serde_with::serde_as]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -135,7 +130,6 @@ pub struct SqsMessageObj<T: Serialize> {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsMessageAttribute {
@@ -159,7 +153,6 @@ pub struct SqsMessageAttribute {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsBatchResponse {
@@ -288,7 +281,6 @@ impl SqsBatchResponse {
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BatchItemFailure {
@@ -306,7 +298,6 @@ pub struct BatchItemFailure {
 /// The Event sent to Lambda from the SQS API. Contains 1 or more individual SQS Messages
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -326,7 +317,6 @@ pub struct SqsApiEventObj<T: Serialize> {
 /// The Event sent to Lambda from SQS API. Contains 1 or more individual SQS Messages
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsApiEvent {
@@ -346,7 +336,6 @@ pub struct SqsApiEvent {
 /// than just using the raw SQS Message string
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[serde_with::serde_as]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -384,7 +373,6 @@ pub struct SqsApiMessageObj<T: Serialize> {
 /// An individual SQS API Message, its metadata, and Message Attributes
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SqsApiMessage {
@@ -510,5 +498,55 @@ mod test {
         response.set_failures(vec!["msg-4".to_string()]);
         assert_eq!(response.batch_item_failures.len(), 1);
         assert_eq!(response.batch_item_failures[0].item_identifier, "msg-4");
+    }
+
+    #[test]
+    #[cfg(all(feature = "sqs", feature = "builders"))]
+    fn test_bon_sqs_event_builder() {
+        let event = SqsEvent::builder()
+            .records(vec![
+                SqsMessage::builder()
+                    .message_id("test-123".to_string())
+                    .body("Hello World".to_string())
+                    .attributes(std::collections::HashMap::new())
+                    .message_attributes(std::collections::HashMap::new())
+                    .build()
+            ])
+            .build();
+
+        assert_eq!(event.records.len(), 1);
+        assert_eq!(event.records[0].message_id, Some("test-123".to_string()));
+        assert_eq!(event.records[0].body, Some("Hello World".to_string()));
+    }
+
+    #[test]
+    #[cfg(all(feature = "sqs", feature = "builders"))]
+    fn test_bon_sqs_message_builder() {
+        let message = SqsMessage::builder()
+            .message_id("msg-456".to_string())
+            .receipt_handle("receipt-handle".to_string())
+            .body("Test message body".to_string())
+            .attributes(std::collections::HashMap::new())
+            .message_attributes(std::collections::HashMap::new())
+            .build();
+
+        assert_eq!(message.message_id, Some("msg-456".to_string()));
+        assert_eq!(message.receipt_handle, Some("receipt-handle".to_string()));
+        assert_eq!(message.body, Some("Test message body".to_string()));
+    }
+
+    #[test]
+    #[cfg(all(feature = "sqs", feature = "builders"))]
+    fn test_bon_minimal_builder() {
+        // Only required fields (non-Option fields with no default)
+        let message = SqsMessage::builder()
+            .attributes(std::collections::HashMap::new())
+            .message_attributes(std::collections::HashMap::new())
+            .build();
+
+        // All Option fields should be None
+        assert_eq!(message.message_id, None);
+        assert_eq!(message.body, None);
+        assert!(message.attributes.is_empty());
     }
 }

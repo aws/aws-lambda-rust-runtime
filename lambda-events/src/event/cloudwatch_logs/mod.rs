@@ -1,5 +1,5 @@
 #[cfg(feature = "builders")]
-use derive_builder::Builder;
+use bon::Builder;
 use serde::{
     de::{Error, MapAccess, Visitor},
     ser::{Error as SeError, SerializeStruct},
@@ -14,7 +14,6 @@ use std::{fmt, io::BufReader};
 /// `LogsEvent` represents the raw event sent by CloudWatch
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct LogsEvent {
     /// `aws_logs` is gzipped and base64 encoded, it needs a custom deserializer
@@ -33,7 +32,6 @@ pub struct LogsEvent {
 /// `AwsLogs` is an unmarshaled, ungzipped, CloudWatch logs event
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct AwsLogs {
     /// `data` is the log data after is decompressed
@@ -43,7 +41,6 @@ pub struct AwsLogs {
 /// `LogData` represents the logs group event information
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LogData {
@@ -72,7 +69,6 @@ pub struct LogData {
 /// `LogEntry` represents a log entry from cloudwatch logs
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct LogEntry {
     /// Unique id for the entry

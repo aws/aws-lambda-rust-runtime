@@ -1,5 +1,5 @@
 #[cfg(feature = "builders")]
-use derive_builder::Builder;
+use bon::Builder;
 use http::HeaderMap;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
@@ -11,7 +11,6 @@ use crate::custom_serde::{deserialize_lambda_map, serialize_headers};
 /// `LambdaFunctionUrlRequest` contains data coming from the HTTP request to a Lambda Function URL.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LambdaFunctionUrlRequest {
@@ -45,7 +44,6 @@ pub struct LambdaFunctionUrlRequest {
 /// `LambdaFunctionUrlRequestContext` contains the information to identify the AWS account and resources invoking the Lambda function.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LambdaFunctionUrlRequestContext {
@@ -81,7 +79,6 @@ pub struct LambdaFunctionUrlRequestContext {
 /// `LambdaFunctionUrlRequestContextAuthorizerDescription` contains authorizer information for the request context.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LambdaFunctionUrlRequestContextAuthorizerDescription {
@@ -99,7 +96,6 @@ pub struct LambdaFunctionUrlRequestContextAuthorizerDescription {
 /// `LambdaFunctionUrlRequestContextAuthorizerIamDescription` contains IAM information for the request context.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LambdaFunctionUrlRequestContextAuthorizerIamDescription {
@@ -126,7 +122,6 @@ pub struct LambdaFunctionUrlRequestContextAuthorizerIamDescription {
 /// `LambdaFunctionUrlRequestContextHttpDescription` contains HTTP information for the request context.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LambdaFunctionUrlRequestContextHttpDescription {
@@ -153,7 +148,6 @@ pub struct LambdaFunctionUrlRequestContextHttpDescription {
 /// `LambdaFunctionUrlResponse` configures the HTTP response to be returned by Lambda Function URL for the request.
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LambdaFunctionUrlResponse {

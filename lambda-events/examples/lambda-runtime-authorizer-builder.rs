@@ -20,7 +20,7 @@
 //        some_thing: ThirdPartyThing,
 //    }
 //
-//    let output = ResponseBuilder::default()
+//    let output = Response::builder()
 //        .is_authorized(true)
 //        .context(context)
 //        .build()?;
@@ -105,7 +105,7 @@ pub async fn function_handler(
     };
 
     // ✅ Clean builder pattern - no Default required!
-    let output = ApiGatewayV2CustomAuthorizerSimpleResponseBuilder::default()
+    let output = ApiGatewayV2CustomAuthorizerSimpleResponse::builder()
         .is_authorized(true)
         .context(context)
         .build()

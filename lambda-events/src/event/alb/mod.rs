@@ -6,7 +6,7 @@ use crate::{
     encodings::Body,
 };
 #[cfg(feature = "builders")]
-use derive_builder::Builder;
+use bon::Builder;
 use http::{HeaderMap, Method};
 use query_map::QueryMap;
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,6 @@ use serde_json::Value;
 /// `AlbTargetGroupRequest` contains data originating from the ALB Lambda target group integration
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AlbTargetGroupRequest {
@@ -52,7 +51,6 @@ pub struct AlbTargetGroupRequest {
 /// `AlbTargetGroupRequestContext` contains the information to identify the load balancer invoking the lambda
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AlbTargetGroupRequestContext {
@@ -70,7 +68,6 @@ pub struct AlbTargetGroupRequestContext {
 /// `ElbContext` contains the information to identify the ARN invoking the lambda
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ElbContext {
@@ -90,7 +87,6 @@ pub struct ElbContext {
 /// `AlbTargetGroupResponse` configures the response to be returned by the ALB Lambda target group for the request
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
-#[cfg_attr(feature = "builders", builder(setter(into, strip_option)))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AlbTargetGroupResponse {
