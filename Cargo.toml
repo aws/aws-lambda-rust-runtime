@@ -7,10 +7,9 @@ members = [
     "lambda-runtime",
     "lambda-extension",
     "lambda-events",
-    "lambda-events/lambda-events-examples",
 ]
 
-exclude = ["examples"]
+exclude = ["examples","lambda-events/lambda-events-examples"]
 
 [workspace.dependencies]
 base64 = "0.22"
