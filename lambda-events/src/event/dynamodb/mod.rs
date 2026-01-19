@@ -3,9 +3,9 @@ use crate::{
     streams::DynamoDbBatchItemFailure,
     time_window::*,
 };
-use chrono::{DateTime, Utc};
 #[cfg(feature = "builders")]
 use bon::Builder;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;

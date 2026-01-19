@@ -504,14 +504,12 @@ mod test {
     #[cfg(all(feature = "sqs", feature = "builders"))]
     fn test_bon_sqs_event_builder() {
         let event = SqsEvent::builder()
-            .records(vec![
-                SqsMessage::builder()
-                    .message_id("test-123".to_string())
-                    .body("Hello World".to_string())
-                    .attributes(std::collections::HashMap::new())
-                    .message_attributes(std::collections::HashMap::new())
-                    .build()
-            ])
+            .records(vec![SqsMessage::builder()
+                .message_id("test-123".to_string())
+                .body("Hello World".to_string())
+                .attributes(std::collections::HashMap::new())
+                .message_attributes(std::collections::HashMap::new())
+                .build()])
             .build();
 
         assert_eq!(event.records.len(), 1);
