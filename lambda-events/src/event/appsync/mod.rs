@@ -67,13 +67,13 @@ pub struct AppSyncIamIdentity {
 #[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(clippy::should_implement_trait)]
 pub struct AppSyncCognitoIdentity<T1 = Value>
 where
     T1: DeserializeOwned,
     T1: Serialize,
 {
     #[serde(default)]
-    #[allow(clippy::should_implement_trait)]
     pub sub: Option<String>,
     #[serde(default)]
     pub issuer: Option<String>,
@@ -314,6 +314,7 @@ impl Default for AppSyncIdentity {
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
+#[allow(clippy::should_implement_trait)]
 pub struct AppSyncIdentityOIDC<T = Value>
 where
     T: Serialize + DeserializeOwned,
@@ -321,7 +322,6 @@ where
     #[serde(bound = "")]
     pub claims: T,
     pub issuer: String,
-    #[allow(clippy::should_implement_trait)]
     pub sub: String,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
