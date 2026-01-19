@@ -19,6 +19,7 @@ pub struct SqsEvent {
     /// If `catch-all-fields` is disabled, any additional fields that are present will be ignored.
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
+    #[cfg_attr(feature = "builders", builder(default))]
     #[serde(flatten)]
     pub other: serde_json::Map<String, Value>,
 }
