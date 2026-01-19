@@ -29,7 +29,7 @@ cargo add aws_lambda_events --no-default-features --features apigw,alb
 
 ### Builder pattern support
 
-The crate provides an optional `builders` feature that adds builder pattern support for event types using the [bon](https://crates.io/crates/bon) crate. This enables type-safe, immutable construction of event responses with a clean, ergonomic API.
+The crate provides an optional `builders` feature that adds builder pattern support for event types. This enables type-safe, immutable construction of event responses with a clean, ergonomic API.
 
 Enable the builders feature:
 
@@ -68,12 +68,6 @@ async fn handler(
     Ok(response)
 }
 ```
-
-Key benefits of bon builders:
-- **Clean API**: `Struct::builder().field().build()` - no `.unwrap()` or `?` needed
-- **Automatic Option handling**: Optional fields don't need to be explicitly set
-- **Type safety**: Compile-time validation of required fields
-- **Ergonomic**: Minimal configuration required
 
 See the [examples directory](https://github.com/aws/aws-lambda-rust-runtime/tree/main/lambda-events/examples) for more builder pattern examples.
 

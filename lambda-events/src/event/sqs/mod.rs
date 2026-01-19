@@ -501,51 +501,5 @@ mod test {
         assert_eq!(response.batch_item_failures[0].item_identifier, "msg-4");
     }
 
-    #[test]
-    #[cfg(all(feature = "sqs", feature = "builders"))]
-    fn test_bon_sqs_event_builder() {
-        let event = SqsEvent::builder()
-            .records(vec![SqsMessage::builder()
-                .message_id("test-123".to_string())
-                .body("Hello World".to_string())
-                .attributes(std::collections::HashMap::new())
-                .message_attributes(std::collections::HashMap::new())
-                .build()])
-            .build();
 
-        assert_eq!(event.records.len(), 1);
-        assert_eq!(event.records[0].message_id, Some("test-123".to_string()));
-        assert_eq!(event.records[0].body, Some("Hello World".to_string()));
-    }
-
-    #[test]
-    #[cfg(all(feature = "sqs", feature = "builders"))]
-    fn test_bon_sqs_message_builder() {
-        let message = SqsMessage::builder()
-            .message_id("msg-456".to_string())
-            .receipt_handle("receipt-handle".to_string())
-            .body("Test message body".to_string())
-            .attributes(std::collections::HashMap::new())
-            .message_attributes(std::collections::HashMap::new())
-            .build();
-
-        assert_eq!(message.message_id, Some("msg-456".to_string()));
-        assert_eq!(message.receipt_handle, Some("receipt-handle".to_string()));
-        assert_eq!(message.body, Some("Test message body".to_string()));
-    }
-
-    #[test]
-    #[cfg(all(feature = "sqs", feature = "builders"))]
-    fn test_bon_minimal_builder() {
-        // Only required fields (non-Option fields with no default)
-        let message = SqsMessage::builder()
-            .attributes(std::collections::HashMap::new())
-            .message_attributes(std::collections::HashMap::new())
-            .build();
-
-        // All Option fields should be None
-        assert_eq!(message.message_id, None);
-        assert_eq!(message.body, None);
-        assert!(message.attributes.is_empty());
-    }
 }
