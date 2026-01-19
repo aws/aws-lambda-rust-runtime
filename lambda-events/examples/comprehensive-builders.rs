@@ -25,7 +25,7 @@ fn main() {
         .records(vec![])
         .other(serde_json::Map::new())
         .build();
-    
+
     #[cfg(not(feature = "catch-all-fields"))]
     let _sqs_event = SqsEvent::builder().records(vec![]).build();
 

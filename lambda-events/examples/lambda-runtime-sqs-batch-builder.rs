@@ -36,9 +36,7 @@
 // • Works seamlessly with lambda_runtime::LambdaEvent
 
 #[cfg(feature = "builders")]
-use aws_lambda_events::event::sqs::{
-    BatchItemFailure, SqsBatchResponse, SqsEvent,
-};
+use aws_lambda_events::event::sqs::{BatchItemFailure, SqsBatchResponse, SqsEvent};
 #[cfg(feature = "builders")]
 use lambda_runtime::{Error, LambdaEvent};
 
@@ -119,9 +117,7 @@ fn main() {
             .build(),
     ];
 
-    let response = SqsBatchResponse::builder()
-        .batch_item_failures(failures)
-        .build();
+    let response = SqsBatchResponse::builder().batch_item_failures(failures).build();
 
     println!(
         "✅ Built SQS batch response with {} failed items",
