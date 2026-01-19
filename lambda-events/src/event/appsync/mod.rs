@@ -73,6 +73,7 @@ where
     T1: Serialize,
 {
     #[serde(default)]
+    #[allow(clippy::should_implement_trait)]
     pub sub: Option<String>,
     #[serde(default)]
     pub issuer: Option<String>,
@@ -320,6 +321,7 @@ where
     #[serde(bound = "")]
     pub claims: T,
     pub issuer: String,
+    #[allow(clippy::should_implement_trait)]
     pub sub: String,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
