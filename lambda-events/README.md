@@ -29,7 +29,7 @@ cargo add aws_lambda_events --no-default-features --features apigw,alb
 
 ### Builder pattern support
 
-The crate provides an optional `builders` feature that adds builder pattern support for event types. This enables type-safe, immutable construction of event responses without requiring `Default` trait implementations on custom context types.
+The crate provides an optional `builders` feature that adds builder pattern support for event types using the [bon](https://crates.io/crates/bon) crate. This enables type-safe, immutable construction of event responses with a clean, ergonomic API.
 
 Enable the builders feature:
 
@@ -41,7 +41,7 @@ Example using builders with API Gateway custom authorizers:
 
 ```rust
 use aws_lambda_events::event::apigw::{
-    ApiGatewayV2CustomAuthorizerSimpleResponseBuilder,
+    ApiGatewayV2CustomAuthorizerSimpleResponse,
     ApiGatewayV2CustomAuthorizerV2Request,
 };
 use lambda_runtime::{Error, LambdaEvent};
@@ -60,14 +60,20 @@ async fn handler(
         permissions: vec!["read".to_string()],
     };
 
-    let response = ApiGatewayV2CustomAuthorizerSimpleResponseBuilder::default()
+    let response = ApiGatewayV2CustomAuthorizerSimpleResponse::builder()
         .is_authorized(true)
         .context(context)
-        .build()?;
+        .build();
 
     Ok(response)
 }
 ```
+
+Key benefits of bon builders:
+- **Clean API**: `Struct::builder().field().build()` - no `.unwrap()` or `?` needed
+- **Automatic Option handling**: Optional fields don't need to be explicitly set
+- **Type safety**: Compile-time validation of required fields
+- **Ergonomic**: Minimal configuration required
 
 See the [examples directory](https://github.com/aws/aws-lambda-rust-runtime/tree/main/lambda-events/examples) for more builder pattern examples.
 

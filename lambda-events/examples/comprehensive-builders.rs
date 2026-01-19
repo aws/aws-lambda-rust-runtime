@@ -28,7 +28,6 @@ fn main() {
         .secret_id("test-secret".to_string())
         .client_request_token("token-123".to_string())
         .build();
-        .unwrap();
 }
 
 #[cfg(not(feature = "builders"))]
