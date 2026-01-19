@@ -33,7 +33,7 @@
 
 #[cfg(feature = "builders")]
 use aws_lambda_events::event::apigw::{
-    ApiGatewayV2CustomAuthorizerSimpleResponse, ApiGatewayV2CustomAuthorizerSimpleResponseBuilder,
+    ApiGatewayV2CustomAuthorizerSimpleResponse,
     ApiGatewayV2CustomAuthorizerV2Request,
 };
 #[cfg(feature = "builders")]
@@ -108,8 +108,7 @@ pub async fn function_handler(
     let output = ApiGatewayV2CustomAuthorizerSimpleResponse::builder()
         .is_authorized(true)
         .context(context)
-        .build()
-        .map_err(|e| format!("Failed to build response: {}", e))?;
+        .build();
 
     Ok(output)
 }
@@ -126,11 +125,10 @@ fn main() {
         permissions: vec!["read".to_string(), "write".to_string()],
     };
 
-    let response = ApiGatewayV2CustomAuthorizerSimpleResponseBuilder::<MyContext>::default()
+    let response = ApiGatewayV2CustomAuthorizerSimpleResponse::<MyContext>::builder()
         .is_authorized(true)
         .context(context)
-        .build()
-        .unwrap();
+        .build();
 
     println!("✅ Built authorizer response for user: {}", response.context.user_id);
     println!("   Authorized: {}", response.is_authorized);

@@ -37,7 +37,7 @@
 
 #[cfg(feature = "builders")]
 use aws_lambda_events::event::sqs::{
-    BatchItemFailure, BatchItemFailureBuilder, SqsBatchResponse, SqsBatchResponseBuilder, SqsEvent,
+    BatchItemFailure, SqsBatchResponse, SqsEvent,
 };
 #[cfg(feature = "builders")]
 use lambda_runtime::{Error, LambdaEvent};
@@ -92,8 +92,7 @@ async fn function_handler(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchRespon
                 // ✅ Clean builder construction
                 let item = BatchItemFailure::builder()
                     .item_identifier(record.message_id.unwrap())
-                    .build()
-                    .unwrap();
+                    .build();
 
                 batch_item_failures.push(item)
             }
@@ -103,8 +102,7 @@ async fn function_handler(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchRespon
     // ✅ Clean response construction with builder
     let response = SqsBatchResponse::builder()
         .batch_item_failures(batch_item_failures)
-        .build()
-        .map_err(|e| format!("Failed to build response: {}", e))?;
+        .build();
 
     Ok(response)
 }
@@ -115,18 +113,15 @@ fn main() {
     let failures = vec![
         BatchItemFailure::builder()
             .item_identifier("msg-123".to_string())
-            .build()
-            .unwrap(),
+            .build(),
         BatchItemFailure::builder()
             .item_identifier("msg-456".to_string())
-            .build()
-            .unwrap(),
+            .build(),
     ];
 
     let response = SqsBatchResponse::builder()
         .batch_item_failures(failures)
-        .build()
-        .unwrap();
+        .build();
 
     println!(
         "✅ Built SQS batch response with {} failed items",
