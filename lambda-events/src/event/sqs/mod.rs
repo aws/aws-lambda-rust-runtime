@@ -500,6 +500,4 @@ mod test {
         assert_eq!(response.batch_item_failures.len(), 1);
         assert_eq!(response.batch_item_failures[0].item_identifier, "msg-4");
     }
-
-
 }
