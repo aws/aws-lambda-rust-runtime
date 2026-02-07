@@ -29,7 +29,7 @@ jobs:
     env:
       RUST_BACKTRACE: 1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Build Runtime API Client
         uses: ./.github/actions/rust-build
         with:
@@ -50,7 +50,7 @@ jobs:
     needs: build-runtime
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check `lambda_runtime_api_client`, `lambda_runtime`, lambda_http` semver with only default features
         uses: obi1kenobi/cargo-semver-checks-action@v2
         with:

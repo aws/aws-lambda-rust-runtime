@@ -28,7 +28,7 @@ jobs:
           uses: aws-actions/setup-sam@v2
           with:
             use-installer: true
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v6
         - name: configure aws credentials
           uses: aws-actions/configure-aws-credentials@v4.0.2
           with:
