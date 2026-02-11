@@ -4,7 +4,7 @@ use hyper::{body::Incoming, server::conn::http1, service::service_fn};
 
 use hyper_util::rt::tokio::TokioIo;
 use lambda_runtime_api_client::Client;
-use serde::Deserialize;
+use serde::{de::DeserializeOwned, Deserialize};
 use std::{
     convert::Infallible,
     fmt,
@@ -83,14 +83,6 @@ where
     L::Error: Into<Error> + fmt::Debug,
     L::MakeError: Into<Error> + fmt::Debug,
     L::Future: Send,
-
-    // Fixme: 'static bound might be too restrictive
-    T: MakeService<(), Vec<LambdaTelemetry>, Response = ()> + Send + Sync + 'static,
-    T::Service: Service<Vec<LambdaTelemetry>, Response = ()> + Send + Sync,
-    <T::Service as Service<Vec<LambdaTelemetry>>>::Future: Send + 'a,
-    T::Error: Into<Error> + fmt::Debug,
-    T::MakeError: Into<Error> + fmt::Debug,
-    T::Future: Send,
 {
     /// Create a new [`Extension`] with a given extension name
     pub fn with_extension_name(self, extension_name: &'a str) -> Self {
@@ -232,7 +224,17 @@ where
     /// Lambda lifecycle operations to register the extension. When implementing an internal Lambda
     /// extension, it is safe to call `lambda_runtime::run` once the future returned by this
     /// function resolves.
-    pub async fn register(self) -> Result<RegisteredExtension<E>, Error> {
+    pub async fn register<TL>(self) -> Result<RegisteredExtension<E>, Error>
+    where
+        // Fixme: 'static bound might be too restrictive
+        T: MakeService<(), Vec<LambdaTelemetry<TL>>, Response = ()> + Send + Sync + 'static,
+        T::Service: Service<Vec<LambdaTelemetry<TL>>, Response = ()> + Send + Sync,
+        <T::Service as Service<Vec<LambdaTelemetry<TL>>>>::Future: Send + 'a,
+        T::Error: Into<Error> + fmt::Debug,
+        T::MakeError: Into<Error> + fmt::Debug,
+        T::Future: Send,
+        TL: DeserializeOwned + Send + 'static,
+    {
         let client = &Client::builder().build()?;
 
         let register_res = register(client, self.extension_name, self.events).await?;
@@ -340,7 +342,17 @@ where
     }
 
     /// Execute the given extension.
-    pub async fn run(self) -> Result<(), Error> {
+    pub async fn run<TL>(self) -> Result<(), Error>
+    where
+        // Fixme: 'static bound might be too restrictive
+        T: MakeService<(), Vec<LambdaTelemetry<TL>>, Response = ()> + Send + Sync + 'static,
+        T::Service: Service<Vec<LambdaTelemetry<TL>>, Response = ()> + Send + Sync,
+        <T::Service as Service<Vec<LambdaTelemetry<TL>>>>::Future: Send + 'a,
+        T::Error: Into<Error> + fmt::Debug,
+        T::MakeError: Into<Error> + fmt::Debug,
+        T::Future: Send,
+        TL: DeserializeOwned + Send + 'static,
+    {
         self.register().await?.run().await
     }
 }

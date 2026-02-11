@@ -3,7 +3,7 @@ use http::{Request, Response};
 use http_body_util::BodyExt;
 use hyper::body::Incoming;
 use lambda_runtime_api_client::body::Body;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{boxed::Box, fmt, sync::Arc};
 use tokio::sync::Mutex;
 use tower::Service;
@@ -269,14 +269,15 @@ pub struct RuntimeDoneMetrics {
 ///
 /// This takes an `hyper::Request` and transforms it into `Vec<LambdaTelemetry>` for the
 /// underlying `Service` to process.
-pub(crate) async fn telemetry_wrapper<S>(
+pub(crate) async fn telemetry_wrapper<S, L>(
     service: Arc<Mutex<S>>,
     req: Request<Incoming>,
 ) -> Result<Response<Body>, Box<dyn std::error::Error + Send + Sync>>
 where
-    S: Service<Vec<LambdaTelemetry>, Response = ()>,
+    S: Service<Vec<LambdaTelemetry<L>>, Response = ()>,
     S::Error: Into<Box<dyn std::error::Error + Send + Sync>> + fmt::Debug,
     S::Future: Send,
+    L: DeserializeOwned,
 {
     trace!("Received telemetry request");
     // Parse the request body as a Vec<LambdaTelemetry>
@@ -291,7 +292,7 @@ where
         }
     };
 
-    let telemetry: Vec<LambdaTelemetry> = match serde_json::from_slice(&body.to_bytes()) {
+    let telemetry: Vec<LambdaTelemetry<L>> = match serde_json::from_slice(&body.to_bytes()) {
         Ok(telemetry) => telemetry,
         Err(e) => {
             error!("Error parsing telemetry: {}", e);
