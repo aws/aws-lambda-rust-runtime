@@ -1,3 +1,5 @@
+#[cfg(feature = "builders")]
+use bon::Builder;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -27,6 +29,7 @@ impl Default for CloudFormationCustomResourceRequest {
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CreateRequest<P2 = Value>
@@ -49,10 +52,12 @@ where
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct UpdateRequest<P1 = Value, P2 = Value>
@@ -79,10 +84,12 @@ where
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct DeleteRequest<P2 = Value>
@@ -106,10 +113,12 @@ where
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Default, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudFormationCustomResourceResponse {
@@ -127,6 +136,7 @@ pub struct CloudFormationCustomResourceResponse {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 

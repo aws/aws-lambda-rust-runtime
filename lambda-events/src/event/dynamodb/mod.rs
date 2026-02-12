@@ -3,6 +3,8 @@ use crate::{
     streams::DynamoDbBatchItemFailure,
     time_window::*,
 };
+#[cfg(feature = "builders")]
+use bon::Builder;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
@@ -124,6 +126,7 @@ impl fmt::Display for KeyType {
 /// The `Event` stream event handled to Lambda
 /// <http://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-ddb-update>
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct Event {
     #[serde(rename = "Records")]
@@ -134,12 +137,14 @@ pub struct Event {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `TimeWindowEvent` represents an Amazon Dynamodb event when using time windows
 /// ref. <https://docs.aws.amazon.com/lambda/latest/dg/with-ddb.html#services-ddb-windows>
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeWindowEvent {
@@ -155,11 +160,13 @@ pub struct TimeWindowEvent {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `TimeWindowEventResponse` is the outer structure to report batch item failures for DynamoDBTimeWindowEvent.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeWindowEventResponse {
@@ -173,11 +180,13 @@ pub struct TimeWindowEventResponse {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// EventRecord stores information about each record of a DynamoDb stream event
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EventRecord {
@@ -241,10 +250,12 @@ pub struct EventRecord {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserIdentity {
@@ -258,12 +269,14 @@ pub struct UserIdentity {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `DynamoDbStreamRecord` represents a description of a single data modification that was performed on an item
 /// in a DynamoDB table.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StreamRecord {
@@ -307,6 +320,7 @@ pub struct StreamRecord {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 

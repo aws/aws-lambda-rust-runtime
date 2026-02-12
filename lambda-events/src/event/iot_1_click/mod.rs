@@ -1,3 +1,5 @@
+#[cfg(feature = "builders")]
+use bon::Builder;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
@@ -8,6 +10,7 @@ use crate::custom_serde::deserialize_lambda_map;
 /// `IoTOneClickEvent` represents a click event published by clicking button type
 /// device.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickEvent {
@@ -20,10 +23,12 @@ pub struct IoTOneClickEvent {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickDeviceEvent {
@@ -34,10 +39,12 @@ pub struct IoTOneClickDeviceEvent {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickButtonClicked {
@@ -51,10 +58,12 @@ pub struct IoTOneClickButtonClicked {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickDeviceInfo {
@@ -72,10 +81,12 @@ pub struct IoTOneClickDeviceInfo {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickPlacementInfo {
@@ -95,6 +106,7 @@ pub struct IoTOneClickPlacementInfo {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 

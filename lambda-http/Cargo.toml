@@ -29,7 +29,7 @@ opentelemetry = ["lambda_runtime/opentelemetry"] # enables access to the OpenTel
 anyhow = ["lambda_runtime/anyhow"] # enables From<T> for Diagnostic for anyhow error types, see README.md for more info
 eyre = ["lambda_runtime/eyre"] # enables From<T> for Diagnostic for eyre error types, see README.md for more info
 miette = ["lambda_runtime/miette"] # enables From<T> for Diagnostic for miette error types, see README.md for more info
-experimental-concurrency = ["lambda_runtime/experimental-concurrency"]
+concurrency-tokio = ["lambda_runtime/concurrency-tokio"]
 
 [dependencies]
 bytes = { workspace = true }
@@ -39,7 +39,7 @@ http = { workspace = true }
 http-body = { workspace = true }
 http-body-util = { workspace = true }
 hyper = { workspace = true }
-lambda_runtime = { version = "1.1.0-rc1", path = "../lambda-runtime" }
+lambda_runtime = { version = "1.1.0-rc1", path = "../lambda-runtime", default-features = false}
 mime = "0.3"
 percent-encoding = "2.2"
 pin-project-lite = { workspace = true }

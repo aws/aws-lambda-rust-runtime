@@ -1,3 +1,5 @@
+#[cfg(feature = "builders")]
+use bon::Builder;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
@@ -7,6 +9,7 @@ use crate::custom_serde::deserialize_lambda_map;
 
 /// `ConnectEvent` contains the data structure for a Connect event.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConnectEvent {
@@ -22,11 +25,13 @@ pub struct ConnectEvent {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ConnectDetails` holds the details of a Connect event
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConnectDetails {
@@ -43,11 +48,13 @@ pub struct ConnectDetails {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ConnectContactData` holds all of the contact information for the user that invoked the Connect event.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConnectContactData {
@@ -87,11 +94,13 @@ pub struct ConnectContactData {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ConnectEndpoint` represents routing information.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConnectEndpoint {
@@ -107,11 +116,13 @@ pub struct ConnectEndpoint {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ConnectQueue` represents a queue object.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConnectQueue {
@@ -127,6 +138,7 @@ pub struct ConnectQueue {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 

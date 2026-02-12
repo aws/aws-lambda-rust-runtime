@@ -1,3 +1,5 @@
+#[cfg(feature = "builders")]
+use bon::Builder;
 use chrono::{DateTime, Utc};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
@@ -10,6 +12,7 @@ use crate::custom_serde::{deserialize_lambda_map, deserialize_nullish_boolean};
 ///
 /// [https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html](https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html)
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SnsEvent {
@@ -21,11 +24,13 @@ pub struct SnsEvent {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// SnsRecord stores information about each record of a SNS event
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SnsRecord {
@@ -47,11 +52,13 @@ pub struct SnsRecord {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// SnsMessage stores information about each record of a SNS event
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SnsMessage {
@@ -104,6 +111,7 @@ pub struct SnsMessage {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
@@ -111,6 +119,7 @@ pub struct SnsMessage {
 ///
 /// [https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html](https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html)
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -123,11 +132,13 @@ pub struct SnsEventObj<T: Serialize> {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// Alternative to `SnsRecord`, used alongside `SnsEventObj<T>` and `SnsMessageObj<T>` when deserializing nested objects from within SNS messages)
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -150,11 +161,13 @@ pub struct SnsRecordObj<T: Serialize> {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// Alternate version of `SnsMessage` to use in conjunction with `SnsEventObj<T>` and `SnsRecordObj<T>` for deserializing the message into a struct of type `T`
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[serde_with::serde_as]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -211,6 +224,7 @@ pub struct SnsMessageObj<T: Serialize> {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
@@ -220,6 +234,7 @@ pub struct SnsMessageObj<T: Serialize> {
 ///
 /// Additional details can be found in the [SNS Developer Guide](https://docs.aws.amazon.com/sns/latest/dg/sns-message-attributes.html)
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct MessageAttribute {
     /// The data type of the attribute. Per the [SNS Developer Guide](https://docs.aws.amazon.com/sns/latest/dg/sns-message-attributes.html), lambda notifications, this will only be **String** or **Binary**.
@@ -236,10 +251,12 @@ pub struct MessageAttribute {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudWatchAlarmPayload {
@@ -260,10 +277,12 @@ pub struct CloudWatchAlarmPayload {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudWatchAlarmTrigger {
@@ -288,10 +307,12 @@ pub struct CloudWatchAlarmTrigger {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudWatchMetricDataQuery {
@@ -308,10 +329,12 @@ pub struct CloudWatchMetricDataQuery {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudWatchMetricStat {
@@ -325,10 +348,12 @@ pub struct CloudWatchMetricStat {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CloudWatchMetric {
@@ -342,10 +367,12 @@ pub struct CloudWatchMetric {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CloudWatchDimension {
     pub name: String,
@@ -356,6 +383,7 @@ pub struct CloudWatchDimension {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 

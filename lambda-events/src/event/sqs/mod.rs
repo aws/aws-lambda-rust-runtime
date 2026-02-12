@@ -1,4 +1,6 @@
 use crate::{custom_serde::deserialize_lambda_map, encodings::Base64Data};
+#[cfg(feature = "builders")]
+use bon::Builder;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
@@ -6,6 +8,7 @@ use std::collections::HashMap;
 
 /// The Event sent to Lambda from SQS. Contains 1 or more individual SQS Messages
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsEvent {
@@ -16,12 +19,14 @@ pub struct SqsEvent {
     /// If `catch-all-fields` is disabled, any additional fields that are present will be ignored.
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
+    #[cfg_attr(feature = "builders", builder(default))]
     #[serde(flatten)]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// An individual SQS Message, its metadata, and Message Attributes
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsMessage {
@@ -55,11 +60,13 @@ pub struct SqsMessage {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// Alternative to `SqsEvent` to be used alongside `SqsMessageObj<T>` when you need to deserialize a nested object into a struct of type `T` within the SQS Message rather than just using the raw SQS Message string
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -73,11 +80,13 @@ pub struct SqsEventObj<T: Serialize> {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// Alternative to `SqsMessage` to be used alongside `SqsEventObj<T>` when you need to deserialize a nested object into a struct of type `T` within the SQS Message rather than just using the raw SQS Message string
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[serde_with::serde_as]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -116,10 +125,12 @@ pub struct SqsMessageObj<T: Serialize> {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsMessageAttribute {
@@ -137,10 +148,12 @@ pub struct SqsMessageAttribute {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsBatchResponse {
@@ -151,6 +164,7 @@ pub struct SqsBatchResponse {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
@@ -267,6 +281,7 @@ impl SqsBatchResponse {
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BatchItemFailure {
@@ -277,11 +292,13 @@ pub struct BatchItemFailure {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// The Event sent to Lambda from the SQS API. Contains 1 or more individual SQS Messages
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -294,11 +311,13 @@ pub struct SqsApiEventObj<T: Serialize> {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// The Event sent to Lambda from SQS API. Contains 1 or more individual SQS Messages
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SqsApiEvent {
@@ -309,6 +328,7 @@ pub struct SqsApiEvent {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
@@ -316,6 +336,7 @@ pub struct SqsApiEvent {
 /// deserialize a nested object into a struct of type T within the SQS Message rather
 /// than just using the raw SQS Message string
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[serde_with::serde_as]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(bound(deserialize = "T: DeserializeOwned"))]
@@ -346,11 +367,13 @@ pub struct SqsApiMessageObj<T: Serialize> {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// An individual SQS API Message, its metadata, and Message Attributes
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SqsApiMessage {
@@ -377,6 +400,7 @@ pub struct SqsApiMessage {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 

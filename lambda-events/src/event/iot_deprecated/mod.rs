@@ -1,4 +1,6 @@
 use crate::iot::*;
+#[cfg(feature = "builders")]
+use bon::Builder;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
@@ -6,6 +8,7 @@ use serde_json::Value;
 /// `IoTCustomAuthorizerRequest` contains data coming in to a custom IoT device gateway authorizer function.
 /// Deprecated: Use IoTCoreCustomAuthorizerRequest instead. `IoTCustomAuthorizerRequest` does not correctly model the request schema
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCustomAuthorizerRequest {
@@ -23,6 +26,7 @@ pub struct IoTCustomAuthorizerRequest {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
@@ -35,6 +39,7 @@ pub type IoTTlsContext = IoTCoreTlsContext;
 /// `IoTCustomAuthorizerResponse` represents the expected format of an IoT device gateway authorization response.
 /// Deprecated: Use IoTCoreCustomAuthorizerResponse. `IoTCustomAuthorizerResponse` does not correctly model the response schema.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTCustomAuthorizerResponse {
@@ -50,5 +55,6 @@ pub struct IoTCustomAuthorizerResponse {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }

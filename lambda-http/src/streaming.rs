@@ -114,10 +114,10 @@ where
 
 /// Builds a streaming-aware Tower service from a `Service<Request>` that can be
 /// cloned and sent across tasks. This is used by the concurrent HTTP entrypoint.
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 type EventToRequest = fn(LambdaEvent<LambdaRequest>) -> Request;
 
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 #[allow(clippy::type_complexity)]
 fn into_stream_service_cloneable<S, B, E>(
     handler: S,
@@ -178,10 +178,16 @@ fn event_to_request(req: LambdaEvent<LambdaRequest>) -> Request {
 /// # Managed concurrency
 /// If `AWS_LAMBDA_MAX_CONCURRENCY` is set, this function returns an error because
 /// it does not enable concurrent polling. Use [`run_with_streaming_response_concurrent`]
-/// (requires the `experimental-concurrency` feature) instead.
+/// (requires the `concurrency-tokio` feature) instead.
 ///
 /// [AWS docs for response streaming]:
 ///     https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html
+///
+/// # Panics
+///
+/// This function panics if required Lambda environment variables are missing
+/// (`AWS_LAMBDA_FUNCTION_NAME`, `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`,
+/// `AWS_LAMBDA_FUNCTION_VERSION`, `AWS_LAMBDA_RUNTIME_API`).
 pub async fn run_with_streaming_response<'a, S, B, E>(handler: S) -> Result<(), Error>
 where
     S: Service<Request, Response = Response<B>, Error = E>,
@@ -197,13 +203,21 @@ where
 /// Runs the Lambda runtime with a handler that returns **streaming** HTTP
 /// responses, in a mode that is compatible with Lambda Managed Instances.
 ///
-/// Requires the `experimental-concurrency` feature.
+/// When `AWS_LAMBDA_MAX_CONCURRENCY` is set to a value greater than 1, this
+/// spawns multiple tokio worker tasks to handle concurrent invocations. When the
+/// environment variable is unset or `<= 1`, it falls back to sequential
+/// behavior, so the same handler can run on both classic Lambda and Lambda
+/// Managed Instances.
 ///
-/// This uses a cloneable, boxed service internally so it can be driven by the
-/// concurrent runtime. When `AWS_LAMBDA_MAX_CONCURRENCY` is not set or `<= 1`,
-/// it falls back to the same sequential behavior as [`run_with_streaming_response`].
-#[cfg(feature = "experimental-concurrency")]
-#[cfg_attr(docsrs, doc(cfg(feature = "experimental-concurrency")))]
+/// # Panics
+///
+/// This function panics if:
+/// - Called outside of a Tokio runtime
+/// - Required Lambda environment variables are missing (`AWS_LAMBDA_FUNCTION_NAME`,
+///   `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`, `AWS_LAMBDA_FUNCTION_VERSION`,
+///   `AWS_LAMBDA_RUNTIME_API`)
+#[cfg(feature = "concurrency-tokio")]
+#[cfg_attr(docsrs, doc(cfg(feature = "concurrency-tokio")))]
 pub async fn run_with_streaming_response_concurrent<S, B, E>(handler: S) -> Result<(), Error>
 where
     S: Service<Request, Response = Response<B>, Error = E> + Clone + Send + 'static,

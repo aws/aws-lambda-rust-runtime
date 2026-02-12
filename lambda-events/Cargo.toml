@@ -20,6 +20,7 @@ edition = "2021"
 base64 = { workspace = true }
 bytes = { workspace = true, features = ["serde"], optional = true }
 chrono = { workspace = true, optional = true }
+bon = { version = "3", optional = true }
 flate2 = { version = "1.0.24", optional = true }
 http = { workspace = true, optional = true }
 http-body = { workspace = true, optional = true }
@@ -126,6 +127,7 @@ documentdb = []
 eventbridge = ["chrono", "serde_with"]
 
 catch-all-fields = []
+builders = ["bon"]
 
 [package.metadata.docs.rs]
 all-features = true

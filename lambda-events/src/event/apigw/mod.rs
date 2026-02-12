@@ -6,6 +6,8 @@ use crate::{
     encodings::Body,
     iam::IamPolicyStatement,
 };
+#[cfg(feature = "builders")]
+use bon::Builder;
 use http::{HeaderMap, Method};
 use query_map::QueryMap;
 use serde::{de::DeserializeOwned, ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
@@ -14,6 +16,7 @@ use std::collections::HashMap;
 
 /// `ApiGatewayProxyRequest` contains data coming from the API Gateway proxy
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayProxyRequest {
@@ -54,11 +57,13 @@ pub struct ApiGatewayProxyRequest {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayProxyResponse` configures the response to be returned by API Gateway for the request
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayProxyResponse {
@@ -79,12 +84,14 @@ pub struct ApiGatewayProxyResponse {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayProxyRequestContext` contains the information to identify the AWS account and resources invoking the
 /// Lambda function. It also includes Cognito identity information for the caller.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayProxyRequestContext {
@@ -133,22 +140,80 @@ pub struct ApiGatewayProxyRequestContext {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayV2httpRequest` contains data coming from the new HTTP API Gateway
+///
+/// # Important Note
+///
+/// For standard HTTP API v2 requests, the HTTP method is located in `request_context.http.method`,
+/// not in the top-level `http_method` field. The top-level `http_method` field (and other
+/// authorizer-specific fields) are only present in Custom Authorizer v1 payloads.
+///
+/// **For standard HTTP API v2 requests, use `request_context.http.method` to get the correct HTTP method.**
+///
+/// For Custom Authorizer v1 payloads, use the dedicated `ApiGatewayV2CustomAuthorizerV1Request` struct instead.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2httpRequest {
+    /// The type field from Custom Authorizer v1 requests.
+    ///
+    /// This field is not present in standard HTTP API v2 requests.
+    /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
+    #[deprecated(
+        since = "1.1.0",
+        note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
+    )]
     #[serde(default, rename = "type")]
     pub kind: Option<String>,
+    /// The method ARN from Custom Authorizer v1 requests.
+    ///
+    /// This field is not present in standard HTTP API v2 requests.
+    /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
+    #[deprecated(
+        since = "1.1.0",
+        note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
+    )]
     #[serde(default)]
     pub method_arn: Option<String>,
+    /// The HTTP method field.
+    ///
+    /// **Warning**: This field defaults to `GET` if not present in the payload, which may lead to
+    /// incorrect behavior. For standard HTTP API v2 requests, this field is not present in the JSON payload.
+    ///
+    /// **Use `request_context.http.method` instead for standard HTTP API v2 requests**, which contains
+    /// the actual HTTP method for the request.
+    ///
+    /// This top-level `http_method` field is only present in Custom Authorizer v1 requests.
+    /// For those payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
+    #[deprecated(
+        since = "1.1.0",
+        note = "For standard HTTP API v2 requests, use `request_context.http.method` instead. This field defaults to GET when missing and may return incorrect values. For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request`."
+    )]
     #[serde(with = "http_method", default = "default_http_method")]
     pub http_method: Method,
+    /// The identity source from Custom Authorizer v1 requests.
+    ///
+    /// This field is not present in standard HTTP API v2 requests.
+    /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
+    #[deprecated(
+        since = "1.1.0",
+        note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
+    )]
     #[serde(default)]
     pub identity_source: Option<String>,
+    /// The authorization token from Custom Authorizer v1 requests.
+    ///
+    /// This field is not present in standard HTTP API v2 requests.
+    /// For Custom Authorizer v1 payloads, use `ApiGatewayV2CustomAuthorizerV1Request` instead.
+    #[deprecated(
+        since = "1.1.0",
+        note = "This field is only present in Custom Authorizer v1 requests. Use `ApiGatewayV2CustomAuthorizerV1Request` for authorizer payloads."
+    )]
     #[serde(default)]
     pub authorization_token: Option<String>,
     #[serde(default)]
@@ -191,11 +256,13 @@ pub struct ApiGatewayV2httpRequest {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayV2httpRequestContext` contains the information to identify the AWS account and resources invoking the Lambda function.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2httpRequestContext {
@@ -231,11 +298,13 @@ pub struct ApiGatewayV2httpRequestContext {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayRequestAuthorizer` contains authorizer information for the request context.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct ApiGatewayRequestAuthorizer {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -256,11 +325,13 @@ pub struct ApiGatewayRequestAuthorizer {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayRequestAuthorizerJwtDescription` contains JWT authorizer information for the request context.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayRequestAuthorizerJwtDescription {
@@ -275,11 +346,13 @@ pub struct ApiGatewayRequestAuthorizerJwtDescription {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayRequestAuthorizerIamDescription` contains IAM information for the request context.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayRequestAuthorizerIamDescription {
@@ -303,11 +376,13 @@ pub struct ApiGatewayRequestAuthorizerIamDescription {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayRequestAuthorizerCognitoIdentity` contains Cognito identity information for the request context.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayRequestAuthorizerCognitoIdentity {
@@ -322,11 +397,13 @@ pub struct ApiGatewayRequestAuthorizerCognitoIdentity {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayV2httpRequestContextHttpDescription` contains HTTP information for the request context.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2httpRequestContextHttpDescription {
@@ -346,11 +423,13 @@ pub struct ApiGatewayV2httpRequestContextHttpDescription {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayV2httpResponse` configures the response to be returned by API Gateway V2 for the request
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2httpResponse {
@@ -372,11 +451,13 @@ pub struct ApiGatewayV2httpResponse {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayRequestIdentity` contains identity information for the request caller.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayRequestIdentity {
@@ -413,11 +494,13 @@ pub struct ApiGatewayRequestIdentity {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayWebsocketProxyRequest` contains data coming from the API Gateway proxy
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayWebsocketProxyRequest {
@@ -460,6 +543,7 @@ pub struct ApiGatewayWebsocketProxyRequest {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
@@ -467,6 +551,7 @@ pub struct ApiGatewayWebsocketProxyRequest {
 /// the AWS account and resources invoking the Lambda function. It also includes
 /// Cognito identity information for the caller.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayWebsocketProxyRequestContext {
@@ -532,11 +617,13 @@ pub struct ApiGatewayWebsocketProxyRequestContext {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayCustomAuthorizerRequestTypeRequestIdentity` contains identity information for the request caller including certificate information if using mTLS.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequestIdentity {
@@ -554,11 +641,13 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestIdentity {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayCustomAuthorizerRequestTypeRequestIdentityClientCert` contains certificate information for the request caller if using mTLS.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequestIdentityClientCert {
@@ -579,11 +668,13 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestIdentityClientCert {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayCustomAuthorizerRequestTypeRequestIdentityClientCertValidity` contains certificate validity information for the request caller if using mTLS.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequestIdentityClientCertValidity {
@@ -597,11 +688,13 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestIdentityClientCertValidit
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayV2httpRequestContextAuthentication` contains authentication context information for the request caller including client certificate information if using mTLS.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2httpRequestContextAuthentication {
@@ -613,11 +706,13 @@ pub struct ApiGatewayV2httpRequestContextAuthentication {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayV2httpRequestContextAuthenticationClientCert` contains client certificate information for the request caller if using mTLS.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2httpRequestContextAuthenticationClientCert {
@@ -638,11 +733,13 @@ pub struct ApiGatewayV2httpRequestContextAuthenticationClientCert {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayV2httpRequestContextAuthenticationClientCertValidity` contains client certificate validity information for the request caller if using mTLS.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2httpRequestContextAuthenticationClientCertValidity {
@@ -656,10 +753,12 @@ pub struct ApiGatewayV2httpRequestContextAuthenticationClientCertValidity {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2CustomAuthorizerV1RequestTypeRequestContext {
@@ -687,10 +786,12 @@ pub struct ApiGatewayV2CustomAuthorizerV1RequestTypeRequestContext {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2CustomAuthorizerV1Request {
@@ -730,10 +831,12 @@ pub struct ApiGatewayV2CustomAuthorizerV1Request {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2CustomAuthorizerV2Request {
@@ -773,12 +876,14 @@ pub struct ApiGatewayV2CustomAuthorizerV2Request {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayCustomAuthorizerContext` represents the expected format of an API Gateway custom authorizer response.
 /// Deprecated. Code should be updated to use the Authorizer map from APIGatewayRequestIdentity. Ex: Authorizer["principalId"]
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayCustomAuthorizerContext {
@@ -793,11 +898,13 @@ pub struct ApiGatewayCustomAuthorizerContext {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayCustomAuthorizerRequestTypeRequestContext` represents the expected format of an API Gateway custom authorizer response.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
@@ -829,11 +936,13 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayCustomAuthorizerRequest` contains data coming in to a custom API Gateway authorizer function.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayCustomAuthorizerRequest {
@@ -850,11 +959,13 @@ pub struct ApiGatewayCustomAuthorizerRequest {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayCustomAuthorizerRequestTypeRequest` contains data coming in to a custom API Gateway authorizer function.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
@@ -895,11 +1006,13 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayCustomAuthorizerResponse` represents the expected format of an API Gateway authorization response.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayCustomAuthorizerResponse<T1 = Value>
@@ -919,11 +1032,13 @@ where
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayV2CustomAuthorizerSimpleResponse` represents the simple format of an API Gateway V2 authorization response.
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2CustomAuthorizerSimpleResponse<T1 = Value>
@@ -940,10 +1055,12 @@ where
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayV2CustomAuthorizerIamPolicyResponse<T1 = Value>
@@ -962,11 +1079,13 @@ where
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
 /// `ApiGatewayCustomAuthorizerPolicy` represents an IAM policy
 #[non_exhaustive]
+#[cfg_attr(feature = "builders", derive(Builder))]
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ApiGatewayCustomAuthorizerPolicy {
@@ -979,6 +1098,7 @@ pub struct ApiGatewayCustomAuthorizerPolicy {
     #[cfg(feature = "catch-all-fields")]
     #[cfg_attr(docsrs, doc(cfg(feature = "catch-all-fields")))]
     #[serde(flatten)]
+    #[cfg_attr(feature = "builders", builder(default))]
     pub other: serde_json::Map<String, Value>,
 }
 
@@ -1203,6 +1323,22 @@ mod test {
         let output: String = serde_json::to_string(&parsed).unwrap();
         let reparsed: ApiGatewayV2httpRequest = serde_json::from_slice(output.as_bytes()).unwrap();
         assert_eq!(parsed, reparsed);
+    }
+
+    #[test]
+    #[cfg(feature = "apigw")]
+    fn apigw_v2_correct_http_method_usage() {
+        // This test demonstrates the correct way to access the HTTP method
+        // for standard HTTP API v2 requests: use request_context.http.method
+        let data = include_bytes!("../../fixtures/example-apigw-v2-request-no-authorizer.json");
+        let parsed: ApiGatewayV2httpRequest = serde_json::from_slice(data).unwrap();
+
+        // The correct way to get the HTTP method for standard HTTP API v2 requests
+        assert_eq!(parsed.request_context.http.method, Method::GET);
+
+        // Verify that request_context.http.method contains the actual method from the JSON
+        // In the fixture, requestContext.http.method is "GET"
+        assert_eq!(parsed.request_context.http.method, Method::GET);
     }
 
     #[test]

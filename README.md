@@ -449,6 +449,80 @@ By default, the log level to emit events is `INFO`. Log at `TRACE` level for mor
 
 This project includes Lambda event struct definitions, [`aws_lambda_events`](https://crates.io/crates/aws_lambda_events). This crate can be leveraged to provide strongly-typed Lambda event structs. You can create your own custom event objects and their corresponding structs as well.
 
+### Builder pattern for event responses
+
+The `aws_lambda_events` crate provides an optional `builders` feature that adds builder pattern support for constructing event responses. This is particularly useful when working with custom context types that don't implement `Default`.
+
+Enable the builders feature in your `Cargo.toml`:
+
+```toml
+[dependencies]
+aws_lambda_events = { version = "*", features = ["builders"] }
+```
+
+Example with API Gateway custom authorizers:
+
+```rust
+use aws_lambda_events::event::apigw::{
+    ApiGatewayV2CustomAuthorizerSimpleResponseBuilder,
+    ApiGatewayV2CustomAuthorizerV2Request,
+};
+use lambda_runtime::{Error, LambdaEvent};
+
+struct MyContext {
+    user_id: String,
+    permissions: Vec<String>,
+}
+
+async fn handler(
+    event: LambdaEvent<ApiGatewayV2CustomAuthorizerV2Request>,
+) -> Result<ApiGatewayV2CustomAuthorizerSimpleResponse<MyContext>, Error> {
+    let context = MyContext {
+        user_id: "user-123".to_string(),
+        permissions: vec!["read".to_string()],
+    };
+
+    let response = ApiGatewayV2CustomAuthorizerSimpleResponseBuilder::default()
+        .is_authorized(true)
+        .context(context)
+        .build()?;
+
+    Ok(response)
+}
+```
+
+Example with SQS batch responses:
+
+```rust
+use aws_lambda_events::event::sqs::{
+    BatchItemFailureBuilder,
+    SqsBatchResponseBuilder,
+    SqsEvent,
+};
+use lambda_runtime::{Error, LambdaEvent};
+
+async fn handler(event: LambdaEvent<SqsEvent>) -> Result<SqsBatchResponse, Error> {
+    let mut failures = Vec::new();
+    
+    for record in event.payload.records {
+        if let Err(_) = process_record(&record).await {
+            let failure = BatchItemFailureBuilder::default()
+                .item_identifier(record.message_id.unwrap())
+                .build()?;
+            failures.push(failure);
+        }
+    }
+    
+    let response = SqsBatchResponseBuilder::default()
+        .batch_item_failures(failures)
+        .build()?;
+    
+    Ok(response)
+}
+```
+
+See the [examples directory](https://github.com/aws/aws-lambda-rust-runtime/tree/main/lambda-events/examples) for more builder pattern examples.
+
 ### Custom event objects
 
 To serialize and deserialize events and responses, we suggest using the [`serde`](https://github.com/serde-rs/serde) library. To receive custom events, annotate your structure with Serde's macros:

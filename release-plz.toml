@@ -1,6 +1,7 @@
 [workspace]
 semver_check = true
 git_release_enable = false
+files_to_ignore = ["examples/**"]
 
 [[package]]
 name = "lambda-integration-tests"

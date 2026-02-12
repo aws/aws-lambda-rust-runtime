@@ -14,6 +14,9 @@ categories = ["web-programming::http-server"]
 keywords = ["AWS", "Lambda", "API"]
 readme = "../README.md"
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tokio_unstable)'] }
+
 [features]
 default = ["tracing"]
 tracing = ["lambda_runtime_api_client/tracing"] # enables access to the Tracing utilities
@@ -25,7 +28,7 @@ miette = ["dep:miette"] # enables From<T> for Diagnostic for miette error types,
 # as well as default features
 # https://github.com/aws/aws-lambda-rust-runtime/issues/984
 graceful-shutdown = ["tokio/rt", "tokio/signal", "dep:lambda-extension"]
-experimental-concurrency = []
+concurrency-tokio = []
 
 [dependencies]
 anyhow = { version = "1.0.86", optional = true }

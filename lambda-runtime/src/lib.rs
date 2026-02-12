@@ -95,9 +95,9 @@ where
 /// [Runtime] type directly.
 ///
 /// # Managed concurrency
-/// If `AWS_LAMBDA_MAX_CONCURRENCY` is set, this function returns an error because
-/// it does not enable concurrent polling. If your handler can satisfy `Clone`,
-/// prefer [`run_concurrent`] (requires the `experimental-concurrency` feature),
+/// If `AWS_LAMBDA_MAX_CONCURRENCY` is set, a warning is logged.
+/// If your handler can satisfy `Clone + Send + 'static`,
+/// prefer [`run_concurrent`] (requires the `concurrency-tokio` feature),
 /// which honors managed concurrency and falls back to sequential behavior when
 /// unset.
 ///
@@ -117,6 +117,12 @@ where
 ///     Ok(event.payload)
 /// }
 /// ```
+///
+/// # Panics
+///
+/// This function panics if required Lambda environment variables are missing
+/// (`AWS_LAMBDA_FUNCTION_NAME`, `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`,
+/// `AWS_LAMBDA_FUNCTION_VERSION`, `AWS_LAMBDA_RUNTIME_API`).
 pub async fn run<A, F, R, B, S, D, E>(handler: F) -> Result<(), Error>
 where
     F: Service<LambdaEvent<A>, Response = R>,
@@ -136,10 +142,10 @@ where
 /// Starts the Lambda Rust runtime in a mode that is compatible with
 /// Lambda Managed Instances (concurrent invocations).
 ///
-/// Requires the `experimental-concurrency` feature.
+/// Requires the `concurrency-tokio` feature.
 ///
 /// When `AWS_LAMBDA_MAX_CONCURRENCY` is set to a value greater than 1, this
-/// will spawn `AWS_LAMBDA_MAX_CONCURRENCY` worker tasks, each running its own
+/// will spawn `AWS_LAMBDA_MAX_CONCURRENCY` tokio worker tasks, each running its own
 /// `/next` polling loop. When the environment variable is unset or `<= 1`, it
 /// falls back to the same sequential behavior as [`run`], so the same handler
 /// can run on both classic Lambda and Lambda Managed Instances.
@@ -163,8 +169,16 @@ where
 ///     Ok(event.payload)
 /// }
 /// ```
-#[cfg(feature = "experimental-concurrency")]
-#[cfg_attr(docsrs, doc(cfg(feature = "experimental-concurrency")))]
+///
+/// # Panics
+///
+/// This function panics if:
+/// - Called outside of a Tokio runtime
+/// - Required Lambda environment variables are missing (`AWS_LAMBDA_FUNCTION_NAME`,
+///   `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`, `AWS_LAMBDA_FUNCTION_VERSION`,
+///   `AWS_LAMBDA_RUNTIME_API`)
+#[cfg(feature = "concurrency-tokio")]
+#[cfg_attr(docsrs, doc(cfg(feature = "concurrency-tokio")))]
 pub async fn run_concurrent<A, F, R, B, S, D, E>(handler: F) -> Result<(), Error>
 where
     F: Service<LambdaEvent<A>, Response = R> + Clone + Send + 'static,

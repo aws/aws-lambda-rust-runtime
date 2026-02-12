@@ -4,18 +4,18 @@ use crate::{
     types::{invoke_request_id, IntoFunctionResponse, LambdaEvent},
     Config, Context, Diagnostic,
 };
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 use futures::stream::FuturesUnordered;
 use http_body_util::BodyExt;
 use lambda_runtime_api_client::{BoxError, Client as ApiClient};
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 use std::fmt;
-use std::{env, fmt::Debug, future::Future, io, sync::Arc};
+use std::{env, fmt::Debug, future::Future, sync::Arc};
 use tokio_stream::{Stream, StreamExt};
 use tower::{Layer, Service, ServiceExt};
 use tracing::trace;
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 use tracing::{debug, error, info_span, warn, Instrument};
 
 /* ----------------------------------------- INVOCATION ---------------------------------------- */
@@ -96,6 +96,13 @@ where
     /// Note that manually creating a [Runtime] does not add tracing to the executed handler
     /// as is done by [super::run]. If you want to add the default tracing functionality, call
     /// [Runtime::layer] with a [super::layers::TracingLayer].
+    ///
+    ///
+    /// # Panics
+    ///
+    /// This function panics if required Lambda environment variables are missing
+    /// (`AWS_LAMBDA_FUNCTION_NAME`, `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`,
+    /// `AWS_LAMBDA_FUNCTION_VERSION`, `AWS_LAMBDA_RUNTIME_API`).
     pub fn new(handler: F) -> Self {
         trace!("Loading config from env");
         let config = Arc::new(Config::from_env());
@@ -154,19 +161,30 @@ impl<S> Runtime<S> {
     }
 }
 
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 impl<S> Runtime<S>
 where
     S: Service<LambdaInvocation, Response = (), Error = BoxError> + Clone + Send + 'static,
     S::Future: Send,
 {
-    /// Start the runtime in concurrent mode when configured for Lambda managed-concurrency.
+    /// Start the runtime and begin polling for events on the Lambda Runtime API,
+    /// in a mode that is compatible with Lambda Managed Instances.
     ///
-    /// If `AWS_LAMBDA_MAX_CONCURRENCY` is not set or is `<= 1`, this falls back to the
-    /// sequential `run_with_incoming` loop so that the same handler can run on both
-    /// classic Lambda and Lambda Managed Instances.
-    #[cfg_attr(docsrs, doc(cfg(feature = "experimental-concurrency")))]
+    /// When `AWS_LAMBDA_MAX_CONCURRENCY` is set to a value greater than 1, this
+    /// spawns multiple tokio worker tasks to handle concurrent invocations. When the
+    /// environment variable is unset or `<= 1`, it falls back to sequential
+    /// behavior, so the same handler can run on both classic Lambda and Lambda
+    /// Managed Instances.
+    ///
+    /// # Panics
+    ///
+    /// This function panics if called outside of a Tokio runtime.
+    #[cfg_attr(docsrs, doc(cfg(feature = "concurrency-tokio")))]
     pub async fn run_concurrent(self) -> Result<(), BoxError> {
+        if tokio::runtime::Handle::try_current().is_err() {
+            panic!("`run_concurrent` must be called from within a Tokio runtime");
+        }
+
         if self.concurrency_limit > 1 {
             trace!("Concurrent mode: _X_AMZN_TRACE_ID is not set; use context.xray_trace_id");
             Self::run_concurrent_inner(self.service, self.config, self.client, self.concurrency_limit).await
@@ -259,20 +277,20 @@ where
     }
 }
 
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 #[derive(Debug)]
 enum WorkerError {
     CleanExit(tokio::task::Id),
     Failure(tokio::task::Id, BoxError),
 }
 
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 #[derive(Debug)]
 struct ConcurrentWorkerErrors {
     errors: Vec<WorkerError>,
 }
 
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 #[derive(Serialize)]
 struct ConcurrentWorkerErrorsPayload<'a> {
     message: &'a str,
@@ -282,14 +300,14 @@ struct ConcurrentWorkerErrorsPayload<'a> {
     failures: Vec<WorkerFailurePayload>,
 }
 
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 #[derive(Serialize)]
 struct WorkerFailurePayload {
     id: String,
     err: String,
 }
 
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 impl fmt::Display for ConcurrentWorkerErrors {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut clean = Vec::new();
@@ -326,7 +344,7 @@ impl fmt::Display for ConcurrentWorkerErrors {
     }
 }
 
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 impl std::error::Error for ConcurrentWorkerErrors {}
 
 impl<S> Runtime<S>
@@ -335,14 +353,23 @@ where
 {
     /// Start the runtime and begin polling for events on the Lambda Runtime API.
     ///
-    /// If `AWS_LAMBDA_MAX_CONCURRENCY` is set, this returns an error because it does not enable
-    /// concurrent polling. Enable the `experimental-concurrency` feature and use
-    /// [`Runtime::run_concurrent`] instead.
+    /// The runtime will process requests sequentially.
+    ///
+    /// # Managed concurrency
+    /// If `AWS_LAMBDA_MAX_CONCURRENCY` is set, a warning is logged.
+    /// If your handler can satisfy `Clone + Send + 'static`,
+    /// prefer [`Runtime::run_concurrent`] (requires the `concurrency-tokio` feature),
+    /// which honors managed concurrency and falls back to sequential behavior when
+    /// unset.
     pub async fn run(self) -> Result<(), BoxError> {
         if let Some(raw) = concurrency_env_value() {
-            return Err(Box::new(io::Error::other(format!(
-                "AWS_LAMBDA_MAX_CONCURRENCY is set to '{raw}', but Runtime::run does not support concurrent polling; enable the experimental-concurrency feature and use Runtime::run_concurrent instead"
-            ))));
+            if tracing::dispatcher::has_been_set() {
+                tracing::warn!(
+                    "AWS_LAMBDA_MAX_CONCURRENCY is set to '{raw}', but the concurrency-tokio feature is not enabled; running sequentially",
+                );
+            } else {
+                eprintln!("AWS_LAMBDA_MAX_CONCURRENCY is set to '{raw}', but the concurrency-tokio feature is not enabled; running sequentially");
+            }
         }
         let incoming = incoming(&self.client);
         Self::run_with_incoming(self.service, self.config, incoming).await
@@ -412,7 +439,7 @@ fn incoming(
 }
 
 /// Creates a future that polls the `/next` endpoint.
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 async fn next_event_future(client: &ApiClient) -> Result<http::Response<hyper::body::Incoming>, BoxError> {
     let req = NextEventRequest.into_req()?;
     client.call(req).await
@@ -429,7 +456,7 @@ fn concurrency_env_value() -> Option<String> {
     env::var("AWS_LAMBDA_MAX_CONCURRENCY").ok()
 }
 
-#[cfg(feature = "experimental-concurrency")]
+#[cfg(feature = "concurrency-tokio")]
 async fn concurrent_worker_loop<S>(mut service: S, config: Arc<Config>, client: Arc<ApiClient>) -> Result<(), BoxError>
 where
     S: Service<LambdaInvocation, Response = (), Error = BoxError>,
@@ -760,7 +787,7 @@ mod endpoint_tests {
         .await
     }
 
-    #[cfg(feature = "experimental-concurrency")]
+    #[cfg(feature = "concurrency-tokio")]
     #[tokio::test]
     async fn concurrent_worker_crash_does_not_stop_other_workers() -> Result<(), Error> {
         let next_calls = Arc::new(AtomicUsize::new(0));
@@ -910,7 +937,7 @@ mod endpoint_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "experimental-concurrency")]
+    #[cfg(feature = "concurrency-tokio")]
     async fn test_concurrent_structured_logging_isolation() -> Result<(), Error> {
         use std::collections::HashSet;
         use tracing::info;

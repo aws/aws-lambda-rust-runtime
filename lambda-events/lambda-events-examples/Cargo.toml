@@ -1,0 +1,25 @@
+[package]
+name = "lambda-events-examples"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+aws_lambda_events = { path = "..", features = ["builders"] }
+lambda_runtime = { path = "../../lambda-runtime" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+serde_dynamo = "4"
+
+[[example]]
+name = "comprehensive-builders"
+path = "examples/comprehensive-builders.rs"
+
+[[example]]
+name = "lambda-runtime-authorizer-builder"
+path = "examples/lambda-runtime-authorizer-builder.rs"
+
+[[example]]
+name = "lambda-runtime-sqs-batch-builder"
+path = "examples/lambda-runtime-sqs-batch-builder.rs"

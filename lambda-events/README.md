@@ -27,6 +27,50 @@ This crate divides all Lambda Events into features named after the service that 
 cargo add aws_lambda_events --no-default-features --features apigw,alb
 ```
 
+### Builder pattern support
+
+The crate provides an optional `builders` feature that adds builder pattern support for event types. This enables type-safe, immutable construction of event responses with a clean, ergonomic API.
+
+Enable the builders feature:
+
+```
+cargo add aws_lambda_events --features builders
+```
+
+Example using builders with API Gateway custom authorizers:
+
+```rust
+use aws_lambda_events::event::apigw::{
+    ApiGatewayV2CustomAuthorizerSimpleResponse,
+    ApiGatewayV2CustomAuthorizerV2Request,
+};
+use lambda_runtime::{Error, LambdaEvent};
+
+// Context type without Default implementation
+struct MyContext {
+    user_id: String,
+    permissions: Vec<String>,
+}
+
+async fn handler(
+    event: LambdaEvent<ApiGatewayV2CustomAuthorizerV2Request>,
+) -> Result<ApiGatewayV2CustomAuthorizerSimpleResponse<MyContext>, Error> {
+    let context = MyContext {
+        user_id: "user-123".to_string(),
+        permissions: vec!["read".to_string()],
+    };
+
+    let response = ApiGatewayV2CustomAuthorizerSimpleResponse::builder()
+        .is_authorized(true)
+        .context(context)
+        .build();
+
+    Ok(response)
+}
+```
+
+See the [examples directory](https://github.com/aws/aws-lambda-rust-runtime/tree/main/lambda-events/examples) for more builder pattern examples.
+
 ## History
 
 The AWS Lambda Events crate was created by [Christian Legnitto](https://github.com/LegNeato). Without all his work and dedication, this project could have not been possible.

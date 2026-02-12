@@ -10,6 +10,8 @@ on:
 
 jobs:
   run-integration-tests:
+    # Only run on the main repo, not forks
+    if: ${{ github.repository_owner == 'aws' }}
     runs-on: ubuntu-latest
     steps:
         - name: install Cargo Lambda
