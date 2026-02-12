@@ -156,7 +156,7 @@ where
 {
     async move {
         let mut body = response.into_body();
-        
+
         while let Some(frame_result) = body.frame().await {
             match frame_result {
                 Ok(frame) => {
@@ -164,7 +164,9 @@ where
                         // Check for Lambda-Runtime-Function-Response-Status: timeout
                         if let Some(status) = trailers.get("Lambda-Runtime-Function-Response-Status") {
                             if status == "timeout" {
-                                warn!("Lambda invocation timed out - response was not sent within the configured timeout");
+                                warn!(
+                                    "Lambda invocation timed out - response was not sent within the configured timeout"
+                                );
                             }
                         }
                     }
@@ -205,23 +207,15 @@ mod tests {
         // Create a response body with trailers indicating timeout
         let body_data = Bytes::from_static(b"response body");
         let mut trailers = http::HeaderMap::new();
-        trailers.insert(
-            "Lambda-Runtime-Function-Response-Status",
-            "timeout".parse().unwrap(),
-        );
+        trailers.insert("Lambda-Runtime-Function-Response-Status", "timeout".parse().unwrap());
 
         // Create a stream with data frame followed by trailer frame
-        let frames: Vec<Result<Frame<Bytes>, Infallible>> = vec![
-            Ok(Frame::data(body_data)),
-            Ok(Frame::trailers(trailers)),
-        ];
+        let frames: Vec<Result<Frame<Bytes>, Infallible>> =
+            vec![Ok(Frame::data(body_data)), Ok(Frame::trailers(trailers))];
         let stream_body: TestBody = StreamBody::new(futures::stream::iter(frames));
 
         // Create a mock response
-        let response: Response<TestBody> = Response::builder()
-            .status(200)
-            .body(stream_body)
-            .unwrap();
+        let response: Response<TestBody> = Response::builder().status(200).body(stream_body).unwrap();
 
         // Test the reconcile_response function directly
         let result = reconcile_response(response).await;
@@ -239,10 +233,7 @@ mod tests {
                 .flat_map(|span| span.events())
                 .filter(|event| {
                     event.metadata().level() == &tracing::Level::WARN
-                        && event
-                            .message()
-                            .map(|msg| msg.contains("timed out"))
-                            .unwrap_or(false)
+                        && event.message().map(|msg| msg.contains("timed out")).unwrap_or(false)
                 })
                 .collect();
 
@@ -259,10 +250,7 @@ mod tests {
         let frames: Vec<Result<Frame<Bytes>, Infallible>> = vec![Ok(Frame::data(body_data))];
         let stream_body: TestBody = StreamBody::new(futures::stream::iter(frames));
 
-        let response: Response<TestBody> = Response::builder()
-            .status(200)
-            .body(stream_body)
-            .unwrap();
+        let response: Response<TestBody> = Response::builder().status(200).body(stream_body).unwrap();
 
         // Test the reconcile_response function directly
         let result = reconcile_response(response).await;

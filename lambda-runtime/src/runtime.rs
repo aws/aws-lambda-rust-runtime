@@ -1214,7 +1214,7 @@ mod endpoint_tests {
         ) -> Result<serde_json::Value, Error> {
             let count = call_count.fetch_add(1, Ordering::SeqCst);
             let request_id = &event.context.request_id;
-            
+
             // Alternate between errors and successes
             if count % 2 == 0 {
                 // Even calls: return error (simulating timeout or other failure)
@@ -1228,9 +1228,8 @@ mod endpoint_tests {
             }
         }
 
-        let handler = crate::service_fn(move |event| {
-            error_then_success_handler(event, handler_call_count_clone.clone())
-        });
+        let handler =
+            crate::service_fn(move |event| error_then_success_handler(event, handler_call_count_clone.clone()));
         let client = Arc::new(Client::builder().with_endpoint(base).build()?);
 
         let runtime = Runtime {
