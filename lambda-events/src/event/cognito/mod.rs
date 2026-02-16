@@ -551,7 +551,7 @@ pub struct ClaimsAndScopeOverrideDetailsV2 {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoIdTokenGenerationV2 {
-    pub claims_to_add_or_override: HashMap<String, String>,
+    pub claims_to_add_or_override: HashMap<String, Value>,
     pub claims_to_suppress: Vec<String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
@@ -569,7 +569,7 @@ pub struct CognitoIdTokenGenerationV2 {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoAccessTokenGenerationV2 {
-    pub claims_to_add_or_override: HashMap<String, String>,
+    pub claims_to_add_or_override: HashMap<String, Value>,
     pub claims_to_suppress: Vec<String>,
     pub scopes_to_add: Vec<String>,
     pub scopes_to_suppress: Vec<String>,
