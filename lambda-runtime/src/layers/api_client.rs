@@ -14,7 +14,7 @@ use tracing::{error, warn};
 /// This type is only meant for internal use in the Lambda runtime crate. It neither augments the
 /// inner service's request type nor its error type. However, this service returns an empty
 /// response `()` as the Lambda request has been completed.
-pub struct RuntimeApiClientService<S> {
+pub(crate) struct RuntimeApiClientService<S> {
     inner: S,
     client: Arc<Client>,
 }
@@ -78,7 +78,7 @@ where
 /// The type parameter `B` represents the response body type. In production this is `hyper::body::Incoming`,
 /// but for testing it can be any body type that implements `http_body::Body`.
 #[pin_project(project = RuntimeApiClientFutureProj)]
-pub enum RuntimeApiClientFuture<F, B> {
+pub(crate) enum RuntimeApiClientFuture<F, B> {
     /// **Invoke Phase**: Polling the inner service to build the Lambda response request.
     ///
     /// Contains:
