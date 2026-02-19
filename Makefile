@@ -9,7 +9,7 @@ RIE_MAX_CONCURRENCY ?= 4
 OUTPUT_DIR ?= /tmp/var-task
 EXAMPLES ?=
 
-.PHONY: pr-check integration-tests check-event-features fmt build-examples test-rie test-rie-lmi
+.PHONY: pr-check integration-tests check-event-features fmt build-examples test-rie test-rie-lmi nuke
 
 define uppercase
 $(shell sed -r 's/(^|-)(\w)/\U\2/g' <<< $(1))
@@ -121,6 +121,10 @@ build-examples:
 
 test-rie:
 	./scripts/test-rie.sh
+
+nuke:
+	docker kill $$(docker ps -q)
+
 
 # Run RIE in Lambda Managed Instance (LMI) mode with concurrent polling.
 test-rie-lmi:
