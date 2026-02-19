@@ -6,6 +6,10 @@ INTEG_EXTENSIONS := extension-fn extension-trait logs-trait
 # Using musl to run extensions on both AL1 and AL2
 INTEG_ARCH := x86_64-unknown-linux-musl
 RIE_MAX_CONCURRENCY ?= 4
+OUTPUT_DIR ?= /tmp/var-task
+EXAMPLES ?=
+
+.PHONY: pr-check integration-tests check-event-features fmt build-examples test-rie test-rie-lmi
 
 define uppercase
 $(shell sed -r 's/(^|-)(\w)/\U\2/g' <<< $(1))
@@ -111,6 +115,9 @@ check-event-features:
 
 fmt:
 	cargo +nightly fmt --all
+
+build-examples:
+	./scripts/build-examples.sh
 
 test-rie:
 	./scripts/test-rie.sh $(EXAMPLE)
