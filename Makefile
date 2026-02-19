@@ -120,7 +120,7 @@ build-examples:
 	./scripts/build-examples.sh
 
 test-rie:
-	./scripts/test-rie.sh $(EXAMPLE)
+	./scripts/test-rie.sh
 
 # Run RIE in Lambda Managed Instance (LMI) mode with concurrent polling.
 test-rie-lmi:
