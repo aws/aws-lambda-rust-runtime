@@ -94,8 +94,24 @@ pub struct SnsMessage {
     pub signing_cert_url: String,
 
     /// A URL that you can use to unsubscribe the endpoint from this topic. If you visit this URL, Amazon SNS unsubscribes the endpoint and stops sending notifications to this endpoint.
+    ///
+    /// Note: This field is only present in Notification messages. It is not present in SubscriptionConfirmation or UnsubscribeConfirmation messages.
     #[serde(alias = "UnsubscribeURL")]
-    pub unsubscribe_url: String,
+    #[serde(default)]
+    pub unsubscribe_url: Option<String>,
+
+    /// A URL that you can visit to re-confirm the subscription or confirm the unsubscription.
+    ///
+    /// Note: This field is only present in SubscriptionConfirmation and UnsubscribeConfirmation messages.
+    #[serde(alias = "SubscribeURL")]
+    #[serde(default)]
+    pub subscribe_url: Option<String>,
+
+    /// A value you can use with the ConfirmSubscription action to re-confirm the subscription.
+    ///
+    /// Note: This field is only present in SubscriptionConfirmation and UnsubscribeConfirmation messages.
+    #[serde(default)]
+    pub token: Option<String>,
 
     /// The Message value specified when the notification was published to the topic.
     pub message: String,
@@ -205,8 +221,24 @@ pub struct SnsMessageObj<T: Serialize> {
     pub signing_cert_url: String,
 
     /// A URL that you can use to unsubscribe the endpoint from this topic. If you visit this URL, Amazon SNS unsubscribes the endpoint and stops sending notifications to this endpoint.
+    ///
+    /// Note: This field is only present in Notification messages. It is not present in SubscriptionConfirmation or UnsubscribeConfirmation messages.
     #[serde(alias = "UnsubscribeURL")]
-    pub unsubscribe_url: String,
+    #[serde(default)]
+    pub unsubscribe_url: Option<String>,
+
+    /// A URL that you can visit to re-confirm the subscription or confirm the unsubscription.
+    ///
+    /// Note: This field is only present in SubscriptionConfirmation and UnsubscribeConfirmation messages.
+    #[serde(alias = "SubscribeURL")]
+    #[serde(default)]
+    pub subscribe_url: Option<String>,
+
+    /// A value you can use with the ConfirmSubscription action to re-confirm the subscription.
+    ///
+    /// Note: This field is only present in SubscriptionConfirmation and UnsubscribeConfirmation messages.
+    #[serde(default)]
+    pub token: Option<String>,
 
     /// Deserialized into a `T` from nested JSON inside the SNS message string. `T` must implement the `Deserialize` or `DeserializeOwned` trait.
     #[serde_as(as = "serde_with::json::JsonString")]
@@ -461,5 +493,46 @@ mod test {
         let output: String = serde_json::to_string(&parsed).unwrap();
         let reparsed: SnsEventObj<CustStruct> = serde_json::from_slice(output.as_bytes()).unwrap();
         assert_eq!(parsed, reparsed);
+    }
+
+    #[test]
+    #[cfg(feature = "sns")]
+    fn my_example_sns_subscription_confirmation() {
+        // Test for issue #966: SnsMessage struct fails with SubscriptionConfirmation types
+        // SubscriptionConfirmation messages have SubscribeURL and Token fields instead of UnsubscribeURL
+        let data = include_bytes!("../../fixtures/example-sns-subscription-confirmation.json");
+        let parsed: SnsEvent = serde_json::from_slice(data).unwrap();
+        assert_eq!(1, parsed.records.len());
+
+        let sns_message = &parsed.records[0].sns;
+        assert_eq!("SubscriptionConfirmation", sns_message.sns_message_type);
+        assert!(sns_message.unsubscribe_url.is_none());
+        assert!(sns_message.subscribe_url.is_some());
+        assert!(sns_message.token.is_some());
+        assert_eq!(
+            "https://sns.us-east-1.amazonaws.com/?Action=ConfirmSubscription&TopicArn=arn:aws:sns:us-east-1:123456789012:MyTopic&Token=2336412f37fb687f5d51e6e2425dacbbffff",
+            sns_message.subscribe_url.as_ref().unwrap()
+        );
+        assert_eq!(
+            "2336412f37fb687f5d51e6e2425dacbbffff",
+            sns_message.token.as_ref().unwrap()
+        );
+
+        let output: String = serde_json::to_string(&parsed).unwrap();
+        let reparsed: SnsEvent = serde_json::from_slice(output.as_bytes()).unwrap();
+        assert_eq!(parsed, reparsed);
+    }
+
+    #[test]
+    #[cfg(feature = "sns")]
+    fn my_example_sns_notification_has_unsubscribe_url() {
+        // Verify that Notification messages still have unsubscribe_url
+        let data = include_bytes!("../../fixtures/example-sns-event.json");
+        let parsed: SnsEvent = serde_json::from_slice(data).unwrap();
+        let sns_message = &parsed.records[0].sns;
+        assert_eq!("Notification", sns_message.sns_message_type);
+        assert!(sns_message.unsubscribe_url.is_some());
+        assert!(sns_message.subscribe_url.is_none());
+        assert!(sns_message.token.is_none());
     }
 }
