@@ -7,7 +7,8 @@ INTEG_EXTENSIONS := extension-fn extension-trait logs-trait
 INTEG_ARCH := x86_64-unknown-linux-musl
 RIE_MAX_CONCURRENCY ?= 4
 OUTPUT_DIR ?= /tmp/var-task
-EXAMPLES ?=
+HANDLERS_TO_BUILD ?= basic-lambda
+HANDLER ?= basic-lambda
 
 .PHONY: help pr-check integration-tests check-event-features fmt build-examples test-rie test-rie-lmi nuke test-dockerized
 
@@ -119,7 +120,10 @@ fmt:
 	cargo +nightly fmt --all
 
 build-examples:
-	./scripts/build-examples.sh
+	HANDLERS_TO_BUILD=${HANDLERS_TO_BUILD} ./scripts/build-examples.sh
+
+nuke:
+	docker kill $$(docker ps -q)
 
 test-dockerized:
 	@echo "Running dockerized tests locally..."
@@ -144,14 +148,11 @@ test-dockerized:
 		/tests/*.json
 
 test-rie:
-	./scripts/test-rie.sh
-
-nuke:
-	docker kill $$(docker ps -q)
+	HANDLER="$(HANDLER)" ./scripts/test-rie.sh
 
 # Run RIE in Lambda Managed Instance (LMI) mode with concurrent polling.
 test-rie-lmi:
-	RIE_MAX_CONCURRENCY=$(RIE_MAX_CONCURRENCY) ./scripts/test-rie.sh $(EXAMPLE)
+	RIE_MAX_CONCURRENCY=$(RIE_MAX_CONCURRENCY) HANDLER="$(HANDLER)" ./scripts/test-rie.sh $(EXAMPLE)
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -162,14 +163,18 @@ help: ## Show this help message
 	@echo '  check-event-features  Test individual event features'
 	@echo '  fmt                   Format code with cargo fmt'
 	@echo '  build-examples        Build example Lambda functions'
-	@echo '                        Usage: EXAMPLES="basic-lambda" make build-examples'
+	@echo '                        Usage: EXAMPLES="basic-lambda" OUTPUT_DIR=/make build-examples'
 	@echo '  test-rie              Test Lambda with Runtime Interface Emulator'
+	@echo '                        Usage: HANDLERS_TO_BUILD="basic-lambda basic-sqs" make test-rie'
+	@echo '                        Usage: HANDLERS_TO_BUILD="basic-lambda" HANDLER="basic-lambda" make test-rie'
 	@echo '  test-rie-lmi          Test RIE in Lambda Managed Instance mode'
-	@echo '                        Usage: RIE_MAX_CONCURRENCY=4 make test-rie-lmi'
+	@echo '                        Usage: RIE_MAX_CONCURRENCY=4 HANDLERS_TO_BUILD="basic-lambda-concurrent" make test-rie-lmi'
 	@echo '  test-dockerized       Run dockerized test harness'
 	@echo '  nuke                  Kill all running Docker containers'
 	@echo ''
 	@echo 'Environment variables:'
-	@echo '  EXAMPLES              Space-separated list of examples to build'
-	@echo '  OUTPUT_DIR            Directory for built binaries (default: /tmp/var-task)'
-	@echo '  RIE_MAX_CONCURRENCY   Max concurrent Lambda invocations for LMI mode'
+	@echo '  EXAMPLES              Space-separated list of examples to build (for build-examples)'
+	@echo '  HANDLERS_TO_BUILD     Space-separated list of handlers to build for RIE (for test-rie)'
+	@echo '  HANDLER               Specific handler to run (defaults to first in HANDLERS_TO_BUILD)'
+	@echo '  OUTPUT_DIR            Directory for built binaries (default: /tmp/var-task for build-examples, /var/task for Docker)'
+	@echo '  RIE_MAX_CONCURRENCY   Max concurrent Lambda invocations for LMI mode (for test-rie-lmi)'

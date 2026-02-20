@@ -3,8 +3,9 @@ FROM public.ecr.aws/lambda/provided:al2023 AS builder
 RUN dnf install -y gcc make
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
-ENV EXAMPLES="basic-lambda"
-ENV OUTPUT_DIR="/var/task"
+
+ARG HANDLERS_TO_BUILD="basic-lambda"
+ARG OUTPUT_DIR="/var/task"
 
 COPY Cargo.* /build/
 COPY lambda-runtime /build/lambda-runtime
@@ -16,7 +17,7 @@ COPY examples /build/examples
 COPY scripts/build-examples.sh /build/
 
 WORKDIR /build
-RUN chmod +x build-examples.sh && ./build-examples.sh
+RUN chmod +x build-examples.sh && HANDLERS_TO_BUILD="$HANDLERS_TO_BUILD" OUTPUT_DIR="$OUTPUT_DIR" ./build-examples.sh
 
 # Final Image
 FROM public.ecr.aws/lambda/provided:al2023

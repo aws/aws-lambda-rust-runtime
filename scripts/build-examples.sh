@@ -2,21 +2,21 @@
 set -e
 
 OUTPUT_DIR="${OUTPUT_DIR:-/tmp/var-task}"
-EXAMPLES="${EXAMPLES:-}"
+HANDLERS_TO_BUILD="${HANDLERS_TO_BUILD:-}"
 
 mkdir -p "$OUTPUT_DIR"
 
-echo "Building examples: $(EXAMPLES)"
+echo "Building handlers: ${HANDLERS_TO_BUILD}"
 
 
-for example in ${EXAMPLES}; do
-    dir="examples/$example"
-    [ ! -f "$dir/Cargo.toml" ] && echo "✗ $example not found" && continue
+for handler in ${HANDLERS_TO_BUILD}; do
+    dir="examples/$handler"
+    [ ! -f "$dir/Cargo.toml" ] && echo "✗ $handler not found" && continue
     
-    echo "Building $example..."
+    echo "Building $handler..."
     (cd "$dir" && cargo build --release) || continue
     
-    [ -f "$dir/target/release/$example" ] && cp "$dir/target/release/$example" "$OUTPUT_DIR/" && echo "✓ $example"
+    [ -f "$dir/target/release/$handler" ] && cp "$dir/target/release/$handler" "$OUTPUT_DIR/" && echo "✓ $handler"
 done
 
 echo ""

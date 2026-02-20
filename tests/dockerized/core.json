@@ -1,0 +1,19 @@
+{
+    "tests": [
+        {
+            "name": "test_echo",
+            "handler": "basic-lambda",
+            "request": {
+                "command": "test"
+            },
+            "assertions": [
+                {
+                    "response": {
+                        "msg": "Command test executed."
+                    },
+                    "transform": "{msg: .msg}"
+                }
+            ]
+        }
+    ]
+}

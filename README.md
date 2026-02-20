@@ -392,34 +392,25 @@ You can read more about how [cargo lambda watch](https://www.cargo-lambda.info/c
 
 ### Local testing with Runtime Interface Emulator (RIE)
 
-For testing with the official AWS Lambda Runtime Interface Emulator, use the provided RIE testing infrastructure:
+For testing with the official AWS Lambda Runtime Interface Emulator:
 
 ```bash
 make test-rie
 ```
 
-By default, this uses the `basic-lambda` example. To test a different example:
+By default, this builds and tests the `basic-lambda` example. To build and test a custom handler:
 
 ```bash
-make test-rie EXAMPLE=basic-sqs
-make test-rie EXAMPLE=http-basic-lambda
+HANDLER="basic-tenant-id" make test-rie
 ```
 
-To test Lambda Managed Instances (concurrent polling), use:
+To test Lambda Managed Instances (concurrent polling):
 
 ```bash
-make test-rie-lmi EXAMPLE=basic-lambda-concurrent
+RIE_MAX_CONCURRENCY=4 make test-rie
 ```
-
-This command will:
-1. Build a Docker image with Rust toolchain and RIE
-2. Compile the specified example inside the Linux container
-3. Start the RIE container on port 9000
-4. Display the appropriate curl command for testing
 
 Different examples expect different payload formats. Check the example's source code in `examples/EXAMPLE_NAME/src/main.rs`
-
-This provides automated testing with Docker and RIE, ensuring your Lambda functions work in a Linux environment identical to AWS Lambda.
 
 ### Lambda Debug Proxy
 
