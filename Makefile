@@ -141,7 +141,7 @@ test-dockerized:
 	@docker run --rm \
 		-e DOCKER_API_VERSION=1.44 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v "$(CURDIR)/tests/dockerized:/tests:ro" \
+		-v "$(CURDIR)/test/dockerized:/tests:ro" \
 		test-runner:local \
 		--test-image local/test \
 		--debug \
