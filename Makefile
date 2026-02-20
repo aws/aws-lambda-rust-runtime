@@ -7,8 +7,12 @@ INTEG_EXTENSIONS := extension-fn extension-trait logs-trait
 INTEG_ARCH := x86_64-unknown-linux-musl
 RIE_MAX_CONCURRENCY ?= 4
 OUTPUT_DIR ?= /tmp/var-task
-HANDLERS_TO_BUILD ?= basic-lambda
-HANDLER ?= basic-lambda
+HANDLERS_TO_BUILD ?=
+HANDLER ?=
+
+# Load environment variables from .env file if it exists
+-include .env
+export
 
 .PHONY: help pr-check integration-tests check-event-features fmt build-examples test-rie test-rie-lmi nuke test-dockerized
 
@@ -128,7 +132,13 @@ nuke:
 test-dockerized:
 	@echo "Running dockerized tests locally..."
 	@echo "Building Docker image..."
-	docker build . -t local/test -f Dockerfile.rie
+	DOCKER_BUILDKIT=1 docker build \
+	-t local/test \
+	-f Dockerfile.rie \
+	--build-arg HANDLERS_TO_BUILD="${HANDLERS_TO_BUILD}" \
+	--build-arg OUTPUT_DIR="${OUTPUT_DIR}" \
+	.
+	
 	@echo "Setting up containerized test runner..."
 	@if [ ! -d ".test-runner" ]; then \
 		echo "Cloning containerized-test-runner-for-aws-lambda..."; \

@@ -17,7 +17,7 @@ COPY examples /build/examples
 COPY scripts/build-examples.sh /build/
 
 WORKDIR /build
-RUN chmod +x build-examples.sh && HANDLERS_TO_BUILD="$HANDLERS_TO_BUILD" OUTPUT_DIR="$OUTPUT_DIR" ./build-examples.sh
+RUN chmod +x build-examples.sh && HANDLERS_TO_BUILD=${HANDLERS_TO_BUILD} OUTPUT_DIR=${OUTPUT_DIR} ./build-examples.sh
 
 # Final Image
 FROM public.ecr.aws/lambda/provided:al2023
