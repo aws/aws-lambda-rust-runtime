@@ -133,7 +133,7 @@ pub struct SnsMessage {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
 /// use aws_lambda_events::event::sns::SnsSubscriptionMessage;
 ///
 /// fn handle_confirmation(msg: SnsSubscriptionMessage) {
