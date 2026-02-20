@@ -132,7 +132,7 @@ nuke:
 test-dockerized:
 	@echo "Running dockerized tests locally..."
 	@echo "Building Docker image..."
-	DOCKER_BUILDKIT=1 docker build \
+	docker build \
 	-t local/test \
 	-f Dockerfile.rie \
 	--build-arg HANDLERS_TO_BUILD="${HANDLERS_TO_BUILD}" \
