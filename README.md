@@ -412,6 +412,41 @@ RIE_MAX_CONCURRENCY=4 make test-rie
 
 Different examples expect different payload formats. Check the example's source code in `examples/EXAMPLE_NAME/src/main.rs`
 
+### Dockerized test harness
+
+For automated testing with AWS's containerized test runner:
+
+```bash
+make test-dockerized
+```
+
+This runs test suites defined in `test/dockerized/*.json` files using the [containerized-test-runner-for-aws-lambda](https://github.com/aws/containerized-test-runner-for-aws-lambda). Test suites specify handlers to test (from examples), request payloads, and expected response assertions.
+
+Example test suite (`test/dockerized/core.json`):
+```json
+{
+    "tests": [
+        {
+            "name": "test_echo",
+            "handler": "basic-lambda",
+            "request": {
+                "command": "test"
+            },
+            "assertions": [
+                {
+                    "response": {
+                        "msg": "Command test executed."
+                    },
+                    "transform": "{msg: .msg}"
+                }
+            ]
+        }
+    ]
+}
+```
+
+The `transform` field uses jq syntax to extract specific fields from responses before comparison, useful when responses include dynamic fields like request IDs.
+
 ### Lambda Debug Proxy
 
 Lambdas can be run and debugged locally using a special [Lambda debug proxy](https://github.com/rimutaka/lambda-debug-proxy) (a non-AWS repo maintained by @rimutaka), which is a Lambda function that forwards incoming requests to one AWS SQS queue and reads responses from another queue. A local proxy running on your development computer reads the queue, calls your Lambda locally and sends back the response. This approach allows debugging of Lambda functions locally while being part of your AWS workflow. The Lambda handler code does not need to be modified between the local and AWS versions.
