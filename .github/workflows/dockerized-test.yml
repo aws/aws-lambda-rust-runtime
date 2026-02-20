@@ -22,7 +22,7 @@ jobs:
       run: docker build . -t local/test -f Dockerfile.rie
 
     - name: Run tests
-      uses: aws/containerized-test-runner-for-aws-lambda@v1
+      uses: aws/containerized-test-runner-for-aws-lambda@main
       with:
         suiteFileArray: '["./test/dockerized/*.json"]'
         dockerImageName: 'local/test'
