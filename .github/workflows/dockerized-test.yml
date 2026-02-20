@@ -1,5 +1,8 @@
 name: dockerized-test
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main ]
@@ -7,12 +10,13 @@ on:
     branches: [ '*' ]
   workflow_dispatch:
 
+
 jobs:
   dockerized-test:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
 
     - name: Build the image
       run: docker build . -t local/test -f Dockerfile.rie
@@ -20,5 +24,5 @@ jobs:
     - name: Run tests
       uses: aws/containerized-test-runner-for-aws-lambda@v1
       with:
-        suiteFileArray: '["./tests/dockerized/*.json"]'
+        suiteFileArray: '["./test/dockerized/*.json"]'
         dockerImageName: 'local/test'
