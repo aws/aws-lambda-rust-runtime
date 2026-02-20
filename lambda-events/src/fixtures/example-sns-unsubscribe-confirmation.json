@@ -1,0 +1,13 @@
+{
+  "Type": "UnsubscribeConfirmation",
+  "MessageId": "47138184-6831-46b8-8466-7168d3b90898",
+  "TopicArn": "arn:aws:sns:us-east-1:123456789012:MyTopic",
+  "Message": "You have chosen to deactivate subscription arn:aws:sns:us-east-1:123456789012:MyTopic:00000000-0000-0000-0000-000000000000.\nTo cancel this operation and restore the subscription, visit the SubscribeURL included in this message.",
+  "Timestamp": "2012-04-26T20:45:04.751Z",
+  "SignatureVersion": "1",
+  "Signature": "EXAMPLEpH+DcEwjAPg8O9mY8dReBSwksfg2S7WKQcikcNKWLQjwu6A4VbeS0QHVCkhRS7fUQvi2egU3N858fiTDN6bkkOxYDVrY0Ad8L10Hs3zH81mtnPk5uvvolIC1CXGu43obcgFxeL3khZl8IKvO61GWB6jI9b5+gLPoBc1Q=",
+  "SigningCertURL": "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-f3ecfb7224c7233fe7bb5f59f96de52f.pem",
+  "Token": "2336412f37fb687f5d51e6e2425dacbbeeee",
+  "Subject": null,
+  "MessageAttributes": {}
+}
