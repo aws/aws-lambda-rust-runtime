@@ -9,7 +9,9 @@ RIE_MAX_CONCURRENCY ?= 4
 OUTPUT_DIR ?= /tmp/var-task
 EXAMPLES ?=
 
-.PHONY: pr-check integration-tests check-event-features fmt build-examples test-rie test-rie-lmi nuke
+.PHONY: help pr-check integration-tests check-event-features fmt build-examples test-rie test-rie-lmi nuke test-dockerized
+
+.DEFAULT_GOAL := help
 
 define uppercase
 $(shell sed -r 's/(^|-)(\w)/\U\2/g' <<< $(1))
@@ -119,13 +121,55 @@ fmt:
 build-examples:
 	./scripts/build-examples.sh
 
+test-dockerized:
+	@echo "Running dockerized tests locally..."
+	@echo "Building Docker image..."
+	docker build . -t local/test -f Dockerfile.rie
+	@echo "Setting up containerized test runner..."
+	@if [ ! -d ".test-runner" ]; then \
+		echo "Cloning containerized-test-runner-for-aws-lambda..."; \
+		git clone --quiet https://github.com/aws/containerized-test-runner-for-aws-lambda.git .test-runner; \
+	fi
+	@echo "Building test runner Docker image..."
+	@docker build -t test-runner:local -f Dockerfile.test-runner .
+	@echo "Running tests in Docker..."
+	@echo "Running actual tests..."
+	@docker run --rm \
+		-e DOCKER_API_VERSION=1.44 \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v "$(CURDIR)/tests/dockerized:/tests:ro" \
+		test-runner:local \
+		--test-image local/test \
+		--debug \
+		/tests/*.json
+
 test-rie:
 	./scripts/test-rie.sh
 
 nuke:
 	docker kill $$(docker ps -q)
 
-
 # Run RIE in Lambda Managed Instance (LMI) mode with concurrent polling.
 test-rie-lmi:
 	RIE_MAX_CONCURRENCY=$(RIE_MAX_CONCURRENCY) ./scripts/test-rie.sh $(EXAMPLE)
+
+help: ## Show this help message
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Available targets:'
+	@echo '  pr-check              Run pre-commit checks (fmt, clippy, tests)'
+	@echo '  integration-tests     Build and run AWS integration tests'
+	@echo '  check-event-features  Test individual event features'
+	@echo '  fmt                   Format code with cargo fmt'
+	@echo '  build-examples        Build example Lambda functions'
+	@echo '                        Usage: EXAMPLES="basic-lambda" make build-examples'
+	@echo '  test-rie              Test Lambda with Runtime Interface Emulator'
+	@echo '  test-rie-lmi          Test RIE in Lambda Managed Instance mode'
+	@echo '                        Usage: RIE_MAX_CONCURRENCY=4 make test-rie-lmi'
+	@echo '  test-dockerized       Run dockerized test harness'
+	@echo '  nuke                  Kill all running Docker containers'
+	@echo ''
+	@echo 'Environment variables:'
+	@echo '  EXAMPLES              Space-separated list of examples to build'
+	@echo '  OUTPUT_DIR            Directory for built binaries (default: /tmp/var-task)'
+	@echo '  RIE_MAX_CONCURRENCY   Max concurrent Lambda invocations for LMI mode'

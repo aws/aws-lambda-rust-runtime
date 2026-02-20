@@ -1,14 +1,10 @@
-FROM public.ecr.aws/lambda/provided:al2023
+FROM public.ecr.aws/lambda/provided:al2023 AS builder
 
 RUN dnf install -y gcc make
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
-ENV EXAMPLES="basic-lambda basic-lambda-concurrent"
+ENV EXAMPLES="basic-lambda"
 ENV OUTPUT_DIR="/var/task"
-
-
-ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie /usr/local/bin/aws-lambda-rie
-RUN chmod +x /usr/local/bin/aws-lambda-rie
 
 COPY Cargo.* /build/
 COPY lambda-runtime /build/lambda-runtime
@@ -17,17 +13,21 @@ COPY lambda-events /build/lambda-events
 COPY lambda-http /build/lambda-http
 COPY lambda-extension /build/lambda-extension
 COPY examples /build/examples
-COPY scripts/custom-lambda-entrypoint.sh /usr/local/bin/lambda-entrypoint
 COPY scripts/build-examples.sh /build/
 
 WORKDIR /build
+RUN chmod +x build-examples.sh && ./build-examples.sh
 
+# Final Image
+FROM public.ecr.aws/lambda/provided:al2023
+
+ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie /usr/local/bin/aws-lambda-rie
+RUN chmod +x /usr/local/bin/aws-lambda-rie
+
+COPY scripts/custom-lambda-entrypoint.sh /usr/local/bin/lambda-entrypoint
 RUN chmod +x /usr/local/bin/lambda-entrypoint
-RUN chmod +x build-examples.sh
 
-# Build only basic-lambda example
-RUN ./build-examples.sh
-
+COPY --from=builder /var/task /var/task
 
 ENTRYPOINT ["/usr/local/bin/lambda-entrypoint"]
 CMD ["basic-lambda"]

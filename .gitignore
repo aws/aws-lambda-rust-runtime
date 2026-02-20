@@ -3,6 +3,7 @@ target
 lambda-runtime/libtest.rmeta
 lambda-integration-tests/target
 Cargo.lock
+.test-runner
 
 # Built AWS Lambda zipfile
 lambda.zip
