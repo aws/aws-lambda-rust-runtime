@@ -1,12 +1,10 @@
-use lambda_extension::{
-    service_fn, tracing, Error, Extension, GenericLambdaTelemetry, GenericLambdaTelemetryRecord, SharedService,
-};
+use lambda_extension::{service_fn, tracing, Error, Extension, LambdaTelemetry, LambdaTelemetryRecord, SharedService};
 
-async fn handler(events: Vec<GenericLambdaTelemetry<serde_json::Value>>) -> Result<(), Error> {
+async fn handler(events: Vec<LambdaTelemetry<serde_json::Value>>) -> Result<(), Error> {
     for event in events {
         match event.record {
-            GenericLambdaTelemetryRecord::Function(record) => tracing::info!("[logs] [function] {}", record),
-            GenericLambdaTelemetryRecord::Extension(record) => tracing::info!("[extension] [function] {}", record),
+            LambdaTelemetryRecord::Function(record) => tracing::info!("[logs] [function] {}", record),
+            LambdaTelemetryRecord::Extension(record) => tracing::info!("[extension] [function] {}", record),
             _ => (),
         }
     }
@@ -22,7 +20,7 @@ async fn main() -> Result<(), Error> {
     let telemetry_processor = SharedService::new(service_fn(handler));
 
     Extension::new()
-        .with_generic_telemetry_processor(telemetry_processor)
+        .with_telemetry_processor(telemetry_processor)
         .run()
         .await?;
 
