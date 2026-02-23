@@ -26,7 +26,9 @@ jobs:
     - name: Load environment variables
       run: |
         if [ -f .env ]; then
-          export $(cat .env | grep -v '^#' | xargs)
+          set -a
+          source .env
+          set +a
           echo "HANDLERS_TO_BUILD=${HANDLERS_TO_BUILD}" >> $GITHUB_ENV
           echo "OUTPUT_DIR=${OUTPUT_DIR}" >> $GITHUB_ENV
         fi
