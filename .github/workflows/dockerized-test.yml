@@ -41,12 +41,12 @@ jobs:
 
     - name: Test container manually
       run: |
-        docker run -d --name test-container -p 8080 local/test basic-lambda
-        sleep 5
+        docker run -d --name test-container -p 9000:8080 local/test basic-lambda
+        sleep 1
         echo "Container logs after startup:"
         docker logs test-container
         echo "Attempting to invoke function:"
-        curl -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d '{"command":"test"}' || echo "Invocation failed"
+        curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"command":"test"}' || echo "Invocation failed"
         echo "Final container logs:"
         docker logs test-container
         docker kill test-container || true
