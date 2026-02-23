@@ -18,6 +18,11 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
     - name: Build the image
       run: docker build . -t local/test -f Dockerfile.rie
 
