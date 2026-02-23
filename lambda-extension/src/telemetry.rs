@@ -11,18 +11,20 @@ use tracing::{error, trace};
 
 /// Payload received from the Telemetry API
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-pub struct LambdaTelemetry<L = String> {
+pub struct GenericLambdaTelemetry<L> {
     /// Time when the telemetry was generated
     pub time: DateTime<Utc>,
     /// Telemetry record entry
     #[serde(flatten)]
-    pub record: LambdaTelemetryRecord<L>,
+    pub record: GenericLambdaTelemetryRecord<L>,
 }
+/// Payload received from the Telemetry API where logs are assumed to be in text format
+pub type LambdaTelemetry = GenericLambdaTelemetry<String>;
 
 /// Record in a LambdaTelemetry entry
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "type", content = "record", rename_all = "lowercase")]
-pub enum LambdaTelemetryRecord<L = String> {
+pub enum GenericLambdaTelemetryRecord<L> {
     /// Function log records
     Function(L),
 
@@ -156,6 +158,8 @@ pub enum LambdaTelemetryRecord<L = String> {
         dropped_bytes: u64,
     },
 }
+/// Record in a LambdaTelemetry entry where logs are assumed to be in text format
+pub type LambdaTelemetryRecord = GenericLambdaTelemetryRecord<String>;
 
 /// Type of Initialization
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
@@ -274,7 +278,7 @@ pub(crate) async fn telemetry_wrapper<S, L>(
     req: Request<Incoming>,
 ) -> Result<Response<Body>, Box<dyn std::error::Error + Send + Sync>>
 where
-    S: Service<Vec<LambdaTelemetry<L>>, Response = ()>,
+    S: Service<Vec<GenericLambdaTelemetry<L>>, Response = ()>,
     S::Error: Into<Box<dyn std::error::Error + Send + Sync>> + fmt::Debug,
     S::Future: Send,
     L: DeserializeOwned,
@@ -292,7 +296,7 @@ where
         }
     };
 
-    let telemetry: Vec<LambdaTelemetry<L>> = match serde_json::from_slice(&body.to_bytes()) {
+    let telemetry: Vec<GenericLambdaTelemetry<L>> = match serde_json::from_slice(&body.to_bytes()) {
         Ok(telemetry) => telemetry,
         Err(e) => {
             error!("Error parsing telemetry: {}", e);
@@ -325,43 +329,50 @@ mod deserialization_tests {
                 #[test]
                 fn $name() {
                     let (input, expected) = $value;
-                    let actual = serde_json::from_str::<LambdaTelemetry$(<$log>)?>(&input).expect("unable to deserialize");
+                    let actual = serde_json::from_str::<deserialize_tests!(@type $(<$log>)?)>(&input).expect("unable to deserialize");
 
                     assert!(actual.record == expected);
                 }
             )*
-        }
+        };
+
+        (@type <$log:ty>) => {
+            GenericLambdaTelemetry<$log>
+        };
+        (@type) => {
+            LambdaTelemetry
+        };
     }
 
     deserialize_tests! {
         // function
         function: (
             r#"{"time": "2020-08-20T12:31:32.123Z","type": "function", "record": "hello world"}"#,
-            LambdaTelemetryRecord::Function("hello world".to_string()),
+            GenericLambdaTelemetryRecord::Function("hello world".to_string()),
         ),
 
         // function (json)
-        function_json<bool>: (
+        function_generic<bool>: (
             r#"{"time": "2020-08-20T12:31:32.123Z","type": "function", "record": true}"#,
-            LambdaTelemetryRecord::Function(true),
+            GenericLambdaTelemetryRecord::Function(true),
         ),
 
         // extension
         extension: (
             r#"{"time": "2020-08-20T12:31:32.123Z","type": "extension", "record": "hello world"}"#,
-            LambdaTelemetryRecord::Extension("hello world".to_string()),
+            GenericLambdaTelemetryRecord::Extension("hello world".to_string()),
         ),
 
         // extension (json)
-        extension_json<bool>: (
+        extension_generic<bool>: (
             r#"{"time": "2020-08-20T12:31:32.123Z","type": "extension", "record": true}"#,
-            LambdaTelemetryRecord::Extension(true),
+            GenericLambdaTelemetryRecord::Extension(true),
         ),
 
         // platform.start
         platform_start: (
             r#"{"time":"2022-10-21T14:05:03.165Z","type":"platform.start","record":{"requestId":"459921b5-681c-4a96-beb0-81e0aa586026","version":"$LATEST","tracing":{"spanId":"24cd7d670fa455f0","type":"X-Amzn-Trace-Id","value":"Root=1-6352a70e-1e2c502e358361800241fd45;Parent=35465b3a9e2f7c6a;Sampled=1"}}}"#,
-            LambdaTelemetryRecord::PlatformStart {
+            GenericLambdaTelemetryRecord::PlatformStart {
                 request_id: "459921b5-681c-4a96-beb0-81e0aa586026".to_string(),
                 version: Some("$LATEST".to_string()),
                 tracing: Some(TraceContext{
@@ -374,7 +385,7 @@ mod deserialization_tests {
         // platform.initStart
         platform_init_start: (
             r#"{"time":"2022-10-19T13:52:15.636Z","type":"platform.initStart","record":{"initializationType":"on-demand","phase":"init"}}"#,
-            LambdaTelemetryRecord::PlatformInitStart {
+            GenericLambdaTelemetryRecord::PlatformInitStart {
                 initialization_type: InitType::OnDemand,
                 phase: InitPhase::Init,
                 runtime_version: None,
@@ -384,7 +395,7 @@ mod deserialization_tests {
         // platform.runtimeDone
         platform_runtime_done: (
             r#"{"time":"2022-10-21T14:05:05.764Z","type":"platform.runtimeDone","record":{"requestId":"459921b5-681c-4a96-beb0-81e0aa586026","status":"success","tracing":{"spanId":"24cd7d670fa455f0","type":"X-Amzn-Trace-Id","value":"Root=1-6352a70e-1e2c502e358361800241fd45;Parent=35465b3a9e2f7c6a;Sampled=1"},"spans":[{"name":"responseLatency","start":"2022-10-21T14:05:03.165Z","durationMs":2598.0},{"name":"responseDuration","start":"2022-10-21T14:05:05.763Z","durationMs":0.0}],"metrics":{"durationMs":2599.0,"producedBytes":8}}}"#,
-            LambdaTelemetryRecord::PlatformRuntimeDone {
+            GenericLambdaTelemetryRecord::PlatformRuntimeDone {
                 request_id: "459921b5-681c-4a96-beb0-81e0aa586026".to_string(),
                 status: Status::Success,
                 error_type: None,
@@ -422,7 +433,7 @@ mod deserialization_tests {
         // platform.report
         platform_report: (
             r#"{"time":"2022-10-21T14:05:05.766Z","type":"platform.report","record":{"requestId":"459921b5-681c-4a96-beb0-81e0aa586026","metrics":{"durationMs":2599.4,"billedDurationMs":2600,"memorySizeMB":128,"maxMemoryUsedMB":94,"initDurationMs":549.04},"tracing":{"spanId":"24cd7d670fa455f0","type":"X-Amzn-Trace-Id","value":"Root=1-6352a70e-1e2c502e358361800241fd45;Parent=35465b3a9e2f7c6a;Sampled=1"},"status":"success"}}"#,
-            LambdaTelemetryRecord::PlatformReport {
+            GenericLambdaTelemetryRecord::PlatformReport {
                 request_id: "459921b5-681c-4a96-beb0-81e0aa586026".to_string(),
                 status: Status::Success,
                 error_type: None,
@@ -445,7 +456,7 @@ mod deserialization_tests {
         // platform.telemetrySubscription
         platform_telemetry_subscription: (
             r#"{"time":"2022-10-19T13:52:15.667Z","type":"platform.telemetrySubscription","record":{"name":"my-extension","state":"Subscribed","types":["platform","function"]}}"#,
-            LambdaTelemetryRecord::PlatformTelemetrySubscription {
+            GenericLambdaTelemetryRecord::PlatformTelemetrySubscription {
                  name: "my-extension".to_string(),
                  state: "Subscribed".to_string(),
                  types: vec!("platform".to_string(), "function".to_string()),
@@ -454,7 +465,7 @@ mod deserialization_tests {
         // platform.initRuntimeDone
         platform_init_runtime_done: (
             r#"{"time":"2022-10-19T13:52:16.136Z","type":"platform.initRuntimeDone","record":{"initializationType":"on-demand","status":"success"}}"#,
-            LambdaTelemetryRecord::PlatformInitRuntimeDone {
+            GenericLambdaTelemetryRecord::PlatformInitRuntimeDone {
                 initialization_type: InitType::OnDemand,
                 status: Status::Success,
                 phase: None,
@@ -465,7 +476,7 @@ mod deserialization_tests {
         // platform.extension
         platform_extension: (
             r#"{"time":"2022-10-19T13:52:16.136Z","type":"platform.extension","record":{"name":"my-extension","state":"Ready","events":["SHUTDOWN","INVOKE"]}}"#,
-            LambdaTelemetryRecord::PlatformExtension {
+            GenericLambdaTelemetryRecord::PlatformExtension {
                 name: "my-extension".to_string(),
                 state: "Ready".to_string(),
                 events: vec!("SHUTDOWN".to_string(), "INVOKE".to_string()),
@@ -474,7 +485,7 @@ mod deserialization_tests {
         // platform.initReport
         platform_init_report: (
             r#"{"time":"2022-10-19T13:52:16.136Z","type":"platform.initReport","record":{"initializationType":"on-demand","metrics":{"durationMs":500.0},"phase":"init"}}"#,
-            LambdaTelemetryRecord::PlatformInitReport {
+            GenericLambdaTelemetryRecord::PlatformInitReport {
                 initialization_type: InitType::OnDemand,
                 phase: InitPhase::Init,
                 metrics: InitReportMetrics { duration_ms: 500.0 },
@@ -494,7 +505,7 @@ mod serialization_tests {
             $(
                 #[test]
                 fn $name() {
-                    let (input, expected): (LambdaTelemetry$(<$log>)?, &str) = $value;
+                    let (input, expected): (serialize_tests!(@type $(<$log>)?), &str) = $value;
                     let actual = serde_json::to_string(&input).expect("unable to serialize");
                     println!("Input: {:?}\n", input);
                     println!("Expected:\n {:?}\n", expected);
@@ -503,47 +514,54 @@ mod serialization_tests {
                     assert!(actual == expected);
                 }
             )*
-        }
+        };
+
+        (@type <$log:ty>) => {
+            GenericLambdaTelemetry<$log>
+        };
+        (@type) => {
+            LambdaTelemetry
+        };
     }
 
     serialize_tests! {
         // function
         function: (
-            LambdaTelemetry {
+            GenericLambdaTelemetry {
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::Function("hello world".to_string()),
+                record: GenericLambdaTelemetryRecord::Function("hello world".to_string()),
             },
             r#"{"time":"2023-11-28T12:00:09Z","type":"function","record":"hello world"}"#,
         ),
         // function (json)
-        function_json<bool>: (
-            LambdaTelemetry {
+        function_generic<bool>: (
+            GenericLambdaTelemetry {
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::Function(true),
+                record: GenericLambdaTelemetryRecord::Function(true),
             },
             r#"{"time":"2023-11-28T12:00:09Z","type":"function","record":true}"#,
         ),
         // extension
         extension: (
-            LambdaTelemetry {
+            GenericLambdaTelemetry {
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::Extension("hello world".to_string()),
+                record: GenericLambdaTelemetryRecord::Extension("hello world".to_string()),
             },
             r#"{"time":"2023-11-28T12:00:09Z","type":"extension","record":"hello world"}"#,
         ),
         // extension (json)
-        extension_json<bool>: (
-            LambdaTelemetry {
+        extension_generic<bool>: (
+            GenericLambdaTelemetry {
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::Extension(true),
+                record: GenericLambdaTelemetryRecord::Extension(true),
             },
             r#"{"time":"2023-11-28T12:00:09Z","type":"extension","record":true}"#,
         ),
         //platform.Start
         platform_start: (
-            LambdaTelemetry{
+            GenericLambdaTelemetry{
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::PlatformStart {
+                record: GenericLambdaTelemetryRecord::PlatformStart {
                         request_id: "459921b5-681c-4a96-beb0-81e0aa586026".to_string(),
                         version: Some("$LATEST".to_string()),
                         tracing: Some(TraceContext{
@@ -557,9 +575,9 @@ mod serialization_tests {
         ),
         // platform.initStart
         platform_init_start: (
-            LambdaTelemetry{
+            GenericLambdaTelemetry{
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::PlatformInitStart {
+                record: GenericLambdaTelemetryRecord::PlatformInitStart {
                         initialization_type: InitType::OnDemand,
                         phase: InitPhase::Init,
                         runtime_version: None,
@@ -570,9 +588,9 @@ mod serialization_tests {
         ),
         // platform.runtimeDone
         platform_runtime_done: (
-            LambdaTelemetry{
+            GenericLambdaTelemetry{
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::PlatformRuntimeDone {
+                record: GenericLambdaTelemetryRecord::PlatformRuntimeDone {
                     request_id: "459921b5-681c-4a96-beb0-81e0aa586026".to_string(),
                     status: Status::Success,
                     error_type: None,
@@ -611,9 +629,9 @@ mod serialization_tests {
         ),
         // platform.report
         platform_report: (
-            LambdaTelemetry{
+            GenericLambdaTelemetry{
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::PlatformReport {
+                record: GenericLambdaTelemetryRecord::PlatformReport {
                     request_id: "459921b5-681c-4a96-beb0-81e0aa586026".to_string(),
                     status: Status::Success,
                     error_type: None,
@@ -637,9 +655,9 @@ mod serialization_tests {
         ),
         // platform.telemetrySubscription
         platform_telemetry_subscription: (
-            LambdaTelemetry{
+            GenericLambdaTelemetry{
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::PlatformTelemetrySubscription {
+                record: GenericLambdaTelemetryRecord::PlatformTelemetrySubscription {
                     name: "my-extension".to_string(),
                     state: "Subscribed".to_string(),
                     types: vec!("platform".to_string(), "function".to_string()),
@@ -649,9 +667,9 @@ mod serialization_tests {
         ),
         // platform.initRuntimeDone
         platform_init_runtime_done: (
-            LambdaTelemetry{
+            GenericLambdaTelemetry{
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::PlatformInitRuntimeDone {
+                record: GenericLambdaTelemetryRecord::PlatformInitRuntimeDone {
                     initialization_type: InitType::OnDemand,
                     status: Status::Success,
                     phase: None,
@@ -663,9 +681,9 @@ mod serialization_tests {
         ),
         // platform.extension
         platform_extension: (
-            LambdaTelemetry {
+            GenericLambdaTelemetry {
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::PlatformExtension {
+                record: GenericLambdaTelemetryRecord::PlatformExtension {
                     name: "my-extension".to_string(),
                     state: "Ready".to_string(),
                     events: vec!("SHUTDOWN".to_string(), "INVOKE".to_string()),
@@ -675,9 +693,9 @@ mod serialization_tests {
         ),
         // platform.initReport
         platform_init_report: (
-            LambdaTelemetry {
+            GenericLambdaTelemetry {
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: LambdaTelemetryRecord::PlatformInitReport {
+                record: GenericLambdaTelemetryRecord::PlatformInitReport {
                     initialization_type: InitType::OnDemand,
                     phase: InitPhase::Init,
                     metrics: InitReportMetrics { duration_ms: 500.0 },

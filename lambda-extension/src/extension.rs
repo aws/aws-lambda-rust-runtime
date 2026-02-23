@@ -9,6 +9,7 @@ use std::{
     convert::Infallible,
     fmt,
     future::{ready, Future},
+    marker::PhantomData,
     net::SocketAddr,
     path::PathBuf,
     pin::Pin,
@@ -22,14 +23,14 @@ use tracing::trace;
 use crate::{
     logs::*,
     requests::{self, Api},
-    telemetry_wrapper, Error, ExtensionError, LambdaEvent, LambdaTelemetry, NextEvent,
+    telemetry_wrapper, Error, ExtensionError, GenericLambdaTelemetry, LambdaEvent, LambdaTelemetry, NextEvent,
 };
 
 const DEFAULT_LOG_PORT_NUMBER: u16 = 9002;
 const DEFAULT_TELEMETRY_PORT_NUMBER: u16 = 9003;
 
 /// An Extension that runs event, log and telemetry processors
-pub struct Extension<'a, E, L, T> {
+pub struct Extension<'a, E, L, T, TL = String> {
     extension_name: Option<&'a str>,
     events: Option<&'a [&'a str]>,
     events_processor: E,
@@ -41,6 +42,7 @@ pub struct Extension<'a, E, L, T> {
     telemetry_processor: Option<T>,
     telemetry_buffering: Option<LogBuffering>,
     telemetry_port_number: u16,
+    _telemetry_record_type: PhantomData<fn(TL)>,
 }
 
 impl Extension<'_, Identity<LambdaEvent>, MakeIdentity<Vec<LambdaLog>>, MakeIdentity<Vec<LambdaTelemetry>>> {
@@ -58,6 +60,7 @@ impl Extension<'_, Identity<LambdaEvent>, MakeIdentity<Vec<LambdaLog>>, MakeIden
             telemetry_buffering: None,
             telemetry_processor: None,
             telemetry_port_number: DEFAULT_TELEMETRY_PORT_NUMBER,
+            _telemetry_record_type: PhantomData,
         }
     }
 }
@@ -70,7 +73,7 @@ impl Default
     }
 }
 
-impl<'a, E, L, T> Extension<'a, E, L, T>
+impl<'a, E, L, T, TL> Extension<'a, E, L, T, TL>
 where
     E: Service<LambdaEvent>,
     E::Future: Future<Output = Result<(), E::Error>>,
@@ -83,6 +86,15 @@ where
     L::Error: Into<Error> + fmt::Debug,
     L::MakeError: Into<Error> + fmt::Debug,
     L::Future: Send,
+
+    // Fixme: 'static bound might be too restrictive
+    T: MakeService<(), Vec<GenericLambdaTelemetry<TL>>, Response = ()> + Send + Sync + 'static,
+    T::Service: Service<Vec<GenericLambdaTelemetry<TL>>, Response = ()> + Send + Sync,
+    <T::Service as Service<Vec<GenericLambdaTelemetry<TL>>>>::Future: Send + 'a,
+    T::Error: Into<Error> + fmt::Debug,
+    T::MakeError: Into<Error> + fmt::Debug,
+    T::Future: Send,
+    TL: DeserializeOwned + Send + 'static,
 {
     /// Create a new [`Extension`] with a given extension name
     pub fn with_extension_name(self, extension_name: &'a str) -> Self {
@@ -102,7 +114,7 @@ where
     }
 
     /// Create a new [`Extension`] with a service that receives Lambda events.
-    pub fn with_events_processor<N>(self, ep: N) -> Extension<'a, N, L, T>
+    pub fn with_events_processor<N>(self, ep: N) -> Extension<'a, N, L, T, TL>
     where
         N: Service<LambdaEvent>,
         N::Future: Future<Output = Result<(), N::Error>>,
@@ -120,11 +132,12 @@ where
             telemetry_buffering: self.telemetry_buffering,
             telemetry_processor: self.telemetry_processor,
             telemetry_port_number: self.telemetry_port_number,
+            _telemetry_record_type: self._telemetry_record_type,
         }
     }
 
     /// Create a new [`Extension`] with a service that receives Lambda logs.
-    pub fn with_logs_processor<N, NS>(self, lp: N) -> Extension<'a, E, N, T>
+    pub fn with_logs_processor<N, NS>(self, lp: N) -> Extension<'a, E, N, T, TL>
     where
         N: Service<()>,
         N::Future: Future<Output = Result<NS, N::Error>>,
@@ -142,6 +155,7 @@ where
             telemetry_buffering: self.telemetry_buffering,
             telemetry_processor: self.telemetry_processor,
             telemetry_port_number: self.telemetry_port_number,
+            _telemetry_record_type: self._telemetry_record_type,
         }
     }
 
@@ -170,7 +184,7 @@ where
         }
     }
 
-    /// Create a new [`Extension`] with a service that receives Lambda telemetry data.
+    /// Create a new [`Extension`] with a service that receives Lambda telemetry data where logs are assumed to be in text format.
     pub fn with_telemetry_processor<N, NS>(self, lp: N) -> Extension<'a, E, L, N>
     where
         N: Service<()>,
@@ -179,6 +193,30 @@ where
     {
         Extension {
             telemetry_processor: Some(lp),
+            _telemetry_record_type: PhantomData,
+            events_processor: self.events_processor,
+            extension_name: self.extension_name,
+            events: self.events,
+            log_types: self.log_types,
+            log_buffering: self.log_buffering,
+            logs_processor: self.logs_processor,
+            log_port_number: self.log_port_number,
+            telemetry_types: self.telemetry_types,
+            telemetry_buffering: self.telemetry_buffering,
+            telemetry_port_number: self.telemetry_port_number,
+        }
+    }
+
+    /// Create a new [`Extension`] with a service that receives Lambda telemetry data.
+    pub fn with_generic_telemetry_processor<N, NS, NL>(self, lp: N) -> Extension<'a, E, L, N, NL>
+    where
+        N: Service<()>,
+        N::Future: Future<Output = Result<NS, N::Error>>,
+        N::Error: Into<Error> + fmt::Display,
+    {
+        Extension {
+            telemetry_processor: Some(lp),
+            _telemetry_record_type: PhantomData,
             events_processor: self.events_processor,
             extension_name: self.extension_name,
             events: self.events,
@@ -224,17 +262,7 @@ where
     /// Lambda lifecycle operations to register the extension. When implementing an internal Lambda
     /// extension, it is safe to call `lambda_runtime::run` once the future returned by this
     /// function resolves.
-    pub async fn register<TL>(self) -> Result<RegisteredExtension<E>, Error>
-    where
-        // Fixme: 'static bound might be too restrictive
-        T: MakeService<(), Vec<LambdaTelemetry<TL>>, Response = ()> + Send + Sync + 'static,
-        T::Service: Service<Vec<LambdaTelemetry<TL>>, Response = ()> + Send + Sync,
-        <T::Service as Service<Vec<LambdaTelemetry<TL>>>>::Future: Send + 'a,
-        T::Error: Into<Error> + fmt::Debug,
-        T::MakeError: Into<Error> + fmt::Debug,
-        T::Future: Send,
-        TL: DeserializeOwned + Send + 'static,
-    {
+    pub async fn register(self) -> Result<RegisteredExtension<E>, Error> {
         let client = &Client::builder().build()?;
 
         let register_res = register(client, self.extension_name, self.events).await?;
@@ -342,17 +370,7 @@ where
     }
 
     /// Execute the given extension.
-    pub async fn run<TL>(self) -> Result<(), Error>
-    where
-        // Fixme: 'static bound might be too restrictive
-        T: MakeService<(), Vec<LambdaTelemetry<TL>>, Response = ()> + Send + Sync + 'static,
-        T::Service: Service<Vec<LambdaTelemetry<TL>>, Response = ()> + Send + Sync,
-        <T::Service as Service<Vec<LambdaTelemetry<TL>>>>::Future: Send + 'a,
-        T::Error: Into<Error> + fmt::Debug,
-        T::MakeError: Into<Error> + fmt::Debug,
-        T::Future: Send,
-        TL: DeserializeOwned + Send + 'static,
-    {
+    pub async fn run(self) -> Result<(), Error> {
         self.register().await?.run().await
     }
 }
