@@ -42,7 +42,7 @@ jobs:
     - name: Test container manually
       run: |
         docker run -d --name test-container -p 9000:8080 local/test basic-lambda
-        sleep 15
+        sleep 5
         echo "Container logs after startup:"
         docker logs test-container
         echo "Attempting to invoke function:"
