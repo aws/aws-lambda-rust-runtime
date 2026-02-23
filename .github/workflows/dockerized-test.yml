@@ -38,6 +38,13 @@ jobs:
         docker build . -t local/test -f Dockerfile.rie \
           --build-arg HANDLERS_TO_BUILD="${HANDLERS_TO_BUILD}" \
           --build-arg OUTPUT_DIR="${OUTPUT_DIR}"
+    
+    - name: Verify image contents
+      run: |
+        echo "Checking /var/task contents:"
+        docker run --rm --entrypoint ls local/test -la /var/task
+        echo "Checking if basic-lambda binary exists:"
+        docker run --rm --entrypoint test local/test -f /var/task/basic-lambda && echo "Binary exists" || echo "Binary NOT found"
 
     - name: Run tests
       uses: aws/containerized-test-runner-for-aws-lambda@main
