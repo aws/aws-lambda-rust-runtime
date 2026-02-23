@@ -23,7 +23,7 @@ use tracing::trace;
 use crate::{
     logs::*,
     requests::{self, Api},
-    telemetry_wrapper, Error, ExtensionError, GenericLambdaTelemetry, LambdaEvent, LambdaTelemetry, NextEvent,
+    telemetry_wrapper, Error, ExtensionError, LambdaEvent, LambdaTelemetry, NextEvent,
 };
 
 const DEFAULT_LOG_PORT_NUMBER: u16 = 9002;
@@ -88,9 +88,9 @@ where
     L::Future: Send,
 
     // Fixme: 'static bound might be too restrictive
-    T: MakeService<(), Vec<GenericLambdaTelemetry<TL>>, Response = ()> + Send + Sync + 'static,
-    T::Service: Service<Vec<GenericLambdaTelemetry<TL>>, Response = ()> + Send + Sync,
-    <T::Service as Service<Vec<GenericLambdaTelemetry<TL>>>>::Future: Send + 'a,
+    T: MakeService<(), Vec<LambdaTelemetry<TL>>, Response = ()> + Send + Sync + 'static,
+    T::Service: Service<Vec<LambdaTelemetry<TL>>, Response = ()> + Send + Sync,
+    <T::Service as Service<Vec<LambdaTelemetry<TL>>>>::Future: Send + 'a,
     T::Error: Into<Error> + fmt::Debug,
     T::MakeError: Into<Error> + fmt::Debug,
     T::Future: Send,
@@ -184,31 +184,8 @@ where
         }
     }
 
-    /// Create a new [`Extension`] with a service that receives Lambda telemetry data where logs are assumed to be in text format.
-    pub fn with_telemetry_processor<N, NS>(self, lp: N) -> Extension<'a, E, L, N>
-    where
-        N: Service<()>,
-        N::Future: Future<Output = Result<NS, N::Error>>,
-        N::Error: Into<Error> + fmt::Display,
-    {
-        Extension {
-            telemetry_processor: Some(lp),
-            _telemetry_record_type: PhantomData,
-            events_processor: self.events_processor,
-            extension_name: self.extension_name,
-            events: self.events,
-            log_types: self.log_types,
-            log_buffering: self.log_buffering,
-            logs_processor: self.logs_processor,
-            log_port_number: self.log_port_number,
-            telemetry_types: self.telemetry_types,
-            telemetry_buffering: self.telemetry_buffering,
-            telemetry_port_number: self.telemetry_port_number,
-        }
-    }
-
     /// Create a new [`Extension`] with a service that receives Lambda telemetry data.
-    pub fn with_generic_telemetry_processor<N, NS, NL>(self, lp: N) -> Extension<'a, E, L, N, NL>
+    pub fn with_telemetry_processor<N, NS, NL>(self, lp: N) -> Extension<'a, E, L, N, NL>
     where
         N: Service<()>,
         N::Future: Future<Output = Result<NS, N::Error>>,

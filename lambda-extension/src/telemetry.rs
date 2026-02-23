@@ -11,20 +11,18 @@ use tracing::{error, trace};
 
 /// Payload received from the Telemetry API
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-pub struct GenericLambdaTelemetry<L> {
+pub struct LambdaTelemetry<L = String> {
     /// Time when the telemetry was generated
     pub time: DateTime<Utc>,
     /// Telemetry record entry
     #[serde(flatten)]
-    pub record: GenericLambdaTelemetryRecord<L>,
+    pub record: LambdaTelemetryRecord<L>,
 }
-/// Payload received from the Telemetry API where logs are assumed to be in text format
-pub type LambdaTelemetry = GenericLambdaTelemetry<String>;
 
 /// Record in a LambdaTelemetry entry
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "type", content = "record", rename_all = "lowercase")]
-pub enum GenericLambdaTelemetryRecord<L> {
+pub enum LambdaTelemetryRecord<L = String> {
     /// Function log records
     Function(L),
 
@@ -158,8 +156,6 @@ pub enum GenericLambdaTelemetryRecord<L> {
         dropped_bytes: u64,
     },
 }
-/// Record in a LambdaTelemetry entry where logs are assumed to be in text format
-pub type LambdaTelemetryRecord = GenericLambdaTelemetryRecord<String>;
 
 /// Type of Initialization
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
@@ -278,7 +274,7 @@ pub(crate) async fn telemetry_wrapper<S, L>(
     req: Request<Incoming>,
 ) -> Result<Response<Body>, Box<dyn std::error::Error + Send + Sync>>
 where
-    S: Service<Vec<GenericLambdaTelemetry<L>>, Response = ()>,
+    S: Service<Vec<LambdaTelemetry<L>>, Response = ()>,
     S::Error: Into<Box<dyn std::error::Error + Send + Sync>> + fmt::Debug,
     S::Future: Send,
     L: DeserializeOwned,
@@ -296,7 +292,7 @@ where
         }
     };
 
-    let telemetry: Vec<GenericLambdaTelemetry<L>> = match serde_json::from_slice(&body.to_bytes()) {
+    let telemetry: Vec<LambdaTelemetry<L>> = match serde_json::from_slice(&body.to_bytes()) {
         Ok(telemetry) => telemetry,
         Err(e) => {
             error!("Error parsing telemetry: {}", e);
@@ -329,18 +325,11 @@ mod deserialization_tests {
                 #[test]
                 fn $name() {
                     let (input, expected) = $value;
-                    let actual = serde_json::from_str::<deserialize_tests!(@type $(<$log>)?)>(&input).expect("unable to deserialize");
+                    let actual = serde_json::from_str::<LambdaTelemetry$(<$log>)?>(&input).expect("unable to deserialize");
 
                     assert!(actual.record == expected);
                 }
             )*
-        };
-
-        (@type <$log:ty>) => {
-            GenericLambdaTelemetry<$log>
-        };
-        (@type) => {
-            LambdaTelemetry
         };
     }
 
@@ -354,7 +343,7 @@ mod deserialization_tests {
         // function (json)
         function_generic<bool>: (
             r#"{"time": "2020-08-20T12:31:32.123Z","type": "function", "record": true}"#,
-            GenericLambdaTelemetryRecord::Function(true),
+            LambdaTelemetryRecord::Function(true),
         ),
 
         // extension
@@ -366,7 +355,7 @@ mod deserialization_tests {
         // extension (json)
         extension_generic<bool>: (
             r#"{"time": "2020-08-20T12:31:32.123Z","type": "extension", "record": true}"#,
-            GenericLambdaTelemetryRecord::Extension(true),
+            LambdaTelemetryRecord::Extension(true),
         ),
 
         // platform.start
@@ -505,7 +494,7 @@ mod serialization_tests {
             $(
                 #[test]
                 fn $name() {
-                    let (input, expected): (serialize_tests!(@type $(<$log>)?), &str) = $value;
+                    let (input, expected): (LambdaTelemetry$(<$log>)?, &str) = $value;
                     let actual = serde_json::to_string(&input).expect("unable to serialize");
                     println!("Input: {:?}\n", input);
                     println!("Expected:\n {:?}\n", expected);
@@ -514,13 +503,6 @@ mod serialization_tests {
                     assert!(actual == expected);
                 }
             )*
-        };
-
-        (@type <$log:ty>) => {
-            GenericLambdaTelemetry<$log>
-        };
-        (@type) => {
-            LambdaTelemetry
         };
     }
 
@@ -535,9 +517,9 @@ mod serialization_tests {
         ),
         // function (json)
         function_generic<bool>: (
-            GenericLambdaTelemetry {
+            LambdaTelemetry {
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: GenericLambdaTelemetryRecord::Function(true),
+                record: LambdaTelemetryRecord::Function(true),
             },
             r#"{"time":"2023-11-28T12:00:09Z","type":"function","record":true}"#,
         ),
@@ -551,9 +533,9 @@ mod serialization_tests {
         ),
         // extension (json)
         extension_generic<bool>: (
-            GenericLambdaTelemetry {
+            LambdaTelemetry {
                 time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
-                record: GenericLambdaTelemetryRecord::Extension(true),
+                record: LambdaTelemetryRecord::Extension(true),
             },
             r#"{"time":"2023-11-28T12:00:09Z","type":"extension","record":true}"#,
         ),
