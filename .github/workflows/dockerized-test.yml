@@ -20,6 +20,9 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: Swatinem/rust-cache@v2
+
     - name: Set up Python 3.14
       uses: actions/setup-python@v5
       with:
@@ -35,26 +38,19 @@ jobs:
           echo "OUTPUT_DIR=${OUTPUT_DIR}" >> $GITHUB_ENV
         fi
     
-    - name: Build the image
+    - name: Build Lambda artifacts for testing
       run: |
-        docker build . -t local/test -f Dockerfile.rie \
-          --build-arg HANDLERS_TO_BUILD="${HANDLERS_TO_BUILD}" \
-          --build-arg OUTPUT_DIR="${OUTPUT_DIR}"
-
-    - name: Test container manually
+        mkdir -p test/dockerized/tasks
+        OUTPUT_DIR="$(pwd)/test/dockerized/tasks" make build-examples
+        ls -la test/dockerized/tasks/
+    
+    - name: Build base test image with RIE and custom entrypoint
       run: |
-        docker run -d --name test-container -p 9000:8080 local/test basic-lambda
-        sleep 1
-        echo "Container logs after startup:"
-        docker logs test-container
-        echo "Attempting to invoke function:"
-        curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"command":"test"}' || echo "Invocation failed"
-        echo "Final container logs:"
-        docker logs test-container
-        docker kill test-container || true
+        docker build . -t local/test-base -f Dockerfile.rie
 
     - name: Run tests
       uses: aws/containerized-test-runner-for-aws-lambda@main
       with:
         suiteFileArray: '["./test/dockerized/*.json"]'
-        dockerImageName: 'local/test'
+        dockerImageName: 'local/test-base'
+        taskFolder: './test/dockerized/tasks'

@@ -6,7 +6,7 @@ INTEG_EXTENSIONS := extension-fn extension-trait logs-trait
 # Using musl to run extensions on both AL1 and AL2
 INTEG_ARCH := x86_64-unknown-linux-musl
 RIE_MAX_CONCURRENCY ?= 4
-OUTPUT_DIR ?= /tmp/var-task
+OUTPUT_DIR ?= test/dockerized/tasks
 HANDLERS_TO_BUILD ?=
 HANDLER ?=
 
@@ -124,19 +124,18 @@ fmt:
 	cargo +nightly fmt --all
 
 build-examples:
-	HANDLERS_TO_BUILD=${HANDLERS_TO_BUILD} ./scripts/build-examples.sh
+	HANDLERS_TO_BUILD=${HANDLERS_TO_BUILD} OUTPUT_DIR=${OUTPUT_DIR} ./scripts/build-examples.sh
 
 nuke:
 	docker kill $$(docker ps -q)
 
-test-dockerized:
+test-dockerized: build-examples
 	@echo "Running dockerized tests locally..."
-	@echo "Building Docker image..."
+	
+	@echo "Building base Docker image with RIE and custom entrypoint..."
 	docker build \
-	-t local/test \
+	-t local/test-base \
 	-f Dockerfile.rie \
-	--build-arg HANDLERS_TO_BUILD="${HANDLERS_TO_BUILD}" \
-	--build-arg OUTPUT_DIR="${OUTPUT_DIR}" \
 	.
 	
 	@echo "Setting up containerized test runner..."
@@ -146,17 +145,17 @@ test-dockerized:
 	fi
 	@echo "Building test runner Docker image..."
 	@docker build -t test-runner:local -f .test-runner/Dockerfile .test-runner
+	
 	@echo "Running tests in Docker..."
-	@echo "Running actual tests..."
 	@docker run --rm \
-		--entrypoint suite \
-		-e DOCKER_API_VERSION=1.44 \
+		-e INPUT_SUITE_FILE_ARRAY='["./test/dockerized/suites/*.json"]' \
+		-e DOCKER_IMAGE_NAME=local/test-base \
+		-e TASK_FOLDER=./test/dockerized/tasks \
+		-e GITHUB_WORKSPACE=/workspace \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v "$(CURDIR)/test/dockerized:/tests:ro" \
-		test-runner:local \
-		--test-image local/test \
-		--debug \
-		/tests/*.json
+		-v "$(CURDIR):/workspace" \
+		-w /workspace \
+		test-runner:local
 
 test-rie:
 	HANDLER="$(HANDLER)" ./scripts/test-rie.sh
