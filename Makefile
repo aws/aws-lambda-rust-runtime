@@ -135,7 +135,7 @@ test-dockerized: build-examples
 	@echo "Building base Docker image with RIE and custom entrypoint..."
 	docker build \
 	-t local/test-base \
-	-f Dockerfile.rie \
+	-f Dockerfile.test \
 	.
 	
 	@echo "Setting up containerized test runner..."

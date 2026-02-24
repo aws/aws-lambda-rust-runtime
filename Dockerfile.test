@@ -1,0 +1,10 @@
+FROM public.ecr.aws/lambda/provided:al2023
+
+ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie /usr/local/bin/aws-lambda-rie
+RUN chmod +x /usr/local/bin/aws-lambda-rie
+
+COPY scripts/custom-lambda-entrypoint.sh /usr/local/bin/lambda-entrypoint
+RUN chmod +x /usr/local/bin/lambda-entrypoint
+
+ENTRYPOINT ["/usr/local/bin/lambda-entrypoint"]
+CMD ["basic-lambda"]

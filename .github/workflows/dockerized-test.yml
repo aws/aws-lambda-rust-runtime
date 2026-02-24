@@ -46,7 +46,7 @@ jobs:
     
     - name: Build base test image with RIE and custom entrypoint
       run: |
-        docker build . -t local/test-base -f Dockerfile.rie
+        docker build . -t local/test-base -f Dockerfile.test
 
     - name: Run tests
       uses: aws/containerized-test-runner-for-aws-lambda@main

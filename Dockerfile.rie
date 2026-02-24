@@ -1,10 +1,25 @@
 FROM public.ecr.aws/lambda/provided:al2023
 
+RUN dnf install -y gcc
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie /usr/local/bin/aws-lambda-rie
 RUN chmod +x /usr/local/bin/aws-lambda-rie
 
-COPY scripts/custom-lambda-entrypoint.sh /usr/local/bin/lambda-entrypoint
-RUN chmod +x /usr/local/bin/lambda-entrypoint
+ARG EXAMPLE=basic-lambda
 
-ENTRYPOINT ["/usr/local/bin/lambda-entrypoint"]
-CMD ["basic-lambda"]
+COPY Cargo.* /build/
+COPY lambda-runtime /build/lambda-runtime
+COPY lambda-runtime-api-client /build/lambda-runtime-api-client
+COPY lambda-events /build/lambda-events
+COPY lambda-http /build/lambda-http
+COPY lambda-extension /build/lambda-extension
+COPY examples/${EXAMPLE} /build/examples/${EXAMPLE}
+
+WORKDIR /build/examples/${EXAMPLE}
+RUN cargo build --release
+RUN cp target/release/${EXAMPLE} ${LAMBDA_RUNTIME_DIR}/bootstrap
+
+ENTRYPOINT []
+CMD [ "/usr/local/bin/aws-lambda-rie", "/var/runtime/bootstrap" ]
