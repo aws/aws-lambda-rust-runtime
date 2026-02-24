@@ -145,11 +145,11 @@ test-dockerized:
 		git clone --quiet https://github.com/aws/containerized-test-runner-for-aws-lambda.git .test-runner; \
 	fi
 	@echo "Building test runner Docker image..."
-	@docker build -t test-runner:local -f Dockerfile.test-runner .
+	@docker build -t test-runner:local -f .test-runner/Dockerfile .test-runner
 	@echo "Running tests in Docker..."
-	@echo "Running actual tests..."
 	@docker run --rm \
-		-e DOCKER_API_VERSION=1.44 \
+		--entrypoint suite \
+		-e DOCKER_API_VERSION=1.41 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v "$(CURDIR)/test/dockerized:/tests:ro" \
 		test-runner:local \
