@@ -53,3 +53,4 @@ jobs:
       with:
         suiteFileArray: '["./test/dockerized/*.json"]'
         dockerImageName: 'local/test'
+        taskFolder:  '["./test/dockerized/*.json"]' #no-op, todo: fix this
