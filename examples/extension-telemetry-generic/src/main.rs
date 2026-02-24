@@ -20,6 +20,7 @@ async fn main() -> Result<(), Error> {
     let telemetry_processor = SharedService::new(service_fn(handler));
 
     Extension::new()
+        .with_telemetry_record_type::<serde_json::Value>()
         .with_telemetry_processor(telemetry_processor)
         .run()
         .await?;

@@ -185,7 +185,7 @@ where
     }
 
     /// Create a new [`Extension`] with a service that receives Lambda telemetry data.
-    pub fn with_telemetry_processor<N, NS, NL>(self, lp: N) -> Extension<'a, E, L, N, NL>
+    pub fn with_telemetry_processor<N, NS>(self, lp: N) -> Extension<'a, E, L, N, TL>
     where
         N: Service<()>,
         N::Future: Future<Output = Result<NS, N::Error>>,
@@ -193,7 +193,6 @@ where
     {
         Extension {
             telemetry_processor: Some(lp),
-            _telemetry_record_type: PhantomData,
             events_processor: self.events_processor,
             extension_name: self.extension_name,
             events: self.events,
@@ -204,6 +203,7 @@ where
             telemetry_types: self.telemetry_types,
             telemetry_buffering: self.telemetry_buffering,
             telemetry_port_number: self.telemetry_port_number,
+            _telemetry_record_type: self._telemetry_record_type,
         }
     }
 
@@ -349,6 +349,48 @@ where
     /// Execute the given extension.
     pub async fn run(self) -> Result<(), Error> {
         self.register().await?.run().await
+    }
+}
+
+impl<'a, E, L> Extension<'a, E, L, MakeIdentity<Vec<LambdaTelemetry>>> {
+    /// Set the deserialization type for telemetry log records.
+    ///
+    /// By default, telemetry log records are deserialized as `String`, but
+    /// it's possible to configure Lambda functions to emit logs in JSON format.
+    /// Use this method to deserialize into a different type, such as
+    /// `serde_json::Value`.
+    ///
+    /// Must be called before [`Self::with_telemetry_processor`].
+    ///
+    /// ```
+    /// use lambda_extension::{Extension, LambdaTelemetry, SharedService, service_fn};
+    ///
+    /// async fn handler(events: Vec<LambdaTelemetry<serde_json::Value>>) -> Result<(), lambda_extension::Error> {
+    ///     for event in &events {
+    ///         println!("{event:?}");
+    ///     }
+    ///     Ok(())
+    /// }
+    ///
+    /// let _ext = Extension::new()
+    ///     .with_telemetry_record_type::<serde_json::Value>()
+    ///     .with_telemetry_processor(SharedService::new(service_fn(handler)));
+    /// ```
+    pub fn with_telemetry_record_type<N>(self) -> Extension<'a, E, L, MakeIdentity<Vec<LambdaTelemetry<N>>>, N> {
+        Extension {
+            _telemetry_record_type: PhantomData,
+            telemetry_processor: None,
+            events_processor: self.events_processor,
+            extension_name: self.extension_name,
+            events: self.events,
+            log_types: self.log_types,
+            log_buffering: self.log_buffering,
+            logs_processor: self.logs_processor,
+            log_port_number: self.log_port_number,
+            telemetry_types: self.telemetry_types,
+            telemetry_buffering: self.telemetry_buffering,
+            telemetry_port_number: self.telemetry_port_number,
+        }
     }
 }
 
