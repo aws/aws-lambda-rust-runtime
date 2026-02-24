@@ -19,6 +19,17 @@ use tokio_stream::Stream;
 use tower::util::ServiceFn;
 pub use tower::{self, service_fn, Service};
 
+/// Logs using tracing `error!` if a dispatcher is set, otherwise falls back to `eprintln!`.
+macro_rules! log_or_print {
+    (tracing: $tracing_expr:expr, fallback: $fallback_expr:expr) => {
+        if tracing::dispatcher::has_been_set() {
+            $tracing_expr;
+        } else {
+            $fallback_expr;
+        }
+    };
+}
+
 /// Diagnostic utilities to convert Rust types into Lambda Error types.
 pub mod diagnostic;
 pub use diagnostic::Diagnostic;
