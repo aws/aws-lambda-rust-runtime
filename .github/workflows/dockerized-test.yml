@@ -51,6 +51,6 @@ jobs:
     - name: Run tests
       uses: aws/containerized-test-runner-for-aws-lambda@main
       with:
-        suiteFileArray: '["./test/dockerized/*.json"]'
+        suiteFileArray: '["./test/dockerized/suites/*.json"]'
         dockerImageName: 'local/test-base'
         taskFolder: './test/dockerized/tasks'
