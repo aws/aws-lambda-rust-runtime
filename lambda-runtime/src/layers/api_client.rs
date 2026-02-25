@@ -279,7 +279,7 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(err.to_string().contains("Request build error"));
-        
+
         // Verify the error was logged
         assert!(logs_contain("failed to build Lambda Runtime API request"));
     }
@@ -303,7 +303,7 @@ mod tests {
 
         // Network errors should propagate as Err
         assert!(result.is_err());
-        
+
         // Verify the error was logged
         assert!(logs_contain("Lambda Runtime API request failed"));
     }
