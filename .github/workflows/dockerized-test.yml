@@ -14,20 +14,11 @@ on:
 jobs:
   dockerized-test:
     runs-on: ubuntu-latest
-    env:
-      ACTIONS_STEP_DEBUG: true
-
     steps:
     - uses: actions/checkout@v6
 
     - uses: dtolnay/rust-toolchain@stable
     - uses: Swatinem/rust-cache@v2
-
-    - name: Set up Python 3.14
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.14'
-    
     - name: Load environment variables
       run: |
         if [ -f .env ]; then
