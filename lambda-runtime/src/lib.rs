@@ -19,6 +19,9 @@ use tokio_stream::Stream;
 use tower::util::ServiceFn;
 pub use tower::{self, service_fn, Service};
 
+#[macro_use]
+mod macros;
+
 /// Diagnostic utilities to convert Rust types into Lambda Error types.
 pub mod diagnostic;
 pub use diagnostic::Diagnostic;

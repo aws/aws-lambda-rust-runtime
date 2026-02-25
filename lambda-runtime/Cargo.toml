@@ -78,6 +78,7 @@ pin-project-lite = { workspace = true }
 tracing-appender = "0.2"
 tracing-capture = "0.1.0"
 tracing-subscriber = { version = "0.3", features = ["registry"] }
+tracing-test = "0.2"
 
 [package.metadata.docs.rs]
 all-features = true
