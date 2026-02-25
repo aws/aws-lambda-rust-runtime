@@ -185,6 +185,10 @@ where
     }
 
     /// Create a new [`Extension`] with a service that receives Lambda telemetry data.
+    /// 
+    /// By default, telemetry log records are deserialized as `String`, but
+    /// it's possible to configure Lambda functions to emit logs in JSON format.
+    /// For more information, refer to [`Self::with_telemetry_record_type`].
     pub fn with_telemetry_processor<N, NS>(self, lp: N) -> Extension<'a, E, L, N, TL>
     where
         N: Service<()>,
