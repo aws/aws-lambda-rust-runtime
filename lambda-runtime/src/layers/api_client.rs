@@ -96,7 +96,8 @@ where
                 RuntimeApiClientFutureProj::Second(fut) => match ready!(fut.poll(cx)) {
                     Ok(resp) if !resp.status().is_success() => {
                         let status = resp.status();
-                        
+
+                        // TODO
                         // we should consume the response body of the call in order to give a more specific message.
                         // https://github.com/aws/aws-lambda-rust-runtime/issues/1110
 
