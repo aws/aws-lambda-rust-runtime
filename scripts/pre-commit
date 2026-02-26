@@ -1,0 +1,25 @@
+#!/bin/sh
+# Pre-commit hook to run cargo fmt
+# 
+# To install this hook, run:
+#   cp scripts/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+
+echo "Running cargo fmt..."
+
+# Run cargo fmt on the entire workspace
+cargo fmt --all -- --check
+
+# Check if cargo fmt found any formatting issues
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Code formatting issues detected!"
+    echo "Running 'cargo fmt --all' to fix formatting..."
+    cargo fmt --all
+    echo ""
+    echo "✅ Formatting applied. Please review the changes and commit again."
+    exit 1
+fi
+
+echo "✅ Code formatting is correct!"
+exit 0

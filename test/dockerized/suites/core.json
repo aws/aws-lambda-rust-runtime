@@ -14,6 +14,77 @@
                     "transform": "{msg: .msg}"
                 }
             ]
+        },
+        {
+            "name": "test_basic_sqs",
+            "handler": "basic-sqs",
+            "request": {
+                "Records": [
+                    {
+                        "messageId": "msg-001",
+                        "receiptHandle": "receipt-001",
+                        "body": "{\"id\":\"user-123\",\"text\":\"Hello from SQS\"}",
+                        "attributes": {
+                            "ApproximateReceiveCount": "1",
+                            "SentTimestamp": "1234567890",
+                            "SenderId": "AIDAI123456789",
+                            "ApproximateFirstReceiveTimestamp": "1234567890"
+                        },
+                        "messageAttributes": {},
+                        "md5OfBody": "abc123",
+                        "eventSource": "aws:sqs",
+                        "eventSourceARN": "arn:aws:sqs:us-east-1:123456789012:test-queue",
+                        "awsRegion": "us-east-1"
+                    }
+                ]
+            },
+            "assertions": [
+                {
+                    "response": null
+                }
+            ]
+        },
+        {
+            "name": "test_http_basic_lambda",
+            "handler": "http-basic-lambda",
+            "request": {
+                "version": "2.0",
+                "routeKey": "$default",
+                "rawPath": "/",
+                "rawQueryString": "",
+                "headers": {
+                    "accept": "text/html",
+                    "user-agent": "test-client"
+                },
+                "requestContext": {
+                    "accountId": "123456789012",
+                    "apiId": "api-id",
+                    "domainName": "example.com",
+                    "domainPrefix": "api",
+                    "http": {
+                        "method": "GET",
+                        "path": "/",
+                        "protocol": "HTTP/1.1",
+                        "sourceIp": "127.0.0.1",
+                        "userAgent": "test-client"
+                    },
+                    "requestId": "req-001",
+                    "routeKey": "$default",
+                    "stage": "$default",
+                    "time": "01/Jan/2024:00:00:00 +0000",
+                    "timeEpoch": 1704067200000
+                },
+                "isBase64Encoded": false
+            },
+            "assertions": [
+                {
+                    "response": {
+                        "statusCode": 200,
+                        "body": "Hello AWS Lambda HTTP request"
+                    },
+                    "transform": "{statusCode: .statusCode, body: .body}"
+                }
+            ]
         }
     ]
 }

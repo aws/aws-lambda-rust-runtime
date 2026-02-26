@@ -1,23 +1,52 @@
-target
-/.cargo
-lambda-runtime/libtest.rmeta
-lambda-integration-tests/target
-Cargo.lock
-.test-runner
+# Rust
+target/
+**/*.rs.bk
+*.pdb
 
-# Built AWS Lambda zipfile
+# Cargo
+/.cargo
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+.kiro/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Environment
+.env
+*.env.local
+
+# AWS / SAM
+.aws-sam/
+build/
+output.json
 lambda.zip
 
-# output.json from example docs
-output.json
-
-.aws-sam
-build
-.vscode
-
-node_modules
-cdk.out
+# CDK
+node_modules/
+cdk.out/
 
 # Test artifacts
-Dockerfile.test-with-tasks
+.test-runner/
 test/dockerized/tasks/
+Dockerfile.test-with-tasks
+.test/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Misc
+lambda-runtime/libtest.rmeta
+lambda-integration-tests/target/

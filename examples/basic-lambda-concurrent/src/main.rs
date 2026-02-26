@@ -1,31 +1,45 @@
 // This example requires the following input to succeed:
 // { "command": "do something" }
 
-use lambda_runtime::{service_fn, tracing, Error, LambdaEvent};
+use lambda_runtime::{service_fn, tracing, Diagnostic, Error, LambdaEvent};
 use serde::{Deserialize, Serialize};
 
-/// This is also a made-up example. Requests come into the runtime as unicode
-/// strings in json format, which can map to any structure that implements `serde::Deserialize`
-/// The runtime pays no attention to the contents of the request payload.
 #[derive(Deserialize)]
 struct Request {
     command: String,
 }
 
-/// This is a made-up example of what a response structure may look like.
-/// There is no restriction on what it can be. The runtime requires responses
-/// to be serialized into json. The runtime pays no attention
-/// to the contents of the response payload.
 #[derive(Serialize)]
 struct Response {
     req_id: String,
     msg: String,
 }
 
+#[derive(Debug)]
+struct HandlerError(String);
+
+impl std::fmt::Display for HandlerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl From<HandlerError> for Diagnostic {
+    fn from(e: HandlerError) -> Diagnostic {
+        Diagnostic {
+            error_type: "HandlerError".into(),
+            error_message: e.0,
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     // required to enable CloudWatch error logging by the runtime
     tracing::init_default_subscriber();
+
+    let max_concurrency = std::env::var("AWS_LAMBDA_MAX_CONCURRENCY").unwrap_or_else(|_| "not set".to_string());
+    tracing::info!(AWS_LAMBDA_MAX_CONCURRENCY = %max_concurrency, "starting concurrent handler");
 
     let func = service_fn(my_handler);
     if let Err(err) = lambda_runtime::run_concurrent(func).await {
@@ -35,17 +49,18 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-pub(crate) async fn my_handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
-    // extract some useful info from the request
+pub(crate) async fn my_handler(event: LambdaEvent<Request>) -> Result<Response, HandlerError> {
     let command = event.payload.command;
 
-    // prepare the response
+    if command == "fail" {
+        return Err(HandlerError("simulated handler error".into()));
+    }
+
     let resp = Response {
         req_id: event.context.request_id,
         msg: format!("Command {command} executed."),
     };
 
-    // return `Response` (it will be serialized to JSON automatically by the runtime)
     Ok(resp)
 }
 

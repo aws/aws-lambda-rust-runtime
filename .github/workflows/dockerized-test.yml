@@ -45,3 +45,36 @@ jobs:
         suiteFileArray: '["./test/dockerized/suites/*.json"]'
         dockerImageName: 'local/test-base'
         taskFolder: './test/dockerized/tasks'
+
+  dockerized-test-concurrent:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: Swatinem/rust-cache@v2
+
+    - name: Build Lambda artifacts for testing
+      run: |
+        mkdir -p test/dockerized/tasks
+        HANDLERS_TO_BUILD="basic-lambda-concurrent" OUTPUT_DIR="$(pwd)/test/dockerized/tasks" make build-examples
+        ls -la test/dockerized/tasks/
+
+    - name: Build base test image with RIE and custom entrypoint
+      run: docker build -t local/test-base -f Dockerfile.test .
+
+    - name: Create Docker network for concurrent tests
+      run: docker network create concurrent-test-net
+
+    - name: Run concurrent scenarios
+      uses: aws/containerized-test-runner-for-aws-lambda@dmelfi/multi-concurrency-test
+      with:
+        suiteFileArray: '[]'
+        dockerImageName: 'local/test-base'
+        taskFolder: './test/dockerized/tasks'
+        scenarioDir: './test/dockerized/scenarios'
+        dockerSharedNetwork: 'concurrent-test-net'
+
+    - name: Remove Docker network
+      if: always()
+      run: docker network rm concurrent-test-net || true
