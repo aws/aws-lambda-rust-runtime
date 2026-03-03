@@ -1,0 +1,21 @@
+{
+  "token": "aToken",
+  "signatureVerified": true,
+  "protocols": [
+    "tls",
+    "mqtt"
+  ],
+  "protocolData": {
+    "tls": {
+      "serverName": "serverName",
+      "x509CertificatePem": "x509CertificatePem",
+      "principalId": "principalId"
+    },
+    "mqtt": {
+      "clientId": "myClientId"
+    }
+  },
+  "connectionMetadata": {
+    "id": "UUID"
+  }
+}

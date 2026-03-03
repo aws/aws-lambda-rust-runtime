@@ -54,6 +54,10 @@ pub struct IoTCoreProtocolData {
 pub struct IoTCoreTlsContext {
     #[serde(default)]
     pub server_name: Option<String>,
+    #[serde(default)]
+    pub x509_certificate_pem: Option<String>,
+    #[serde(default)]
+    pub principal_id: Option<String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
     /// If `catch-all-fields` is disabled, any additional fields that are present will be ignored.
@@ -91,6 +95,10 @@ pub struct IoTCoreHttpContext {
 pub struct IoTCoreMqttContext {
     #[serde(default)]
     pub client_id: Option<String>,
+    ///  X.509 custom authorizer requests don't include a password field.
+    /// Default to empty Vec<u8> when absent.
+    /// Serializing result will be `password: ""`
+    #[serde(default)]
     pub password: Base64Data,
     #[serde(default)]
     pub username: Option<String>,
@@ -152,6 +160,16 @@ mod test {
     #[cfg(feature = "iot")]
     fn example_iot_custom_auth_request() {
         let data = include_bytes!("../../fixtures/example-iot-custom-auth-request.json");
+        let parsed: IoTCoreCustomAuthorizerRequest = serde_json::from_slice(data).unwrap();
+        let output: String = serde_json::to_string(&parsed).unwrap();
+        let reparsed: IoTCoreCustomAuthorizerRequest = serde_json::from_slice(output.as_bytes()).unwrap();
+        assert_eq!(parsed, reparsed);
+    }
+
+    #[test]
+    #[cfg(feature = "iot")]
+    fn example_iot_custom_auth_request_x509() {
+        let data = include_bytes!("../../fixtures/example-iot-custom-auth-request-x509.json");
         let parsed: IoTCoreCustomAuthorizerRequest = serde_json::from_slice(data).unwrap();
         let output: String = serde_json::to_string(&parsed).unwrap();
         let reparsed: IoTCoreCustomAuthorizerRequest = serde_json::from_slice(output.as_bytes()).unwrap();
