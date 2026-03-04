@@ -96,7 +96,7 @@ pub struct IoTCoreMqttContext {
     #[serde(default)]
     pub client_id: Option<String>,
     ///  X.509 custom authorizer requests don't include a password field.
-    /// Default to empty Vec<u8> when absent.
+    /// Default to empty `Vec<u8>` when absent.
     /// Serializing result will be `password: ""`
     #[serde(default)]
     pub password: Base64Data,
