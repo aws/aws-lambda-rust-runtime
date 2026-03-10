@@ -20,7 +20,7 @@ export
 .DEFAULT_GOAL := help
 
 define uppercase
-$(shell sed -r 's/(^|-)(\w)/\U\2/g' <<< $(1))
+$(shell echo '$(1)' | sed -r 's/(^|-)(\w)/\U\2/g')
 endef
 
 pr-check:
@@ -147,9 +147,9 @@ build-test-runner: build-examples
 
 test-dockerized-concurrent: build-test-runner
 	@echo "Running concurrent scenarios in Docker..."
-	@docker network create concurrent-test-net 2>/dev/null || true
+	@docker network rm concurrent-test-net 2>/dev/null || true
+	@docker network create concurrent-test-net
 	@docker run --rm \
-		--network concurrent-test-net \
 		-e INPUT_SUITE_FILE_ARRAY='[]' \
 		-e INPUT_SCENARIO_DIR=/workspace/test/dockerized/scenarios \
 		-e DOCKER_IMAGE_NAME=local/test-base \
