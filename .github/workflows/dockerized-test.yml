@@ -67,7 +67,7 @@ jobs:
       run: docker network create concurrent-test-net
 
     - name: Run concurrent scenarios
-      uses: aws/containerized-test-runner-for-aws-lambda@dmelfi/multi-concurrency-test
+      uses: aws/containerized-test-runner-for-aws-lambda@main
       with:
         suiteFileArray: '[]'
         dockerImageName: 'local/test-base'
