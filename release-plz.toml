@@ -5,6 +5,7 @@ git_release_enable = false
 [[package]]
 name = "lambda-integration-tests"
 publish = false
+release = false
 
 [changelog]
 protect_breaking_commits = true
