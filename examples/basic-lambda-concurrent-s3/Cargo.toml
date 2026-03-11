@@ -1,0 +1,11 @@
+[package]
+name = "basic-lambda-concurrent-s3"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aws-config = { version = "1", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1"
+lambda_runtime = { path = "../../lambda-runtime", features = ["concurrency-tokio"] }
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["macros"] }
