@@ -21,7 +21,6 @@ Cargo.lock
 .LSOverride
 
 # Environment
-.env
 *.env.local
 
 # AWS / SAM
