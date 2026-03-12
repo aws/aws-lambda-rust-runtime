@@ -1,6 +1,6 @@
 [package]
 name = "aws_lambda_events"
-version = "1.1.0"
+version = "1.1.1"
 rust-version = "1.84.0"
 description = "AWS Lambda event definitions"
 authors = [
@@ -137,4 +137,4 @@ builders = ["bon"]
 all-features = true
 
 [dev-dependencies]
-lambda_runtime = { version = "1.1.0-rc1", path = "../lambda-runtime" }
+lambda_runtime = { version = "1.1.0-rc1.1", path = "../lambda-runtime" }

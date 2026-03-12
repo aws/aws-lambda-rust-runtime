@@ -1,6 +1,6 @@
 [package]
 name = "lambda_runtime"
-version = "1.1.0-rc1"
+version = "1.1.0-rc1.1"
 authors = [
     "David Calavera <dcalaver@amazon.com>",
     "Harold Sun <sunhua@amazon.com>",
