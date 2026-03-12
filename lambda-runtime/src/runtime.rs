@@ -936,6 +936,8 @@ mod endpoint_tests {
     }
 
     #[cfg(feature = "concurrency-tokio")]
+    // Must be current-thread (the default) so the thread-local tracing
+    // subscriber set via `set_default` propagates to spawned tasks.
     #[tokio::test]
     async fn test_concurrent_structured_logging_isolation() -> Result<(), Error> {
         use std::collections::HashSet;
