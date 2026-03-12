@@ -945,7 +945,7 @@ mod endpoint_tests {
 
         let storage = SharedStorage::default();
         let subscriber = tracing_subscriber::registry().with(CaptureLayer::new(&storage));
-        tracing::subscriber::set_global_default(subscriber).unwrap();
+        let _guard = tracing::subscriber::set_default(subscriber);
 
         let request_count = Arc::new(AtomicUsize::new(0));
         let done = Arc::new(tokio::sync::Notify::new());
