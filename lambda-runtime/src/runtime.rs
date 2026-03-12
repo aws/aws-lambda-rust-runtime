@@ -936,7 +936,6 @@ mod endpoint_tests {
     }
 
     #[cfg(feature = "concurrency-tokio")]
-    #[tracing_test::traced_test]
     #[tokio::test]
     async fn test_concurrent_structured_logging_isolation() -> Result<(), Error> {
         use std::collections::HashSet;
