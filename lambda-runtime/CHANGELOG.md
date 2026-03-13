@@ -30,8 +30,8 @@ We would like also to involve the community in a broader discussion about improv
 
 ### Added
 
-- *(lambda-managed-instances)* tenant ID propagation for multi-tenant Lambda use cases. The `tenant_id` is available in the `context.tenant_id` field (`Option<String>`) and is automatically extracted from the `lambda-runtime-aws-tenant-id` header when present ([#1082](https://github.com/aws/aws-lambda-rust-runtime/pull/1082))
 - *(lambda-managed-instances)* log non-2xx Lambda Runtime API responses with status and body ([#1109](https://github.com/aws/aws-lambda-rust-runtime/pull/1109))
+- tenant ID propagation for multi-tenant Lambda use cases. The `tenant_id` is available in the `context.tenant_id` field (`Option<String>`) and is automatically extracted from the `lambda-runtime-aws-tenant-id` header when present ([#1082](https://github.com/aws/aws-lambda-rust-runtime/pull/1082))
 - Add builder pattern support for event response types ([#1090](https://github.com/aws/aws-lambda-rust-runtime/pull/1090))
 
 ### Fixed
