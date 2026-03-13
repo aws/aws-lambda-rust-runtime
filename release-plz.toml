@@ -3,6 +3,12 @@ semver_check = true
 git_release_enable = false
 
 [[package]]
+name = "lambda_runtime"
+git_release_enable = true
+git_release_name = "v{{ version }}"
+changelog_include = ["lambda_http", "lambda_runtime_api_client", "lambda-extension", "aws_lambda_events"]
+
+[[package]]
 name = "lambda-integration-tests"
 publish = false
 release = false

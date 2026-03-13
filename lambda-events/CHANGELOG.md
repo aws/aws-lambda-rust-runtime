@@ -7,13 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-<<<<<<< HEAD
-## [1.1.1](https://github.com/aws/aws-lambda-rust-runtime/compare/aws_lambda_events-v1.1.0...aws_lambda_events-v1.1.1) - 2026-03-12
-
-### Other
-
-- updated the following local packages: lambda_runtime
-=======
 ## [1.1.1](https://github.com/aws/aws-lambda-rust-runtime/compare/aws_lambda_events-v1.0.3...aws_lambda_events-v1.1.1) - 2026-03-11
 
 ### Added
@@ -37,4 +30,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - MSRV updated from 1.82.0 to 1.84.0, enabled MSRV-aware resolver ([#1078](https://github.com/aws/aws-lambda-rust-runtime/pull/1078))
->>>>>>> 7f3f758 (chore: some other changes)
