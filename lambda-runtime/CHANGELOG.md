@@ -30,7 +30,7 @@ lambda_runtime::run_concurrent(service_fn(my_handler)).await?;
 For a complete working example, see [examples/basic-lambda-concurrent](https://github.com/aws/aws-lambda-rust-runtime/tree/main/examples/basic-lambda-concurrent). For detailed guidance on building functions for multi-concurrency, including shared state patterns and database connection pools, see the [Rust runtime for Lambda Managed Instances](https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-rust.html) documentation.
 >>>>>>> f0f4e6c (chore: adding thanks  and link)
 
-We would like also to involve the community in a broader discussion about improving our approach on multiconcurrency. You can find the discussion in ([#1120])(https://github.com/aws/aws-lambda-rust-runtime/issues/1120)
+We would like also to involve the community in a broader discussion about improving our approach on multiconcurrency. You can find the discussion in ([#1120](https://github.com/aws/aws-lambda-rust-runtime/issues/1120))
 
 ### Added
 
