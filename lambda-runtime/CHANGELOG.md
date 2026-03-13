@@ -30,11 +30,17 @@ lambda_runtime::run_concurrent(service_fn(my_handler)).await?;
 For a complete working example, see [examples/basic-lambda-concurrent](https://github.com/aws/aws-lambda-rust-runtime/tree/main/examples/basic-lambda-concurrent). For detailed guidance on building functions for multi-concurrency, including shared state patterns and database connection pools, see the [Rust runtime for Lambda Managed Instances](https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-rust.html) documentation.
 >>>>>>> f0f4e6c (chore: adding thanks  and link)
 
-We would like also to involve the community in a broader discussion about improving our approach on multiconcurrency. You can find the discussion in [#1120](https://github.com/aws/aws-lambda-rust-runtime/issues/1120)
+We would like also to involve the community in a broader discussion about improving our approach on multiconcurrency. You can find the discussion in ([#1120])(https://github.com/aws/aws-lambda-rust-runtime/issues/1120)
 
 ### Added
 
+<<<<<<< HEAD
 - *(lambda-runtime)* log non-2xx Lambda Runtime API responses with status and body ([#1109](https://github.com/aws/aws-lambda-rust-runtime/pull/1109))
+=======
+- *(lambda-managed-instances)* tenant ID propagation for multi-tenant Lambda use cases. The `tenant_id` is available in the `context.tenant_id` field (`Option<String>`) and is automatically extracted from the `lambda-runtime-aws-tenant-id` header when present ([#1082](https://github.com/aws/aws-lambda-rust-runtime/pull/1082))
+- *(lambda-managed-instances)* log non-2xx Lambda Runtime API responses with status and body ([#1109](https://github.com/aws/aws-lambda-rust-runtime/pull/1109))
+- Add builder pattern support for event response types ([#1090](https://github.com/aws/aws-lambda-rust-runtime/pull/1090))
+>>>>>>> 7f3f758 (chore: some other changes)
 
 ### Fixed
 
@@ -42,6 +48,12 @@ We would like also to involve the community in a broader discussion about improv
 
 ### Other
 
+<<<<<<< HEAD
+=======
+- *(lambda-managed-instances)* add `tokio_unstable` to known cfgs to avoid linter warns ([#1095](https://github.com/aws/aws-lambda-rust-runtime/pull/1095))
+- *(lambda-managed-instances)* verify request-ID isolation in concurrent exec ([#1086](https://github.com/aws/aws-lambda-rust-runtime/pull/1086))
+- *(lambda-managed-instances)* warn on `run()` with `AWS_LAMBDA_MAX_CONCURRENCY`, rename feature `experimental-concurrency` to `concurrency-tokio` ([#1095](https://github.com/aws/aws-lambda-rust-runtime/pull/1095))
+>>>>>>> 7f3f758 (chore: some other changes)
 - Introducing Harness Testing ([#1103](https://github.com/aws/aws-lambda-rust-runtime/pull/1103))
 - add tokio_unstable to known cfgs to avoid linter warns
 - *(lambda-managed-instances)* warn on `run()` with `AWS_LAMBDA_MAX_CONCURRENCY, rename feature experimental-concurrency -> concurrency->tokio
