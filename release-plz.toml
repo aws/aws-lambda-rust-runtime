@@ -9,6 +9,10 @@ git_release_name = "v{{ version }}"
 changelog_include = ["lambda_http", "lambda_runtime_api_client", "lambda-extension", "aws_lambda_events"]
 
 [[package]]
+name = "aws_lambda_events"
+publish_no_verify = true # dev-dep on lambda_runtime may not be published yet
+
+[[package]]
 name = "lambda-integration-tests"
 publish = false
 release = false
