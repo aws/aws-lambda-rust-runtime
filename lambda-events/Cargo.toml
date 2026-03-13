@@ -137,4 +137,4 @@ builders = ["bon"]
 all-features = true
 
 [dev-dependencies]
-lambda_runtime = { version = "*", path = "../lambda-runtime" }
+lambda_runtime = { version = "1", path = "../lambda-runtime" }
