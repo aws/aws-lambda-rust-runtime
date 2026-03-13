@@ -59,7 +59,7 @@ features = ["alb", "apigw"]
 axum-core = "0.5.4"
 
 axum-extra = { version = "0.12.5", features = ["query"] }
-lambda_runtime_api_client = { version = "1.0.2", path = "../lambda-runtime-api-client" }
+lambda_runtime_api_client = { version = "1.0.3", path = "../lambda-runtime-api-client" }
 
 log = "^0.4"
 maplit = "1.0"
