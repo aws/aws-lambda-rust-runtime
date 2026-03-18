@@ -433,8 +433,8 @@ pub struct CognitoEventUserPoolsPreTokenGenRequest {
     #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
-    /// Group and role overrides. Note that null or missing values in the request 
-    /// deserialize to [`GroupConfiguration::default`], see notes on [`deserialize_nullish`].
+    /// Group and role overrides. Note that null or missing values in the request
+    /// deserialize to [`GroupConfiguration::default`].
     #[serde(default, deserialize_with = "deserialize_nullish")]
     pub group_configuration: GroupConfiguration,
     #[serde(deserialize_with = "deserialize_nullish")]
@@ -498,8 +498,8 @@ pub struct CognitoEventUserPoolsPreTokenGenRequestV2 {
     #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
-    /// Group and role overrides. Note that null or missing values in the request 
-    /// deserialize to [`GroupConfiguration::default`], see notes on [`deserialize_nullish`].
+    /// Group and role overrides. Note that null or missing values in the request
+    /// deserialize to [`GroupConfiguration::default`].
     #[serde(default, deserialize_with = "deserialize_nullish")]
     pub group_configuration: GroupConfiguration,
     #[serde(deserialize_with = "deserialize_nullish")]

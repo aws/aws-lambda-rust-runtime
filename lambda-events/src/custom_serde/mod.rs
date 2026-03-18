@@ -58,11 +58,11 @@ where
 }
 
 /// Deserializes any `Default` type, mapping JSON `null` to `T::default()`.
-/// 
-/// **Note** null-to-empty semantics are usually clear for container types (Map, Vec, etc). 
-/// For most other data types, prefer modeling fields as Option<T> with #[serde(default)] 
-/// instead of using this deserializer. Option preserves information about the message 
-/// for the application, and default semantics for the target data type may change 
+///
+/// **Note** null-to-empty semantics are usually clear for container types (Map, Vec, etc).
+/// For most other data types, prefer modeling fields as ```Option<T>``` with #[serde(default)]
+/// instead of using this deserializer. Option preserves information about the message
+/// for the application, and default semantics for the target data type may change
 /// over time without warning.
 pub(crate) fn deserialize_nullish<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
@@ -77,7 +77,7 @@ where
 #[allow(deprecated)]
 mod test {
     use super::*;
-    
+
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
 

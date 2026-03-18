@@ -1,7 +1,6 @@
 use crate::{
     custom_serde::{
-        deserialize_headers, deserialize_nullish, http_method, serialize_headers,
-        serialize_multi_value_headers,
+        deserialize_headers, deserialize_nullish, http_method, serialize_headers, serialize_multi_value_headers,
     },
     encodings::Body,
     iam::IamPolicyStatement,

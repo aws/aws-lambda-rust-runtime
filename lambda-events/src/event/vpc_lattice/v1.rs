@@ -8,8 +8,7 @@ use serde_json::Value;
 
 use crate::{
     custom_serde::{
-        deserialize_comma_separated_headers, deserialize_nullish, http_method,
-        serialize_comma_separated_headers,
+        deserialize_comma_separated_headers, deserialize_nullish, http_method, serialize_comma_separated_headers,
     },
     encodings::Body,
 };
