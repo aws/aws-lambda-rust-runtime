@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::deserialize_lambda_map;
+use crate::custom_serde::deserialize_nullish;
 
 /// `IoTOneClickEvent` represents a click event published by clicking button type
 /// device.
@@ -67,7 +67,7 @@ pub struct IoTOneClickButtonClicked {
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IoTOneClickDeviceInfo {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub attributes: HashMap<String, String>,
     #[serde(default)]
@@ -94,10 +94,10 @@ pub struct IoTOneClickPlacementInfo {
     pub project_name: Option<String>,
     #[serde(default)]
     pub placement_name: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub attributes: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub devices: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.

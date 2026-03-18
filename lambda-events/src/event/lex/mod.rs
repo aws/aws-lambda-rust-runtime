@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::deserialize_lambda_map;
+use crate::custom_serde::deserialize_nullish;
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
@@ -17,7 +17,7 @@ pub struct LexEvent {
     pub user_id: Option<String>,
     pub input_transcript: Option<String>,
     pub session_attributes: Option<SessionAttributes>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub request_attributes: HashMap<String, String>,
     pub bot: Option<LexBot>,
@@ -62,7 +62,7 @@ pub struct LexCurrentIntent {
     pub name: Option<String>,
     pub nlu_intent_confidence_score: Option<f64>,
     pub slots: Option<Slots>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub slot_details: HashMap<String, SlotDetail>,
     pub confirmation_status: Option<String>,
@@ -84,7 +84,7 @@ pub struct LexAlternativeIntents {
     pub name: Option<String>,
     pub nlu_intent_confidence_score: Option<f64>,
     pub slots: Option<Slots>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub slot_details: HashMap<String, SlotDetail>,
     pub confirmation_status: Option<String>,
@@ -122,7 +122,7 @@ pub struct SlotDetail {
 pub struct LexDialogAction {
     pub type_: Option<String>,
     pub fulfillment_state: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub message: HashMap<String, String>,
     pub intent_name: Option<String>,

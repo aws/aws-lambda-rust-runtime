@@ -3,7 +3,6 @@ use serde::{
     de::{Deserialize, Deserializer, Error as DeError},
     ser::Serializer,
 };
-use std::collections::HashMap;
 
 #[cfg(feature = "codebuild")]
 pub(crate) mod codebuild_time;
@@ -59,6 +58,12 @@ where
 }
 
 /// Deserializes any `Default` type, mapping JSON `null` to `T::default()`.
+/// 
+/// **Note** null-to-empty semantics are usually clear for container types (Map, Vec, etc). 
+/// For most other data types, prefer modeling fields as Option<T> with #[serde(default)] 
+/// instead of using this deserializer. Option preserves information about the message 
+/// for the application, and default semantics for the target data type may change 
+/// over time without warning.
 pub(crate) fn deserialize_nullish<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
     D: Deserializer<'de>,
@@ -68,56 +73,13 @@ where
     Ok(opt.unwrap_or_default())
 }
 
-/// Deserializes `HashMap<_>`, mapping JSON `null` to an empty map.
-pub(crate) fn deserialize_lambda_map<'de, D, K, V>(deserializer: D) -> Result<HashMap<K, V>, D::Error>
-where
-    D: Deserializer<'de>,
-    K: serde::Deserialize<'de>,
-    K: std::hash::Hash,
-    K: std::cmp::Eq,
-    V: serde::Deserialize<'de>,
-{
-    // https://github.com/serde-rs/serde/issues/1098
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or_default())
-}
-
-#[cfg(feature = "dynamodb")]
-/// Deserializes `Item`, mapping JSON `null` to an empty item.
-pub(crate) fn deserialize_lambda_dynamodb_item<'de, D>(deserializer: D) -> Result<serde_dynamo::Item, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    // https://github.com/serde-rs/serde/issues/1098
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or_default())
-}
-
-/// Deserializes `HashMap<_>`, mapping JSON `null` to an empty map.
-#[cfg(any(
-    feature = "alb",
-    feature = "apigw",
-    feature = "cloudwatch_events",
-    feature = "code_commit",
-    feature = "cognito",
-    feature = "sns",
-    feature = "vpc_lattice",
-    test
-))]
-pub(crate) fn deserialize_nullish_boolean<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    // https://github.com/serde-rs/serde/issues/1098
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or_default())
-}
-
 #[cfg(test)]
 #[allow(deprecated)]
 mod test {
     use super::*;
+    
     use serde::{Deserialize, Serialize};
+    use std::collections::HashMap;
 
     #[test]
     fn test_deserialize_base64() {
@@ -151,7 +113,7 @@ mod test {
     fn test_deserialize_map() {
         #[derive(Deserialize)]
         struct Test {
-            #[serde(deserialize_with = "deserialize_lambda_map")]
+            #[serde(deserialize_with = "deserialize_nullish")]
             v: HashMap<String, String>,
         }
         let input = serde_json::json!({
@@ -170,9 +132,9 @@ mod test {
     #[cfg(feature = "dynamodb")]
     #[test]
     fn test_deserialize_lambda_dynamodb_item() {
-        #[derive(Deserialize)]
+        #[derive(Deserialize, Debug)]
         struct Test {
-            #[serde(deserialize_with = "deserialize_lambda_dynamodb_item")]
+            #[serde(deserialize_with = "deserialize_nullish")]
             v: serde_dynamo::Item,
         }
         let input = serde_json::json!({
@@ -186,6 +148,10 @@ mod test {
         });
         let decoded: Test = serde_json::from_value(input).unwrap();
         assert_eq!(serde_dynamo::Item::from(HashMap::new()), decoded.v);
+
+        let input = serde_json::json!({});
+        let failure = serde_json::from_value::<Test>(input);
+        assert!(failure.is_err(), "Missing field should not default: {failure:?}")
     }
 
     #[test]
@@ -214,7 +180,7 @@ mod test {
     fn test_deserialize_nullish_boolean() {
         #[derive(Deserialize)]
         struct Test {
-            #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+            #[serde(default, deserialize_with = "deserialize_nullish")]
             v: bool,
         }
 

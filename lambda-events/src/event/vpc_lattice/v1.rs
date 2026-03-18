@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use crate::{
     custom_serde::{
-        deserialize_comma_separated_headers, deserialize_nullish_boolean, http_method,
+        deserialize_comma_separated_headers, deserialize_nullish, http_method,
         serialize_comma_separated_headers,
     },
     encodings::Body,
@@ -50,7 +50,7 @@ pub struct VpcLatticeRequestV1 {
     pub body: Option<Body>,
 
     /// Whether the body is base64 encoded
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub is_base64_encoded: bool,
 
     /// Catchall to catch any additional fields

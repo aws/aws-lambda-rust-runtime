@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
 
-use crate::custom_serde::deserialize_nullish_boolean;
+use crate::custom_serde::deserialize_nullish;
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
@@ -50,7 +50,7 @@ pub struct Ticket {
 pub struct Player {
     pub player_id: String,
     pub team: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub accepted: bool,
     pub player_session_id: Option<String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.

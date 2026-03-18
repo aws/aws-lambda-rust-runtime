@@ -1,6 +1,6 @@
 use crate::{
     custom_serde::{
-        deserialize_headers, deserialize_lambda_map, deserialize_nullish_boolean, http_method, serialize_headers,
+        deserialize_headers, deserialize_nullish, http_method, serialize_headers,
         serialize_multi_value_headers,
     },
     encodings::Body,
@@ -39,17 +39,17 @@ pub struct ApiGatewayProxyRequest {
     pub query_string_parameters: QueryMap,
     #[serde(default, deserialize_with = "query_map::serde::standard::deserialize_empty")]
     pub multi_value_query_string_parameters: QueryMap,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub path_parameters: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub stage_variables: HashMap<String, String>,
     #[serde(bound = "")]
     pub request_context: ApiGatewayProxyRequestContext,
     #[serde(default)]
     pub body: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub is_base64_encoded: bool,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
@@ -76,7 +76,7 @@ pub struct ApiGatewayProxyResponse {
     pub multi_value_headers: HeaderMap,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub body: Option<Body>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub is_base64_encoded: bool,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
@@ -238,12 +238,12 @@ pub struct ApiGatewayV2httpRequest {
     #[serde(skip_serializing_if = "QueryMap::is_empty")]
     #[serde(serialize_with = "query_map::serde::aws_api_gateway_v2::serialize_query_string_parameters")]
     pub query_string_parameters: QueryMap,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub path_parameters: HashMap<String, String>,
     pub request_context: ApiGatewayV2httpRequestContext,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub stage_variables: HashMap<String, String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -314,7 +314,7 @@ pub struct ApiGatewayRequestAuthorizer {
         rename = "lambda",
         default,
         skip_serializing_if = "HashMap::is_empty",
-        deserialize_with = "deserialize_lambda_map"
+        deserialize_with = "deserialize_nullish"
     )]
     pub fields: HashMap<String, Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -335,7 +335,7 @@ pub struct ApiGatewayRequestAuthorizer {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGatewayRequestAuthorizerJwtDescription {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub claims: HashMap<String, String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -442,7 +442,7 @@ pub struct ApiGatewayV2httpResponse {
     pub multi_value_headers: HeaderMap,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub body: Option<Body>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub is_base64_encoded: bool,
     pub cookies: Vec<String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -525,17 +525,17 @@ pub struct ApiGatewayWebsocketProxyRequest {
     pub query_string_parameters: QueryMap,
     #[serde(default, deserialize_with = "query_map::serde::standard::deserialize_empty")]
     pub multi_value_query_string_parameters: QueryMap,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub path_parameters: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub stage_variables: HashMap<String, String>,
     #[serde(bound = "")]
     pub request_context: ApiGatewayWebsocketProxyRequestContext,
     #[serde(default)]
     pub body: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub is_base64_encoded: bool,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
@@ -815,13 +815,13 @@ pub struct ApiGatewayV2CustomAuthorizerV1Request {
     #[serde(deserialize_with = "http_serde::header_map::deserialize", default)]
     #[serde(serialize_with = "serialize_headers")]
     pub headers: HeaderMap,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub query_string_parameters: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub path_parameters: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub stage_variables: HashMap<String, String>,
     pub request_context: ApiGatewayV2CustomAuthorizerV1RequestTypeRequestContext,
@@ -860,14 +860,14 @@ pub struct ApiGatewayV2CustomAuthorizerV2Request {
     #[serde(deserialize_with = "http_serde::header_map::deserialize", default)]
     #[serde(serialize_with = "serialize_headers")]
     pub headers: HeaderMap,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub query_string_parameters: HashMap<String, String>,
     pub request_context: ApiGatewayV2httpRequestContext,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub path_parameters: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub stage_variables: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -890,7 +890,7 @@ pub struct ApiGatewayCustomAuthorizerContext {
     pub principal_id: Option<String>,
     pub string_key: Option<String>,
     pub num_key: Option<i64>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub bool_key: bool,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
@@ -993,10 +993,10 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
     pub query_string_parameters: QueryMap,
     #[serde(default, deserialize_with = "query_map::serde::standard::deserialize_empty")]
     pub multi_value_query_string_parameters: QueryMap,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub path_parameters: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub stage_variables: HashMap<String, String>,
     pub request_context: ApiGatewayCustomAuthorizerRequestTypeRequestContext,

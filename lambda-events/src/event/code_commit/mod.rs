@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
 
-use crate::custom_serde::deserialize_nullish_boolean;
+use crate::custom_serde::deserialize_nullish;
 
 /// `CodeCommitEvent` represents a CodeCommit event
 #[non_exhaustive]
@@ -100,7 +100,7 @@ pub struct CodeCommitReference {
     pub commit: Option<String>,
     #[serde(default)]
     pub ref_: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub created: bool,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.

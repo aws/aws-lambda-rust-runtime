@@ -1,5 +1,5 @@
 use crate::{
-    custom_serde::{deserialize_headers, deserialize_nullish_boolean, http_method, serialize_multi_value_headers},
+    custom_serde::{deserialize_headers, deserialize_nullish, http_method, serialize_multi_value_headers},
     encodings::Body,
 };
 #[cfg(feature = "builders")]
@@ -50,7 +50,7 @@ pub struct VpcLatticeRequestV2 {
     pub body: Option<Body>,
 
     /// Whether the body is base64 encoded
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub is_base64_encoded: bool,
 
     /// VPC Lattice specific request context

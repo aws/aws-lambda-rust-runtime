@@ -4,7 +4,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::{deserialize_lambda_map, deserialize_nullish, deserialize_nullish_boolean};
+use crate::custom_serde::deserialize_nullish;
 
 /// `CognitoEvent` contains data from an event sent from AWS Cognito Sync
 #[non_exhaustive]
@@ -14,7 +14,7 @@ use crate::custom_serde::{deserialize_lambda_map, deserialize_nullish, deseriali
 pub struct CognitoEvent {
     #[serde(default)]
     pub dataset_name: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub dataset_records: HashMap<String, CognitoDatasetRecord>,
     #[serde(default)]
@@ -313,13 +313,13 @@ pub struct CognitoEventUserPoolsHeader<T> {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreSignupRequest {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub validation_data: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub client_metadata: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -357,10 +357,10 @@ pub struct CognitoEventUserPoolsPreSignupResponse {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreAuthenticationRequest {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub validation_data: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -393,10 +393,10 @@ pub struct CognitoEventUserPoolsPreAuthenticationResponse {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPostConfirmationRequest {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub client_metadata: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -430,12 +430,14 @@ pub struct CognitoEventUserPoolsPostConfirmationResponse {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreTokenGenRequest {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
+    /// Group and role overrides. Note that null or missing values in the request 
+    /// deserialize to [`GroupConfiguration::default`], see notes on [`deserialize_nullish`].
     #[serde(default, deserialize_with = "deserialize_nullish")]
     pub group_configuration: GroupConfiguration,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub client_metadata: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -493,12 +495,14 @@ pub struct CognitoEventUserPoolsPreTokenGenV2 {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPreTokenGenRequestV2 {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
+    /// Group and role overrides. Note that null or missing values in the request 
+    /// deserialize to [`GroupConfiguration::default`], see notes on [`deserialize_nullish`].
     #[serde(default, deserialize_with = "deserialize_nullish")]
     pub group_configuration: GroupConfiguration,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub client_metadata: HashMap<String, String>,
     pub scopes: Vec<String>,
@@ -592,10 +596,10 @@ pub struct CognitoAccessTokenGenerationV2 {
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsPostAuthenticationRequest {
     pub new_device_used: bool,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub client_metadata: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -630,10 +634,10 @@ pub struct CognitoEventUserPoolsPostAuthenticationResponse {
 pub struct CognitoEventUserPoolsMigrateUserRequest {
     #[serde(default)]
     pub password: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub validation_data: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub client_metadata: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -652,7 +656,7 @@ pub struct CognitoEventUserPoolsMigrateUserRequest {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsMigrateUserResponse {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
     #[serde(default)]
@@ -661,7 +665,7 @@ pub struct CognitoEventUserPoolsMigrateUserResponse {
     pub message_action: Option<String>,
     #[serde(default)]
     pub desired_delivery_mediums: Option<Vec<String>>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub force_alias_creation: bool,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
@@ -680,7 +684,7 @@ pub struct CognitoEventUserPoolsMigrateUserResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ClaimsOverrideDetails {
     pub group_override_details: GroupConfiguration,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub claims_to_add_or_override: HashMap<String, String>,
     pub claims_to_suppress: Vec<String>,
@@ -741,11 +745,11 @@ pub struct CognitoEventUserPoolsChallengeResult {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsDefineAuthChallengeRequest {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
     pub session: Vec<Option<CognitoEventUserPoolsChallengeResult>>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub client_metadata: HashMap<String, String>,
     #[serde(default)]
@@ -768,9 +772,9 @@ pub struct CognitoEventUserPoolsDefineAuthChallengeRequest {
 pub struct CognitoEventUserPoolsDefineAuthChallengeResponse {
     #[serde(default)]
     pub challenge_name: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub issue_tokens: bool,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub fail_authentication: bool,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
@@ -818,13 +822,13 @@ pub enum CognitoEventUserPoolsDefineAuthChallengeTriggerSource {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsCreateAuthChallengeRequest {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
     #[serde(default)]
     pub challenge_name: Option<String>,
     pub session: Vec<Option<CognitoEventUserPoolsChallengeResult>>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub client_metadata: HashMap<String, String>,
     #[serde(default)]
@@ -845,10 +849,10 @@ pub struct CognitoEventUserPoolsCreateAuthChallengeRequest {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsCreateAuthChallengeResponse {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub public_challenge_parameters: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub private_challenge_parameters: HashMap<String, String>,
     #[serde(default)]
@@ -903,15 +907,15 @@ where
     T1: DeserializeOwned,
     T1: Serialize,
 {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub private_challenge_parameters: HashMap<String, String>,
     #[serde(bound = "")]
     pub challenge_answer: Option<T1>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub client_metadata: HashMap<String, String>,
     #[serde(default)]
@@ -932,7 +936,7 @@ where
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CognitoEventUserPoolsVerifyAuthChallengeResponse {
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub answer_correct: bool,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
@@ -1027,7 +1031,7 @@ where
     T1: DeserializeOwned,
     T1: Serialize,
 {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(bound = "")]
     pub user_attributes: HashMap<String, T1>,
@@ -1035,7 +1039,7 @@ where
     pub code_parameter: Option<String>,
     #[serde(default)]
     pub username_parameter: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub client_metadata: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.

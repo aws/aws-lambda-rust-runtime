@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::custom_serde::deserialize_lambda_map;
+use crate::custom_serde::deserialize_nullish;
 
 /// `Window` is the object that captures the time window for the records in the event when using the tumbling windows feature
 /// Kinesis: <https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html#services-kinesis-windows>
@@ -34,7 +34,7 @@ pub struct TimeWindowProperties {
     /// Time window for the records in the event.
     pub window: Window,
     /// State being built up to this invoke in the time window.
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub state: HashMap<String, String>,
     /// Shard id of the records
@@ -60,7 +60,7 @@ pub struct TimeWindowProperties {
 #[serde(rename_all = "camelCase")]
 pub struct TimeWindowEventResponseProperties {
     /// State being built up to this invoke in the time window.
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub state: HashMap<String, String>,
 }

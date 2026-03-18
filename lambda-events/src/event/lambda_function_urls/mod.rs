@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::{deserialize_lambda_map, serialize_headers};
+use crate::custom_serde::{deserialize_nullish, serialize_headers};
 
 /// `LambdaFunctionUrlRequest` contains data coming from the HTTP request to a Lambda Function URL.
 #[non_exhaustive]
@@ -25,7 +25,7 @@ pub struct LambdaFunctionUrlRequest {
     #[serde(deserialize_with = "http_serde::header_map::deserialize", default)]
     #[serde(serialize_with = "serialize_headers")]
     pub headers: HeaderMap,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub query_string_parameters: HashMap<String, String>,
     pub request_context: LambdaFunctionUrlRequestContext,

@@ -1,5 +1,5 @@
 use crate::{
-    custom_serde::deserialize_lambda_map,
+    custom_serde::deserialize_nullish,
     encodings::{Base64Data, MillisecondTimestamp},
 };
 #[cfg(feature = "builders")]
@@ -100,7 +100,7 @@ pub struct KinesisFirehoseResponseRecord {
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct KinesisFirehoseResponseRecordMetadata {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub partition_keys: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.

@@ -5,7 +5,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::deserialize_lambda_map;
+use crate::custom_serde::deserialize_nullish;
 
 /// `AutoScalingEvent` struct is used to parse the json for auto scaling event types //
 #[non_exhaustive]
@@ -41,7 +41,7 @@ where
     pub region: Option<String>,
     /// Information about resources impacted by event
     pub resources: Vec<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(bound = "")]
     pub detail: HashMap<String, T1>,

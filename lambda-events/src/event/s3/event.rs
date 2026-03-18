@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::deserialize_lambda_map;
+use crate::custom_serde::deserialize_nullish;
 
 /// `S3Event` which wrap an array of `S3Event`Record
 #[non_exhaustive]
@@ -44,7 +44,7 @@ pub struct S3EventRecord {
     #[serde(rename = "userIdentity")]
     pub principal_id: S3UserIdentity,
     pub request_parameters: S3RequestParameters,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub response_elements: HashMap<String, String>,
     pub s3: S3Entity,

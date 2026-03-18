@@ -1,4 +1,4 @@
-use crate::{custom_serde::deserialize_lambda_map, encodings::Base64Data};
+use crate::{custom_serde::deserialize_nullish, encodings::Base64Data};
 #[cfg(feature = "builders")]
 use bon::Builder;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -41,10 +41,10 @@ pub struct SqsMessage {
     pub md5_of_body: Option<String>,
     #[serde(default)]
     pub md5_of_message_attributes: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub attributes: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub message_attributes: HashMap<String, SqsMessageAttribute>,
     #[serde(default)]
@@ -106,10 +106,10 @@ pub struct SqsMessageObj<T: Serialize> {
     pub md5_of_body: Option<String>,
     #[serde(default)]
     pub md5_of_message_attributes: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub attributes: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub message_attributes: HashMap<String, SqsMessageAttribute>,
     #[serde(default)]
@@ -355,10 +355,10 @@ pub struct SqsApiMessageObj<T: Serialize> {
     pub md5_of_body: Option<String>,
     #[serde(default)]
     pub md5_of_message_attributes: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub attributes: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub message_attributes: HashMap<String, SqsMessageAttribute>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -388,10 +388,10 @@ pub struct SqsApiMessage {
     pub md5_of_body: Option<String>,
     #[serde(default)]
     pub md5_of_message_attributes: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub attributes: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub message_attributes: HashMap<String, SqsMessageAttribute>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.

@@ -4,7 +4,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::deserialize_lambda_map;
+use crate::custom_serde::deserialize_nullish;
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
@@ -15,7 +15,7 @@ pub struct RabbitMqEvent {
     pub event_source: Option<String>,
     #[serde(default)]
     pub event_source_arn: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(rename = "rmqMessagesByQueue")]
     pub messages_by_queue: HashMap<String, Vec<RabbitMqMessage>>,
@@ -61,7 +61,7 @@ where
     pub content_type: Option<String>,
     pub content_encoding: Option<String>,
     /// Application or header exchange table
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(bound = "")]
     pub headers: HashMap<String, T1>,

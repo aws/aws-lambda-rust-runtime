@@ -6,7 +6,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::{deserialize_lambda_map, deserialize_nullish_boolean};
+use crate::custom_serde::deserialize_nullish;
 
 /// The `Event` notification event handled by Lambda
 ///
@@ -105,7 +105,7 @@ pub struct SnsMessage {
     pub message: String,
 
     /// This is a HashMap of defined attributes for a message. Additional details can be found in the [SNS Developer Guide](https://docs.aws.amazon.com/sns/latest/dg/sns-message-attributes.html)
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub message_attributes: HashMap<String, MessageAttribute>,
 
@@ -194,7 +194,7 @@ pub struct SnsSubscriptionMessage {
     pub message: String,
 
     /// This is a HashMap of defined attributes for a message. Additional details can be found in the [SNS Developer Guide](https://docs.aws.amazon.com/sns/latest/dg/sns-message-attributes.html)
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub message_attributes: HashMap<String, MessageAttribute>,
 
@@ -311,7 +311,7 @@ pub struct SnsMessageObj<T: Serialize> {
     pub message: T,
 
     /// This is a HashMap of defined attributes for a message. Additional details can be found in the [SNS Developer Guide](https://docs.aws.amazon.com/sns/latest/dg/sns-message-attributes.html)
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub message_attributes: HashMap<String, MessageAttribute>,
 
@@ -418,7 +418,7 @@ pub struct CloudWatchMetricDataQuery {
     pub label: Option<String>,
     pub metric_stat: Option<CloudWatchMetricStat>,
     pub period: Option<i64>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub return_data: bool,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.

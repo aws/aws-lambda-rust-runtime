@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::deserialize_lambda_map;
+use crate::custom_serde::deserialize_nullish;
 
 /// `ConnectEvent` contains the data structure for a Connect event.
 #[non_exhaustive]
@@ -38,7 +38,7 @@ pub struct ConnectDetails {
     #[serde(rename = "ContactData")]
     pub contact_data: ConnectContactData,
     /// The parameters that have been set in the Connect instance at the time of the Lambda invocation.
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(rename = "Parameters")]
     pub parameters: HashMap<String, String>,
@@ -59,7 +59,7 @@ pub struct ConnectDetails {
 #[serde(rename_all = "camelCase")]
 pub struct ConnectContactData {
     /// The custom attributes from Connect that the Lambda function was invoked with.
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(rename = "Attributes")]
     pub attributes: HashMap<String, String>,

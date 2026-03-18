@@ -4,7 +4,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::deserialize_lambda_map;
+use crate::custom_serde::deserialize_nullish;
 
 /// Deprecated: `AppSyncResolverTemplate` does not represent resolver events sent by AppSync. Instead directly model your input schema, or use `map[string]string`, `json.RawMessage`,` interface{}`, etc..
 #[non_exhaustive]
@@ -79,7 +79,7 @@ where
     pub issuer: Option<String>,
     #[serde(default)]
     pub username: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(bound = "")]
     pub claims: HashMap<String, T1>,
@@ -139,7 +139,7 @@ where
     pub query_string: Option<String>,
     #[serde(default)]
     pub operation_name: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(bound = "")]
     pub variables: HashMap<String, T1>,
@@ -164,7 +164,7 @@ where
     T1: Serialize,
 {
     pub is_authorized: bool,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(bound = "")]
     pub resolver_context: HashMap<String, T1>,
@@ -229,7 +229,7 @@ where
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSyncRequest {
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(bound = "")]
     pub headers: HashMap<String, Option<String>>,

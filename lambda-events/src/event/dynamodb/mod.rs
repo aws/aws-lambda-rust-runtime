@@ -1,5 +1,5 @@
 use crate::{
-    custom_serde::{deserialize_lambda_dynamodb_item, float_unix_epoch},
+    custom_serde::{deserialize_nullish, float_unix_epoch},
     streams::DynamoDbBatchItemFailure,
     time_window::*,
 };
@@ -288,17 +288,17 @@ pub struct StreamRecord {
     #[serde(default)]
     pub approximate_creation_date_time: DateTime<Utc>,
     /// The primary key attribute(s) for the DynamoDB item that was modified.
-    #[serde(deserialize_with = "deserialize_lambda_dynamodb_item")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(rename = "Keys")]
     pub keys: serde_dynamo::Item,
     /// The item in the DynamoDB table as it appeared after it was modified.
-    #[serde(deserialize_with = "deserialize_lambda_dynamodb_item")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(rename = "NewImage")]
     pub new_image: serde_dynamo::Item,
     /// The item in the DynamoDB table as it appeared before it was modified.
-    #[serde(deserialize_with = "deserialize_lambda_dynamodb_item")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     #[serde(rename = "OldImage")]
     pub old_image: serde_dynamo::Item,

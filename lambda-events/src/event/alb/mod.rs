@@ -1,6 +1,6 @@
 use crate::{
     custom_serde::{
-        deserialize_headers, deserialize_nullish_boolean, http_method, serialize_headers,
+        deserialize_headers, deserialize_nullish, http_method, serialize_headers,
         serialize_multi_value_headers, serialize_query_string_parameters,
     },
     encodings::Body,
@@ -35,7 +35,7 @@ pub struct AlbTargetGroupRequest {
     #[serde(serialize_with = "serialize_multi_value_headers")]
     pub multi_value_headers: HeaderMap,
     pub request_context: AlbTargetGroupRequestContext,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub is_base64_encoded: bool,
     pub body: Option<String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
@@ -101,7 +101,7 @@ pub struct AlbTargetGroupResponse {
     pub multi_value_headers: HeaderMap,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub body: Option<Body>,
-    #[serde(default, deserialize_with = "deserialize_nullish_boolean")]
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub is_base64_encoded: bool,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.

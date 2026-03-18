@@ -1,4 +1,4 @@
-use crate::{custom_serde::deserialize_lambda_map, encodings::MillisecondTimestamp};
+use crate::{custom_serde::deserialize_nullish, encodings::MillisecondTimestamp};
 #[cfg(feature = "builders")]
 use bon::Builder;
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ pub struct KafkaEvent {
     pub event_source: Option<String>,
     #[serde(default)]
     pub event_source_arn: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub records: HashMap<String, Vec<KafkaRecord>>,
     #[serde(default)]

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::deserialize_lambda_map;
+use crate::custom_serde::deserialize_nullish;
 
 #[non_exhaustive]
 #[cfg_attr(feature = "builders", derive(Builder))]
@@ -54,7 +54,7 @@ pub struct ActiveMqMessage {
     pub data: Option<String>,
     pub broker_in_time: i64,
     pub broker_out_time: i64,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(deserialize_with = "deserialize_nullish")]
     #[serde(default)]
     pub properties: HashMap<String, String>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
