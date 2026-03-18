@@ -58,6 +58,16 @@ where
     serializer.serialize_str(&base64::engine::general_purpose::STANDARD.encode(value))
 }
 
+/// Deserializes any `Default` type, mapping JSON `null` to `T::default()`.
+pub(crate) fn deserialize_nullish<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Default + Deserialize<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
+
 /// Deserializes `HashMap<_>`, mapping JSON `null` to an empty map.
 pub(crate) fn deserialize_lambda_map<'de, D, K, V>(deserializer: D) -> Result<HashMap<K, V>, D::Error>
 where
@@ -176,6 +186,28 @@ mod test {
         });
         let decoded: Test = serde_json::from_value(input).unwrap();
         assert_eq!(serde_dynamo::Item::from(HashMap::new()), decoded.v);
+    }
+
+    #[test]
+    fn test_deserialize_nullish() {
+        #[derive(Debug, Default, Deserialize, PartialEq)]
+        struct Inner {
+            x: u32,
+        }
+        #[derive(Deserialize)]
+        struct Test {
+            #[serde(default, deserialize_with = "deserialize_nullish")]
+            v: Inner,
+        }
+
+        let decoded: Test = serde_json::from_str(r#"{"v": null}"#).unwrap();
+        assert_eq!(decoded.v, Inner::default());
+
+        let decoded: Test = serde_json::from_str(r#"{}"#).unwrap();
+        assert_eq!(decoded.v, Inner::default());
+
+        let decoded: Test = serde_json::from_str(r#"{"v": {"x": 42}}"#).unwrap();
+        assert_eq!(decoded.v, Inner { x: 42 });
     }
 
     #[test]

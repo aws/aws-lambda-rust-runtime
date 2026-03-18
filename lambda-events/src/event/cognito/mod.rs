@@ -4,7 +4,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use crate::custom_serde::{deserialize_lambda_map, deserialize_nullish_boolean};
+use crate::custom_serde::{deserialize_lambda_map, deserialize_nullish, deserialize_nullish_boolean};
 
 /// `CognitoEvent` contains data from an event sent from AWS Cognito Sync
 #[non_exhaustive]
@@ -433,6 +433,7 @@ pub struct CognitoEventUserPoolsPreTokenGenRequest {
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub group_configuration: GroupConfiguration,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
@@ -495,6 +496,7 @@ pub struct CognitoEventUserPoolsPreTokenGenRequestV2 {
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
     pub user_attributes: HashMap<String, String>,
+    #[serde(default, deserialize_with = "deserialize_nullish")]
     pub group_configuration: GroupConfiguration,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
