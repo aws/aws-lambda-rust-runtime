@@ -1,0 +1,31 @@
+{
+    "version": "1",
+    "triggerSource": "UserMigration_Authentication",
+    "region": "<region>",
+    "userPoolId": "<userPoolId>",
+    "userName": "<userName>",
+    "callerContext": {
+        "awsSdkVersion": "<calling aws sdk with version>",
+        "clientId": "<apps client id>"
+    },
+    "request": {
+        "password": "<password>",
+        "validationData": {
+            "exampleMetadataKey": "example metadata value"
+        },
+        "clientMetadata": {
+            "exampleMetadataKey": "example metadata value"
+        }
+    },
+    "response": {
+        "userAttributes": null,
+        "finalUserStatus": "<final_user_status>",
+        "messageAction": "<message-action>",
+        "desiredDeliveryMediums": [
+            "<desired-delivery-mediums-1>",
+            "<desired-delivery-mediums-2>"
+        ],
+        "forceAliasCreation": null
+    }
+}
+

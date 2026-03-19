@@ -328,6 +328,7 @@ pub struct StreamRecord {
 #[allow(deprecated)]
 mod test {
     use super::*;
+    use crate::fixtures::verify_serde_roundtrip;
     use chrono::TimeZone;
 
     #[test]
@@ -342,6 +343,16 @@ mod test {
         let event = parsed.records.pop().unwrap();
         let date = Utc.ymd(2016, 12, 2).and_hms(1, 27, 0);
         assert_eq!(date, event.change.approximate_creation_date_time);
+    }
+
+    #[test]
+    #[cfg(feature = "dynamodb")]
+    fn example_dynamodb_event_null_items() {
+        let data = include_bytes!("../../fixtures/example-dynamodb-event-null-items.json");
+        let event = verify_serde_roundtrip::<Event>(data);
+        assert_eq!(0, event.records[0].change.keys.len());
+        assert_eq!(0, event.records[0].change.new_image.len());
+        assert_eq!(0, event.records[0].change.old_image.len());
     }
 
     #[test]

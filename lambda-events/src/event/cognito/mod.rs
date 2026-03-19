@@ -1077,6 +1077,7 @@ pub struct CognitoEventUserPoolsCustomMessageResponse {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::fixtures::verify_serde_roundtrip;
 
     #[test]
     #[cfg(feature = "cognito")]
@@ -1166,10 +1167,27 @@ mod test {
     #[cfg(feature = "cognito")]
     fn example_cognito_event_userpools_migrateuser() {
         let data = include_bytes!("../../fixtures/example-cognito-event-userpools-migrateuser.json");
-        let parsed: CognitoEventUserPoolsMigrateUser = serde_json::from_slice(data).unwrap();
-        let output: String = serde_json::to_string(&parsed).unwrap();
-        let reparsed: CognitoEventUserPoolsMigrateUser = serde_json::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(parsed, reparsed);
+        verify_serde_roundtrip::<CognitoEventUserPoolsMigrateUser>(data);
+    }
+
+    #[test]
+    #[cfg(feature = "cognito")]
+    fn example_cognito_event_userpools_migrateuser_null_fields() {
+        let data = include_bytes!("../../fixtures/example-cognito-event-userpools-migrateuser-null-fields.json");
+        let event: CognitoEventUserPoolsMigrateUser = verify_serde_roundtrip(data);
+        // verify correct values substituted for nulls.
+        assert_eq!(
+            0,
+            event
+                .cognito_event_user_pools_migrate_user_response
+                .user_attributes
+                .len()
+        );
+        assert!(
+            !event
+                .cognito_event_user_pools_migrate_user_response
+                .force_alias_creation
+        );
     }
 
     #[test]
@@ -1216,40 +1234,52 @@ mod test {
     #[cfg(feature = "cognito")]
     fn example_cognito_event_userpools_pretokengen_incoming() {
         let data = include_bytes!("../../fixtures/example-cognito-event-userpools-pretokengen-incoming.json");
-        let parsed: CognitoEventUserPoolsPreTokenGen = serde_json::from_slice(data).unwrap();
-        let output: String = serde_json::to_string(&parsed).unwrap();
-        let reparsed: CognitoEventUserPoolsPreTokenGen = serde_json::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(parsed, reparsed);
+        verify_serde_roundtrip::<CognitoEventUserPoolsPreTokenGen>(data);
     }
 
     #[test]
     #[cfg(feature = "cognito")]
     fn example_cognito_event_userpools_pretokengen_v2_incoming() {
         let data = include_bytes!("../../fixtures/example-cognito-event-userpools-pretokengen-v2-incoming.json");
-        let parsed: CognitoEventUserPoolsPreTokenGenV2 = serde_json::from_slice(data).unwrap();
-        let output: String = serde_json::to_string(&parsed).unwrap();
-        let reparsed: CognitoEventUserPoolsPreTokenGenV2 = serde_json::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(parsed, reparsed);
+        verify_serde_roundtrip::<CognitoEventUserPoolsPreTokenGenV2>(data);
     }
 
     #[test]
     #[cfg(feature = "cognito")]
     fn example_cognito_event_userpools_pretokengen() {
         let data = include_bytes!("../../fixtures/example-cognito-event-userpools-pretokengen.json");
-        let parsed: CognitoEventUserPoolsPreTokenGen = serde_json::from_slice(data).unwrap();
-        let output: String = serde_json::to_string(&parsed).unwrap();
-        let reparsed: CognitoEventUserPoolsPreTokenGen = serde_json::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(parsed, reparsed);
+        verify_serde_roundtrip::<CognitoEventUserPoolsPreTokenGen>(data);
+    }
+
+    #[test]
+    #[cfg(feature = "cognito")]
+    fn example_cognito_event_userpools_pretokengen_null_group_configuration() {
+        let data =
+            include_bytes!("../../fixtures/example-cognito-event-userpools-pretokengen-null-group-configuration.json");
+        verify_serde_roundtrip::<CognitoEventUserPoolsPreTokenGen>(data);
     }
 
     #[test]
     #[cfg(feature = "cognito")]
     fn example_cognito_event_userpools_v2_pretokengen() {
         let data = include_bytes!("../../fixtures/example-cognito-event-userpools-pretokengen-v2.json");
-        let parsed: CognitoEventUserPoolsPreTokenGenV2 = serde_json::from_slice(data).unwrap();
-        let output: String = serde_json::to_string(&parsed).unwrap();
-        let reparsed: CognitoEventUserPoolsPreTokenGenV2 = serde_json::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(parsed, reparsed);
+        verify_serde_roundtrip::<CognitoEventUserPoolsPreTokenGenV2>(data);
+    }
+
+    #[test]
+    #[cfg(feature = "cognito")]
+    fn example_cognito_event_userpools_v2_pretokengen_null_group_configuration() {
+        let data = include_bytes!(
+            "../../fixtures/example-cognito-event-userpools-pretokengen-v2-null-group-configuration.json"
+        );
+        let event: CognitoEventUserPoolsPreTokenGenV2 = verify_serde_roundtrip(data);
+        // fail if there are any breaking changes to GroupConfiguration::default().
+        assert_eq!(0, event.request.group_configuration.groups_to_override.len());
+        assert_eq!(0, event.request.group_configuration.iam_roles_to_override.len());
+        assert!(event.request.group_configuration.preferred_role.is_none());
+
+        #[cfg(feature = "catch-all-fields")]
+        assert_eq!(0, event.request.group_configuration.other.len());
     }
 
     #[test]

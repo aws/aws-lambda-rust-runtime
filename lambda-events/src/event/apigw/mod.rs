@@ -1147,6 +1147,7 @@ pub fn serialize_authorizer_fields<S: Serializer>(
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::fixtures::verify_serde_roundtrip;
 
     #[test]
     #[cfg(feature = "apigw")]
@@ -1396,20 +1397,24 @@ mod test {
     #[cfg(feature = "apigw")]
     fn example_apigw_v2_custom_authorizer_v2_request() {
         let data = include_bytes!("../../fixtures/example-apigw-v2-custom-authorizer-v2-request.json");
-        let parsed: ApiGatewayV2CustomAuthorizerV2Request = serde_json::from_slice(data).unwrap();
-        let output: String = serde_json::to_string(&parsed).unwrap();
-        let reparsed: ApiGatewayV2CustomAuthorizerV2Request = serde_json::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(parsed, reparsed);
+        verify_serde_roundtrip::<ApiGatewayV2CustomAuthorizerV2Request>(data);
+    }
+
+    #[test]
+    #[cfg(feature = "apigw")]
+    fn example_apigw_v2_custom_authorizer_v2_request_null_maps() {
+        let data = include_bytes!("../../fixtures/example-apigw-v2-custom-authorizer-v2-request-null-maps.json");
+        let parsed: ApiGatewayV2CustomAuthorizerV2Request = verify_serde_roundtrip(data);
+        assert_eq!(0, parsed.path_parameters.len());
+        assert_eq!(0, parsed.query_string_parameters.len());
+        assert_eq!(0, parsed.stage_variables.len());
     }
 
     #[test]
     #[cfg(feature = "apigw")]
     fn example_apigw_v2_custom_authorizer_v2_request_without_cookies() {
         let data = include_bytes!("../../fixtures/example-apigw-v2-custom-authorizer-v2-request-without-cookies.json");
-        let parsed: ApiGatewayV2CustomAuthorizerV2Request = serde_json::from_slice(data).unwrap();
-        let output: String = serde_json::to_string(&parsed).unwrap();
-        let reparsed: ApiGatewayV2CustomAuthorizerV2Request = serde_json::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(parsed, reparsed);
+        verify_serde_roundtrip::<ApiGatewayV2CustomAuthorizerV2Request>(data);
     }
 
     #[test]
@@ -1417,10 +1422,7 @@ mod test {
     fn example_apigw_v2_custom_authorizer_v2_request_without_identity_source() {
         let data =
             include_bytes!("../../fixtures/example-apigw-v2-custom-authorizer-v2-request-without-identity-source.json");
-        let parsed: ApiGatewayV2CustomAuthorizerV2Request = serde_json::from_slice(data).unwrap();
-        let output: String = serde_json::to_string(&parsed).unwrap();
-        let reparsed: ApiGatewayV2CustomAuthorizerV2Request = serde_json::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(parsed, reparsed);
+        verify_serde_roundtrip::<ApiGatewayV2CustomAuthorizerV2Request>(data);
     }
 
     #[test]

@@ -17,6 +17,10 @@ pub mod time_window;
 /// AWS Lambda event definitions.
 pub mod event;
 
+/// Reusable unit test utilities.
+#[cfg(test)]
+pub(crate) mod fixtures;
+
 /// AWS Lambda event definitions for activemq.
 #[cfg(feature = "activemq")]
 #[cfg_attr(docsrs, doc(cfg(feature = "activemq")))]

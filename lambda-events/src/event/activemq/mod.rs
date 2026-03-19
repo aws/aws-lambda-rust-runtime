@@ -87,14 +87,24 @@ pub struct ActiveMqDestination {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::fixtures::verify_serde_roundtrip;
 
     #[test]
     #[cfg(feature = "activemq")]
     fn example_activemq_event() {
-        let data = include_bytes!("../../fixtures/example-activemq-event.json");
-        let parsed: ActiveMqEvent = serde_json::from_slice(data).unwrap();
-        let output: String = serde_json::to_string(&parsed).unwrap();
-        let reparsed: ActiveMqEvent = serde_json::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(parsed, reparsed);
+        verify_serde_roundtrip::<ActiveMqEvent>(include_bytes!("../../fixtures/example-activemq-event.json"));
+    }
+
+    #[test]
+    #[cfg(feature = "activemq")]
+    fn example_activemq_event_null_properties() {
+        let event: ActiveMqEvent = verify_serde_roundtrip(include_bytes!(
+            "../../fixtures/example-activemq-event-null-properties.json"
+        ));
+        assert_eq!(
+            0,
+            event.messages[0].properties.len(),
+            "null properties should deserialize to empty map"
+        )
     }
 }
