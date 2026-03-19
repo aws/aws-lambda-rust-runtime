@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_runtime-v1.1.1...lambda_runtime-v1.1.2) - 2026-03-19
+
+### Fixed
+
+- fix handling of null groupConfiguration ([#1130](https://github.com/aws/aws-lambda-rust-runtime/pull/1130))
+
+### Other
+
+- release ([#1118](https://github.com/aws/aws-lambda-rust-runtime/pull/1118))
+
 ## [1.1.1](https://github.com/aws/aws-lambda-rust-runtime/compare/v1.0.2...lambda_runtime-v1.1.1) - 2026-03-11
 
 Thank you to all the contributors who helped make this release possible. We appreciate your time, effort, and passion for the Rust Lambda community. ❤️

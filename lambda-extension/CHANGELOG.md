@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda-extension-v1.0.3...lambda-extension-v1.0.4) - 2026-03-19
+
+### Other
+
+- updated the following local packages: lambda_runtime_api_client
+
 ## [1.0.3](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda-extension-v1.0.2...lambda-extension-v1.0.3) - 2026-03-12
 
 ### Added
