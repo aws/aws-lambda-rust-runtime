@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_runtime-v1.1.2...lambda_runtime-v1.1.3) - 2026-04-16
+
+### Other
+
+- remove non exhaustive from time structs ([#1138](https://github.com/aws/aws-lambda-rust-runtime/pull/1138))
+
 ## [1.1.2](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_runtime-v1.1.1...lambda_runtime-v1.1.2) - 2026-03-19
 
 ### Fixed
