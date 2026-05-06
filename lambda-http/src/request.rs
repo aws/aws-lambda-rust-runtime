@@ -147,7 +147,7 @@ fn into_api_gateway_v2_request(ag: ApiGatewayV2httpRequest) -> http::Request<Bod
 
     let mut headers = ag.headers;
     if let Some(cookies) = ag.cookies {
-        if let Ok(header_value) = HeaderValue::from_str(&cookies.join(";")) {
+        if let Ok(header_value) = HeaderValue::from_str(&cookies.join("; ")) {
             headers.insert(http::header::COOKIE, header_value);
         }
     }
@@ -570,7 +570,7 @@ mod tests {
 
         assert_eq!(req.method(), "POST");
         assert_eq!(req.uri(), "https://id.execute-api.us-east-1.amazonaws.com/my/path?parameter1=value1&parameter1=value2&parameter2=value");
-        assert_eq!(cookie_header, Ok("cookie1=value1;cookie2=value2"));
+        assert_eq!(cookie_header, Ok("cookie1=value1; cookie2=value2"));
 
         // Ensure this is an APIGWv2 request
         let req_context = req.request_context_ref().expect("Request is missing RequestContext");
