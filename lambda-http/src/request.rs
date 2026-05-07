@@ -384,6 +384,7 @@ fn into_vpc_lattice_request(vlr: VpcLatticeRequestV2) -> http::Request<Body> {
 
     req
 }
+
 #[cfg(feature = "pass_through")]
 fn into_pass_through_request(data: String) -> http::Request<Body> {
     let mut builder = http::Request::builder();
@@ -479,7 +480,7 @@ impl RequestContext {
             Self::ApiGatewayV2(ag) => ag.authorizer.as_ref(),
             #[cfg(feature = "apigw_websockets")]
             Self::WebSocket(ag) => Some(&ag.authorizer),
-            #[cfg(any(feature = "alb", feature = "pass_through"))]
+            #[cfg(any(feature = "alb", feature = "pass_through", feature = "vpc_lattice"))]
             _ => None,
         }
     }
@@ -826,6 +827,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "vpc_lattice")]
     fn deserializes_vpc_lattice_basic() {
         let input = include_str!("../tests/data/vpc_lattice_v2_request.json");
         let result = from_str(input);
@@ -861,6 +863,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "vpc_lattice")]
     fn deserializes_vpc_lattice_basic_base64() {
         let input = include_str!("../tests/data/vpc_lattice_v2_request_base64.json");
         let result = from_str(input);
@@ -896,6 +899,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "vpc_lattice")]
     fn deserializes_vpc_lattice_headers() {
         let input = include_str!("../tests/data/vpc_lattice_v2_request.json");
         let result = from_str(input);
@@ -936,6 +940,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "vpc_lattice")]
     fn deserializes_vpc_lattice_multi_value_querys() {
         let input = include_str!("../tests/data/vpc_lattice_v2_request.json");
         let result = from_str(input);
@@ -1178,5 +1183,66 @@ mod tests {
         let req_context = req.request_context_ref().expect("Request is missing RequestContext");
         let authorizer = req_context.authorizer().expect("authorizer is missing");
         assert_eq!(Some("admin"), authorizer.fields.get("principalId").unwrap().as_str());
+    }
+
+    #[test]
+    #[cfg(all(feature = "apigw_http", feature = "vpc_lattice"))]
+    fn vpc_lattice_event_does_not_match_apigw_v2() {
+        let data = include_bytes!("../../lambda-events/src/fixtures/example-vpc-lattice-v2-request.json");
+        let result = serde_json::from_slice::<ApiGatewayV2httpRequest>(data);
+        assert!(result.is_err(), "VPC Lattice event should not deserialize as APIGW V2");
+    }
+
+    #[test]
+    #[cfg(feature = "vpc_lattice")]
+    fn vpc_lattice_method_none_defaults_to_get() {
+        let input = r#"{
+            "version": "2.0",
+            "path": "/ping",
+            "headers": {"accept": ["*/*"]},
+            "queryStringParameters": {},
+            "isBase64Encoded": false,
+            "requestContext": {
+                "serviceNetworkArn": "arn:aws:vpc-lattice:us-east-1:123456789012:servicenetwork/sn-abc",
+                "serviceArn": "arn:aws:vpc-lattice:us-east-1:123456789012:service/svc-abc",
+                "targetGroupArn": "arn:aws:vpc-lattice:us-east-1:123456789012:targetgroup/tg-abc",
+                "region": "us-east-1",
+                "timeEpoch": "1724875399456789"
+            }
+        }"#;
+        let result = from_str(input);
+        assert!(result.is_ok(), "event was not parsed as expected {result:?}");
+        let request = result.expect("failed to parse request");
+        assert_eq!(request.method(), "GET");
+    }
+
+    #[test]
+    #[cfg(feature = "vpc_lattice")]
+    fn vpc_lattice_post_with_body() {
+        let input = r#"{
+            "version": "2.0",
+            "path": "/submit",
+            "method": "POST",
+            "headers": {"content-type": ["application/json"]},
+            "queryStringParameters": {},
+            "body": "{\"key\":\"value\"}",
+            "isBase64Encoded": false,
+            "requestContext": {
+                "serviceNetworkArn": "arn:aws:vpc-lattice:us-east-1:123456789012:servicenetwork/sn-abc",
+                "serviceArn": "arn:aws:vpc-lattice:us-east-1:123456789012:service/svc-abc",
+                "targetGroupArn": "arn:aws:vpc-lattice:us-east-1:123456789012:targetgroup/tg-abc",
+                "region": "us-east-1",
+                "timeEpoch": "1724875399456789"
+            }
+        }"#;
+        let result = from_str(input);
+        assert!(result.is_ok(), "event was not parsed as expected {result:?}");
+        let request = result.expect("failed to parse request");
+        assert_eq!(request.method(), "POST");
+        let body_str = match request.body() {
+            Body::Text(s) => s.as_str(),
+            other => panic!("expected text body, got {other:?}"),
+        };
+        assert_eq!(body_str, r#"{"key":"value"}"#);
     }
 }
