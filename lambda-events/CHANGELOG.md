@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0](https://github.com/aws/aws-lambda-rust-runtime/compare/aws_lambda_events-v1.1.3...aws_lambda_events-v1.2.0) - 2026-05-08
+
+### Added
+
+- Add VPC Lattice as an upstream source for lambda-http ([#1136](https://github.com/aws/aws-lambda-rust-runtime/pull/1136))
+
 ## [1.1.3](https://github.com/aws/aws-lambda-rust-runtime/compare/aws_lambda_events-v1.1.2...aws_lambda_events-v1.1.3) - 2026-04-16
 
 ### Other

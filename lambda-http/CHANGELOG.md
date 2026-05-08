@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_http-v1.1.3...lambda_http-v1.2.0) - 2026-05-08
+
+### Added
+
+- Add VPC Lattice as an upstream source for lambda-http ([#1136](https://github.com/aws/aws-lambda-rust-runtime/pull/1136))
+
+### Fixed
+
+- *(lambda-http)* into_api_gateway_v2_request joins cookies with "; " ([#1143](https://github.com/aws/aws-lambda-rust-runtime/pull/1143))
+
+### Other
+
+- Added `builders` pass-through feature to enable `aws_lambda_events/builders` ([#1146](https://github.com/aws/aws-lambda-rust-runtime/pull/1146))
+
 ## [1.1.3](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_http-v1.1.2...lambda_http-v1.1.3) - 2026-04-16
 
 ### Other
