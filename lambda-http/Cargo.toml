@@ -24,6 +24,7 @@ apigw_websockets = []
 alb = []
 vpc_lattice = []
 pass_through = []
+builders = ["aws_lambda_events/builders"]
 catch-all-fields = ["aws_lambda_events/catch-all-fields"]
 tracing = ["lambda_runtime/tracing"] # enables access to the Tracing utilities
 opentelemetry = ["lambda_runtime/opentelemetry"] # enables access to the OpenTelemetry layers and utilities

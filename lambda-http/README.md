@@ -252,6 +252,8 @@ The available feature flags for `lambda_http` are the following:
 - `apigw_http`: for events coming from [Amazon API Gateway HTTP APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api.html) and [AWS Lambda Function URLs](https://docs.aws.amazon.com/lambda/latest/dg/lambda-urls.html).
 - `apigw_websockets`: for events coming from [Amazon API Gateway WebSockets](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api.html).
 - `vpc_lattice`: for events coming from [AWS VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/lambda-functions.html).
+- `catch-all-fields`: enables catch-all fields in event types to preserve unknown JSON fields during deserialization.
+- `builders`: enables builder pattern support for request/response types in `aws_lambda_events`, useful for constructing test fixtures.
 
 If you only want to support one of these sources, you can disable the default features, and enable only the source that you care about in your package's `Cargo.toml` file. Substitute the dependency line for `lambda_http` for the snippet below, changing the feature that you want to enable:
 
