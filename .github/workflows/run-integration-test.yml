@@ -13,6 +13,9 @@ jobs:
     # Only run on the main repo, not forks
     if: ${{ github.repository_owner == 'aws' }}
     runs-on: ubuntu-latest
+    concurrency:
+      group: integration-test
+      cancel-in-progress: false
     steps:
         - name: install Cargo Lambda
           uses: jaxxstorm/action-install-gh-release@v2.1.0
