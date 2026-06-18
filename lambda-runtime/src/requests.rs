@@ -24,6 +24,60 @@ impl IntoRequest for NextEventRequest {
     }
 }
 
+// /runtime/restore/next
+#[derive(Debug, Eq, PartialEq)]
+pub(crate) struct RestoreNextRequest;
+
+impl IntoRequest for RestoreNextRequest {
+    fn into_req(self) -> Result<Request<Body>, Error> {
+        let req = build_request()
+            .method(Method::GET)
+            .uri(Uri::from_static("/2018-06-01/runtime/restore/next"))
+            .body(Default::default())?;
+        Ok(req)
+    }
+}
+
+// /runtime/init/error
+pub(crate) struct InitErrorRequest {
+    pub(crate) diagnostic: Diagnostic,
+}
+
+impl IntoRequest for InitErrorRequest {
+    fn into_req(self) -> Result<Request<Body>, Error> {
+        let uri = Uri::from_static("/2018-06-01/runtime/init/error");
+        let body = serde_json::to_vec(&self.diagnostic)?;
+        let body = Body::from(body);
+
+        let req = build_request()
+            .method(Method::POST)
+            .uri(uri)
+            .header("lambda-runtime-function-error-type", "Runtime.InitError")
+            .body(body)?;
+        Ok(req)
+    }
+}
+
+// /runtime/restore/error
+pub(crate) struct RestoreErrorRequest {
+    pub(crate) diagnostic: Diagnostic,
+}
+
+impl IntoRequest for RestoreErrorRequest {
+    fn into_req(self) -> Result<Request<Body>, Error> {
+        let uri = Uri::from_static("/2018-06-01/runtime/restore/error");
+        let body = serde_json::to_vec(&self.diagnostic)?;
+        let body = Body::from(body);
+
+        let req = build_request()
+            .method(Method::POST)
+            .uri(uri)
+            .header("lambda-runtime-function-error-type", "Runtime.AfterRestoreError")
+            .body(body)?;
+        Ok(req)
+    }
+}
+
 // /runtime/invocation/{AwsRequestId}/response
 pub(crate) struct EventCompletionRequest<'a, R, B, S, D, E>
 where
@@ -216,6 +270,57 @@ mod tests {
             Some(header) => header.to_str().unwrap().starts_with("aws-lambda-rust/"),
             None => false,
         });
+    }
+
+    #[test]
+    fn test_restore_next_request() {
+        let req = RestoreNextRequest;
+        let req = req.into_req().unwrap();
+        assert_eq!(req.method(), Method::GET);
+        assert_eq!(req.uri(), &Uri::from_static("/2018-06-01/runtime/restore/next"));
+        assert!(req
+            .headers()
+            .get("User-Agent")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .starts_with("aws-lambda-rust/"));
+    }
+
+    #[test]
+    fn test_restore_error_request() {
+        let req = RestoreErrorRequest {
+            diagnostic: Diagnostic {
+                error_type: "Runtime.AfterRestoreError".into(),
+                error_message: "Failed to reconnect to database".into(),
+            },
+        };
+        let req = req.into_req().unwrap();
+        let expected = Uri::from_static("/2018-06-01/runtime/restore/error");
+        assert_eq!(req.method(), Method::POST);
+        assert_eq!(req.uri(), &expected);
+        assert_eq!(
+            req.headers().get("lambda-runtime-function-error-type").unwrap(),
+            "Runtime.AfterRestoreError"
+        );
+    }
+
+    #[test]
+    fn test_init_error_request() {
+        let req = InitErrorRequest {
+            diagnostic: Diagnostic {
+                error_type: "Runtime.InitError".into(),
+                error_message: "Failed to release resources before snapshot".into(),
+            },
+        };
+        let req = req.into_req().unwrap();
+        let expected = Uri::from_static("/2018-06-01/runtime/init/error");
+        assert_eq!(req.method(), Method::POST);
+        assert_eq!(req.uri(), &expected);
+        assert_eq!(
+            req.headers().get("lambda-runtime-function-error-type").unwrap(),
+            "Runtime.InitError"
+        );
     }
 
     #[test]

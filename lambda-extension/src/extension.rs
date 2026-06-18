@@ -3,7 +3,7 @@ use http_body_util::BodyExt;
 use hyper::{body::Incoming, server::conn::http1, service::service_fn};
 
 use hyper_util::rt::tokio::TokioIo;
-use lambda_runtime_api_client::Client;
+use lambda_runtime_api_client::PooledClient as Client;
 use serde::{de::DeserializeOwned, Deserialize};
 use std::{
     convert::Infallible,
@@ -244,7 +244,7 @@ where
     /// extension, it is safe to call `lambda_runtime::run` once the future returned by this
     /// function resolves.
     pub async fn register(self) -> Result<RegisteredExtension<E>, Error> {
-        let client = &Client::builder().build()?;
+        let client = &Client::builder().build();
 
         let register_res = register(client, self.extension_name, self.events).await?;
 
@@ -428,7 +428,7 @@ where
     /// [shutdown](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html#runtimes-lifecycle-shutdown)
     /// Lambda lifecycle phases.
     pub async fn run(self) -> Result<(), Error> {
-        let client = &Client::builder().build()?;
+        let client = &Client::builder().build();
         let mut ep = self.events_processor;
         let extension_id = &self.extension_id;
 

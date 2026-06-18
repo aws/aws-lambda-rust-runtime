@@ -1,13 +1,14 @@
 use crate::{
     layers::{CatchPanicService, RuntimeApiClientService, RuntimeApiResponseService},
-    requests::{IntoRequest, NextEventRequest},
+    requests::{InitErrorRequest, IntoRequest, NextEventRequest, RestoreErrorRequest, RestoreNextRequest},
+    snapstart::SnapStartResource,
     types::{invoke_request_id, IntoFunctionResponse, LambdaEvent},
     Config, Context, Diagnostic,
 };
 #[cfg(feature = "concurrency-tokio")]
 use futures::stream::FuturesUnordered;
 use http_body_util::BodyExt;
-use lambda_runtime_api_client::{BoxError, Client as ApiClient};
+use lambda_runtime_api_client::{BoxError, PooledClient as ApiClient};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "concurrency-tokio")]
 use std::fmt;
@@ -60,6 +61,7 @@ pub struct Runtime<S> {
     config: Arc<Config>,
     client: Arc<ApiClient>,
     concurrency_limit: u32,
+    snapstart_resources: Vec<Arc<dyn SnapStartResource>>,
 }
 
 impl<F, EventPayload, Response, BufferedResponse, StreamingResponse, StreamItem, StreamError>
@@ -74,6 +76,7 @@ impl<F, EventPayload, Response, BufferedResponse, StreamingResponse, StreamItem,
                 StreamItem,
                 StreamError,
             >,
+            ApiClient,
         >,
     >
 where
@@ -109,17 +112,13 @@ where
         let concurrency_limit = max_concurrency_from_env().unwrap_or(1).max(1);
         // Strategy: allocate all worker tasks up-front, so size the client pool to match.
         let pool_size = concurrency_limit as usize;
-        let client = Arc::new(
-            ApiClient::builder()
-                .with_pool_size(pool_size)
-                .build()
-                .expect("Unable to create a runtime client"),
-        );
+        let client = Arc::new(ApiClient::builder().with_pool_size(pool_size).build());
         Self {
             service: wrap_handler(handler, client.clone()),
             config,
             client,
             concurrency_limit,
+            snapstart_resources: Vec::new(),
         }
     }
 }
@@ -157,7 +156,56 @@ impl<S> Runtime<S> {
             config: self.config,
             service: layer.layer(self.service),
             concurrency_limit: self.concurrency_limit,
+            snapstart_resources: self.snapstart_resources,
         }
+    }
+}
+
+impl<S> Runtime<S> {
+    /// Returns `true` if the current execution environment has SnapStart enabled.
+    pub fn is_snapstart(&self) -> bool {
+        is_snapstart_env()
+    }
+
+    /// Register a [`SnapStartResource`] whose `before_snapshot`/`after_restore`
+    /// hooks should run around the SnapStart snapshot/restore boundary.
+    ///
+    /// Register resources in dependency order — **foundations first** (e.g.
+    /// credentials before the pool that depends on them). The runtime runs
+    /// `before_snapshot` in reverse registration order (LIFO) and `after_restore`
+    /// in registration order (FIFO), so teardown and rebuild both happen in the
+    /// correct relative order. See the [`snapstart`](crate::snapstart) module
+    /// docs for details.
+    ///
+    /// When SnapStart is not enabled, registered resources are never invoked and
+    /// add no runtime overhead beyond the cost of holding the `Arc`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use lambda_runtime::{Error, LambdaEvent, Runtime, SnapStartResource};
+    /// use std::sync::Arc;
+    /// use serde_json::Value;
+    /// use tower::service_fn;
+    ///
+    /// // Uses the default no-op hooks; override before_snapshot/after_restore as needed.
+    /// struct Pool;
+    /// impl SnapStartResource for Pool {}
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Error> {
+    ///     let pool = Arc::new(Pool);
+    ///     let runtime = Runtime::new(service_fn(handler))
+    ///         .register_snapstart_resource(pool.clone());
+    ///     runtime.run().await
+    /// }
+    ///
+    /// async fn handler(event: LambdaEvent<Value>) -> Result<Value, Error> {
+    ///     Ok(event.payload)
+    /// }
+    /// ```
+    pub fn register_snapstart_resource(mut self, resource: Arc<dyn SnapStartResource>) -> Self {
+        self.snapstart_resources.push(resource);
+        self
     }
 }
 
@@ -184,6 +232,8 @@ where
         if tokio::runtime::Handle::try_current().is_err() {
             panic!("`run_concurrent` must be called from within a Tokio runtime");
         }
+
+        snapstart_lifecycle(&self.client, &self.snapstart_resources).await?;
 
         if self.concurrency_limit > 1 {
             trace!("Concurrent mode: _X_AMZN_TRACE_ID is not set; use context.xray_trace_id");
@@ -370,6 +420,7 @@ where
                 fallback: eprintln!("AWS_LAMBDA_MAX_CONCURRENCY is set to '{raw}', but the concurrency-tokio feature is not enabled; running sequentially")
             );
         }
+        snapstart_lifecycle(&self.client, &self.snapstart_resources).await?;
         let incoming = incoming(&self.client);
         Self::run_with_incoming(self.service, self.config, incoming).await
     }
@@ -393,6 +444,136 @@ where
 
 /* ------------------------------------------- UTILS ------------------------------------------- */
 
+/// Returns `true` if the current execution environment has SnapStart enabled.
+fn is_snapstart_env() -> bool {
+    env::var("AWS_LAMBDA_INITIALIZATION_TYPE").as_deref() == Ok("snap-start")
+}
+
+/// Runs the SnapStart restore lifecycle when SnapStart is enabled, and is a
+/// no-op otherwise.
+///
+/// The sequence is: run `before_snapshot` hooks (LIFO) → call `/restore/next`
+/// (blocks until the VM is restored) → reset the internal RAPID connection pool
+/// → run `after_restore` hooks (FIFO). A failure in the before-snapshot phase
+/// (a hook or `/restore/next`) is reported to Lambda via `/init/error`; an
+/// `after_restore` failure is reported via `/restore/error`. Either way the
+/// error is returned so the runtime exits cleanly (no `process::exit`, so
+/// graceful-shutdown handlers still run).
+///
+/// This is a free function taking only the fields it needs (rather than `&self`)
+/// so it does not borrow the handler `S` across an `.await`, which would require
+/// `Runtime<S>: Sync` in the by-value `run`/`run_concurrent` methods.
+async fn snapstart_lifecycle(
+    client: &Arc<ApiClient>,
+    resources: &[Arc<dyn SnapStartResource>],
+) -> Result<(), BoxError> {
+    if !is_snapstart_env() {
+        return Ok(());
+    }
+    run_restore_lifecycle(client, resources).await
+}
+
+/// Performs the restore lifecycle unconditionally (the env gate lives in the
+/// caller, [`snapstart_lifecycle`]). Split out so it can be tested directly
+/// without mutating the process-global `AWS_LAMBDA_INITIALIZATION_TYPE`.
+async fn run_restore_lifecycle(
+    client: &Arc<ApiClient>,
+    resources: &[Arc<dyn SnapStartResource>],
+) -> Result<(), BoxError> {
+    // before_snapshot runs in REVERSE registration order (LIFO): tear down
+    // dependents before their foundations. A failure here happens during init,
+    // so report it to /init/error.
+    for resource in resources.iter().rev() {
+        if let Err(e) = resource.before_snapshot().await {
+            return Err(report_init_error(client, e).await);
+        }
+    }
+
+    // Signal init complete and block until the VM is restored from snapshot.
+    let req = RestoreNextRequest.into_req()?;
+    let resp = match client.call(req).await {
+        Ok(resp) => resp,
+        // A transport failure calling /restore/next is still an init-phase error.
+        Err(e) => return Err(report_init_error(client, e).await),
+    };
+    // `call()` only surfaces transport errors; a non-2xx status from RAPID still
+    // resolves to `Ok`. Treat a failed `/restore/next` as fatal rather than
+    // silently proceeding into the invocation loop with an un-restored VM. This
+    // still happens during init, so report it to /init/error.
+    let status = resp.status();
+    if !status.is_success() {
+        let err: BoxError = format!("/restore/next returned a non-success status: {status}").into();
+        return Err(report_init_error(client, err).await);
+    }
+    // Stale connections to RAPID won't survive the snapshot; rebuild the pool.
+    client.reset_pool();
+
+    // after_restore runs in registration order (FIFO): rebuild foundations
+    // before the dependents that need them. A failure here is reported to
+    // /restore/error and propagated so the runtime exits.
+    for resource in resources {
+        if let Err(e) = resource.after_restore().await {
+            return Err(report_restore_error(client, e).await);
+        }
+    }
+
+    Ok(())
+}
+
+/// Reports an init-phase error (a `before_snapshot` hook or `/restore/next`) to
+/// Lambda via `/init/error`, then returns the original error so the caller can
+/// propagate it and exit the runtime.
+async fn report_init_error(client: &Arc<ApiClient>, err: BoxError) -> BoxError {
+    report_diagnostic(client, err, ReportKind::Init).await
+}
+
+/// Reports an after-restore error to Lambda via `/restore/error`, then returns
+/// the original error so the caller can propagate it and exit the runtime.
+async fn report_restore_error(client: &Arc<ApiClient>, err: BoxError) -> BoxError {
+    report_diagnostic(client, err, ReportKind::Restore).await
+}
+
+enum ReportKind {
+    Init,
+    Restore,
+}
+
+/// Posts a `Diagnostic` (built from the error) to the appropriate RAPID error
+/// endpoint, then returns the **original** `BoxError` so the caller propagates it
+/// with its concrete type and `source()` chain intact. Failures to build or send
+/// the report are logged (never swallowed silently) but do not mask the error.
+async fn report_diagnostic(client: &Arc<ApiClient>, err: BoxError, kind: ReportKind) -> BoxError {
+    // Build the diagnostic from a reference so we can return `err` untouched.
+    let diagnostic = Diagnostic {
+        error_type: crate::diagnostic::type_name_of_val(&err),
+        error_message: err.to_string(),
+    };
+
+    let (endpoint, req) = match kind {
+        ReportKind::Init => ("/init/error", InitErrorRequest { diagnostic }.into_req()),
+        ReportKind::Restore => ("/restore/error", RestoreErrorRequest { diagnostic }.into_req()),
+    };
+
+    match req {
+        Ok(req) => {
+            if let Err(e) = client.call(req).await {
+                log_or_print!(
+                    tracing: tracing::error!(error = ?e, "failed to report SnapStart error to {endpoint}"),
+                    fallback: eprintln!("failed to report SnapStart error to {endpoint}: {e:?}")
+                );
+            }
+        }
+        Err(e) => {
+            log_or_print!(
+                tracing: tracing::error!(error = ?e, "failed to build SnapStart {endpoint} request"),
+                fallback: eprintln!("failed to build SnapStart {endpoint} request: {e:?}")
+            );
+        }
+    }
+
+    err
+}
+
 #[allow(clippy::type_complexity)]
 fn wrap_handler<'a, F, EventPayload, Response, BufferedResponse, StreamingResponse, StreamItem, StreamError>(
     handler: F,
@@ -407,6 +588,7 @@ fn wrap_handler<'a, F, EventPayload, Response, BufferedResponse, StreamingRespon
         StreamItem,
         StreamError,
     >,
+    ApiClient,
 >
 where
     F: Service<LambdaEvent<EventPayload>, Response = Response>,
@@ -532,10 +714,9 @@ mod endpoint_tests {
     use super::{incoming, wrap_handler};
     use crate::{
         requests::{EventCompletionRequest, EventErrorRequest, IntoRequest, NextEventRequest},
-        Config, Diagnostic, Error, Runtime,
+        BoxFuture, Config, Diagnostic, Error, Runtime,
     };
     use bytes::Bytes;
-    use futures::future::BoxFuture;
     use http::{HeaderValue, Method, Request, Response, StatusCode};
     use http_body_util::{BodyExt, Full};
     use httpmock::prelude::*;
@@ -545,7 +726,7 @@ mod endpoint_tests {
         rt::{tokio::TokioIo, TokioExecutor},
         server::conn::auto::Builder as ServerBuilder,
     };
-    use lambda_runtime_api_client::Client;
+    use lambda_runtime_api_client::PooledClient as Client;
     use std::{
         convert::Infallible,
         env,
@@ -574,7 +755,7 @@ mod endpoint_tests {
         });
 
         let base = server.base_url().parse().expect("Invalid mock server Uri");
-        let client = Client::builder().with_endpoint(base).build()?;
+        let client = Client::builder().with_endpoint(base).build();
 
         let req = NextEventRequest.into_req()?;
         let rsp = client.call(req).await.expect("Unable to send request");
@@ -607,7 +788,7 @@ mod endpoint_tests {
         });
 
         let base = server.base_url().parse().expect("Invalid mock server Uri");
-        let client = Client::builder().with_endpoint(base).build()?;
+        let client = Client::builder().with_endpoint(base).build();
 
         let req = EventCompletionRequest::new("156cb537-e2d4-11e8-9b34-d36013741fb9", "{}");
         let req = req.into_req()?;
@@ -637,7 +818,7 @@ mod endpoint_tests {
         });
 
         let base = server.base_url().parse().expect("Invalid mock server Uri");
-        let client = Client::builder().with_endpoint(base).build()?;
+        let client = Client::builder().with_endpoint(base).build();
 
         let req = EventErrorRequest {
             request_id: "156cb537-e2d4-11e8-9b34-d36013741fb9",
@@ -673,7 +854,7 @@ mod endpoint_tests {
         });
 
         let base = server.base_url().parse().expect("Invalid mock server Uri");
-        let client = Client::builder().with_endpoint(base).build()?;
+        let client = Client::builder().with_endpoint(base).build();
 
         async fn func(event: crate::LambdaEvent<serde_json::Value>) -> Result<serde_json::Value, Error> {
             let (event, _) = event.into_parts();
@@ -708,6 +889,7 @@ mod endpoint_tests {
             config: Arc::new(config),
             service: wrap_handler(f, client),
             concurrency_limit: 1,
+            snapstart_resources: Vec::new(),
         };
         let client = &runtime.client;
         let incoming = incoming(client).take(1);
@@ -745,7 +927,7 @@ mod endpoint_tests {
         });
 
         let base = server.base_url().parse().expect("Invalid mock server Uri");
-        let client = Client::builder().with_endpoint(base).build()?;
+        let client = Client::builder().with_endpoint(base).build();
 
         let f = crate::service_fn(func);
 
@@ -763,6 +945,7 @@ mod endpoint_tests {
             config,
             service: wrap_handler(f, client),
             concurrency_limit: 1,
+            snapstart_resources: Vec::new(),
         };
         let client = &runtime.client;
         let incoming = incoming(client).take(1);
@@ -904,7 +1087,7 @@ mod endpoint_tests {
         }
 
         let handler = crate::service_fn(func);
-        let client = Arc::new(Client::builder().with_endpoint(base).build()?);
+        let client = Arc::new(Client::builder().with_endpoint(base).build());
         let runtime = Runtime {
             client: client.clone(),
             config: Arc::new(Config {
@@ -916,6 +1099,7 @@ mod endpoint_tests {
             }),
             service: wrap_handler(handler, client),
             concurrency_limit: 2,
+            snapstart_resources: Vec::new(),
         };
 
         let res = tokio::time::timeout(Duration::from_secs(2), runtime.run_concurrent()).await;
@@ -1032,7 +1216,7 @@ mod endpoint_tests {
         }
 
         let handler = crate::service_fn(test_handler);
-        let client = Arc::new(Client::builder().with_endpoint(base).build()?);
+        let client = Arc::new(Client::builder().with_endpoint(base).build());
 
         // Add tracing layer to capture span fields
         use crate::layers::trace::TracingLayer;
@@ -1052,6 +1236,7 @@ mod endpoint_tests {
             }),
             service,
             concurrency_limit: 3,
+            snapstart_resources: Vec::new(),
         };
 
         let runtime_handle = tokio::spawn(async move { runtime.run_concurrent().await });
@@ -1106,6 +1291,274 @@ mod endpoint_tests {
             );
         }
 
+        Ok(())
+    }
+
+    /// Records the order in which `before_snapshot`/`after_restore` fire across
+    /// resources, so tests can assert LIFO/FIFO ordering.
+    struct OrderRecorder {
+        label: &'static str,
+        log: Arc<std::sync::Mutex<Vec<String>>>,
+    }
+
+    impl crate::SnapStartResource for OrderRecorder {
+        fn before_snapshot(&self) -> BoxFuture<'_, Result<(), Error>> {
+            let log = self.log.clone();
+            let label = self.label;
+            Box::pin(async move {
+                log.lock().unwrap().push(format!("before:{label}"));
+                Ok(())
+            })
+        }
+
+        fn after_restore(&self) -> BoxFuture<'_, Result<(), Error>> {
+            let log = self.log.clone();
+            let label = self.label;
+            Box::pin(async move {
+                log.lock().unwrap().push(format!("after:{label}"));
+                Ok(())
+            })
+        }
+    }
+
+    /// Which lifecycle phase a [`FailingResource`] should fail in.
+    #[derive(Clone, Copy)]
+    enum Phase {
+        BeforeSnapshot,
+        AfterRestore,
+    }
+
+    /// A resource that returns an error from the selected phase (and is a no-op
+    /// in the other), used to exercise the error-reporting paths.
+    struct FailingResource {
+        phase: Phase,
+    }
+
+    impl crate::SnapStartResource for FailingResource {
+        fn before_snapshot(&self) -> BoxFuture<'_, Result<(), Error>> {
+            let fail = matches!(self.phase, Phase::BeforeSnapshot);
+            Box::pin(async move {
+                if fail {
+                    Err("before_snapshot failed".into())
+                } else {
+                    Ok(())
+                }
+            })
+        }
+
+        fn after_restore(&self) -> BoxFuture<'_, Result<(), Error>> {
+            let fail = matches!(self.phase, Phase::AfterRestore);
+            Box::pin(async move {
+                if fail {
+                    Err("after_restore failed".into())
+                } else {
+                    Ok(())
+                }
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn test_snapstart_restore_lifecycle_calls_restore_next() -> Result<(), Error> {
+        let server = MockServer::start();
+
+        let restore_mock = server.mock(|when, then| {
+            when.method(GET).path("/2018-06-01/runtime/restore/next");
+            then.status(200).body("");
+        });
+
+        let base = server.base_url().parse().expect("Invalid mock server Uri");
+        let client = Arc::new(Client::builder().with_endpoint(base).build());
+
+        let log = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let resources: Vec<Arc<dyn crate::SnapStartResource>> = vec![Arc::new(OrderRecorder {
+            label: "pool",
+            log: log.clone(),
+        })];
+
+        // Exercise the restore lifecycle directly (no env mutation, no races with
+        // other tests that call run()/run_concurrent()).
+        super::run_restore_lifecycle(&client, &resources).await?;
+
+        restore_mock.assert_async().await;
+        let recorded = log.lock().unwrap().clone();
+        assert_eq!(recorded, vec!["before:pool", "after:pool"]);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_snapstart_resource_ordering_is_lifo_then_fifo() -> Result<(), Error> {
+        let server = MockServer::start();
+        server.mock(|when, then| {
+            when.method(GET).path("/2018-06-01/runtime/restore/next");
+            then.status(200).body("");
+        });
+
+        let base = server.base_url().parse().expect("Invalid mock server Uri");
+        let client = Arc::new(Client::builder().with_endpoint(base).build());
+
+        let log = Arc::new(std::sync::Mutex::new(Vec::new()));
+        // Registration order: credentials → pool → cache (foundations first).
+        let resources: Vec<Arc<dyn crate::SnapStartResource>> = vec![
+            Arc::new(OrderRecorder {
+                label: "credentials",
+                log: log.clone(),
+            }),
+            Arc::new(OrderRecorder {
+                label: "pool",
+                log: log.clone(),
+            }),
+            Arc::new(OrderRecorder {
+                label: "cache",
+                log: log.clone(),
+            }),
+        ];
+
+        super::run_restore_lifecycle(&client, &resources).await?;
+
+        let recorded = log.lock().unwrap().clone();
+        assert_eq!(
+            recorded,
+            vec![
+                // before_snapshot: LIFO (reverse registration)
+                "before:cache",
+                "before:pool",
+                "before:credentials",
+                // after_restore: FIFO (registration order)
+                "after:credentials",
+                "after:pool",
+                "after:cache",
+            ]
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_snapstart_restore_next_non_success_is_fatal() -> Result<(), Error> {
+        let server = MockServer::start();
+        server.mock(|when, then| {
+            when.method(GET).path("/2018-06-01/runtime/restore/next");
+            then.status(500).body("");
+        });
+        let init_err_mock = server.mock(|when, then| {
+            when.method(POST).path("/2018-06-01/runtime/init/error");
+            then.status(202).body("");
+        });
+
+        let base = server.base_url().parse().expect("Invalid mock server Uri");
+        let client = Arc::new(Client::builder().with_endpoint(base).build());
+
+        let log = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let resources: Vec<Arc<dyn crate::SnapStartResource>> = vec![Arc::new(OrderRecorder {
+            label: "pool",
+            log: log.clone(),
+        })];
+
+        let result = super::run_restore_lifecycle(&client, &resources).await;
+
+        // A non-2xx /restore/next must surface as an error rather than silently
+        // continuing into the invocation loop with an un-restored VM, and it must
+        // be reported to /init/error.
+        assert!(result.is_err(), "expected non-success /restore/next to be fatal");
+        init_err_mock.assert_async().await;
+        // before_snapshot ran; after_restore must NOT run when the restore call fails.
+        let recorded = log.lock().unwrap().clone();
+        assert_eq!(recorded, vec!["before:pool"]);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_snapstart_lifecycle_is_noop_when_not_snapstart() -> Result<(), Error> {
+        // Only meaningful when the SnapStart env var is absent. Never mutate the
+        // global env (would race with parallel tests); skip if it's set.
+        if env::var("AWS_LAMBDA_INITIALIZATION_TYPE").is_ok() {
+            return Ok(());
+        }
+
+        let server = MockServer::start();
+        let restore_mock = server.mock(|when, then| {
+            when.method(GET).path("/2018-06-01/runtime/restore/next");
+            then.status(200).body("");
+        });
+
+        let base = server.base_url().parse().expect("Invalid mock server Uri");
+        let client = Arc::new(Client::builder().with_endpoint(base).build());
+
+        let log = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let resources: Vec<Arc<dyn crate::SnapStartResource>> = vec![Arc::new(OrderRecorder {
+            label: "pool",
+            log: log.clone(),
+        })];
+
+        // The env-gated entry point must do nothing when SnapStart is not enabled.
+        super::snapstart_lifecycle(&client, &resources).await?;
+
+        assert_eq!(
+            restore_mock.calls(),
+            0,
+            "/restore/next must not be called when not snap-start"
+        );
+        assert!(
+            log.lock().unwrap().is_empty(),
+            "no hooks should fire when not snap-start"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_before_snapshot_failure_reports_init_error() -> Result<(), Error> {
+        let server = MockServer::start();
+        let init_err_mock = server.mock(|when, then| {
+            when.method(POST).path("/2018-06-01/runtime/init/error");
+            then.status(202).body("");
+        });
+        let restore_mock = server.mock(|when, then| {
+            when.method(GET).path("/2018-06-01/runtime/restore/next");
+            then.status(200).body("");
+        });
+
+        let base = server.base_url().parse().expect("Invalid mock server Uri");
+        let client = Arc::new(Client::builder().with_endpoint(base).build());
+
+        let resources: Vec<Arc<dyn crate::SnapStartResource>> = vec![Arc::new(FailingResource {
+            phase: Phase::BeforeSnapshot,
+        })];
+
+        let result = super::run_restore_lifecycle(&client, &resources).await;
+
+        assert!(result.is_err(), "before_snapshot failure must propagate");
+        init_err_mock.assert_async().await;
+        // /restore/next must NOT be reached when before_snapshot fails.
+        assert_eq!(restore_mock.calls(), 0);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_after_restore_failure_reports_restore_error() -> Result<(), Error> {
+        let server = MockServer::start();
+        let restore_mock = server.mock(|when, then| {
+            when.method(GET).path("/2018-06-01/runtime/restore/next");
+            then.status(200).body("");
+        });
+        let restore_err_mock = server.mock(|when, then| {
+            when.method(POST).path("/2018-06-01/runtime/restore/error");
+            then.status(202).body("");
+        });
+
+        let base = server.base_url().parse().expect("Invalid mock server Uri");
+        let client = Arc::new(Client::builder().with_endpoint(base).build());
+
+        let resources: Vec<Arc<dyn crate::SnapStartResource>> = vec![Arc::new(FailingResource {
+            phase: Phase::AfterRestore,
+        })];
+
+        let result = super::run_restore_lifecycle(&client, &resources).await;
+
+        // Now that the runtime no longer calls process::exit, the after_restore
+        // failure path returns an error and is unit-testable.
+        assert!(result.is_err(), "after_restore failure must propagate");
+        restore_mock.assert_async().await;
+        restore_err_mock.assert_async().await;
         Ok(())
     }
 }
