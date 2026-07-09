@@ -1,0 +1,8 @@
+[package]
+name = "http-snapstart"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lambda_http = { path = "../../lambda-http" }
+tokio = { version = "1", features = ["macros"] }

@@ -230,6 +230,64 @@ where
     lambda_runtime::run_concurrent(into_stream_service_cloneable(handler)).await
 }
 
+/// Returns a configured [`Runtime`](lambda_runtime::Runtime) wrapping the given
+/// streaming handler, without starting the event loop.
+///
+/// Use this when you need access to the [`Runtime`](lambda_runtime::Runtime) for
+/// SnapStart lifecycle hooks with a streaming response handler.
+///
+/// # Panics
+///
+/// This function panics if required Lambda environment variables are missing.
+pub fn streaming_runtime<S, B, E>(
+    handler: S,
+) -> lambda_runtime::Runtime<
+    impl lambda_runtime::Service<lambda_runtime::LambdaInvocation, Response = (), Error = lambda_runtime::Error>,
+>
+where
+    S: Service<Request, Response = Response<B>, Error = E> + Send + 'static,
+    S::Future: Send + 'static,
+    E: Debug + Into<Diagnostic> + Send + 'static,
+    B: Body + Unpin + Send + 'static,
+    B::Data: Into<Bytes> + Send,
+    B::Error: Into<Error> + Send + Debug,
+{
+    lambda_runtime::Runtime::new(into_stream_service(handler))
+}
+
+/// Returns a configured [`Runtime`](lambda_runtime::Runtime) wrapping the given
+/// streaming handler for concurrent execution, without starting the event loop.
+///
+/// This is the concurrent variant of [`streaming_runtime()`].
+///
+/// # Panics
+///
+/// This function panics if required Lambda environment variables are missing.
+#[cfg(feature = "concurrency-tokio")]
+#[cfg_attr(docsrs, doc(cfg(feature = "concurrency-tokio")))]
+pub fn streaming_runtime_concurrent<S, B, E>(
+    handler: S,
+) -> lambda_runtime::Runtime<
+    impl lambda_runtime::Service<
+            lambda_runtime::LambdaInvocation,
+            Response = (),
+            Error = lambda_runtime::Error,
+            Future: Send,
+        > + Clone
+        + Send
+        + 'static,
+>
+where
+    S: Service<Request, Response = Response<B>, Error = E> + Clone + Send + 'static,
+    S::Future: Send + 'static,
+    E: Debug + Into<Diagnostic> + Send + 'static,
+    B: Body + Unpin + Send + 'static,
+    B::Data: Into<Bytes> + Send,
+    B::Error: Into<Error> + Send + Debug,
+{
+    lambda_runtime::Runtime::new(into_stream_service_cloneable(handler))
+}
+
 pin_project_lite::pin_project! {
 #[non_exhaustive]
 pub struct BodyStream<B> {

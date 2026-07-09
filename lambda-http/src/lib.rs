@@ -74,7 +74,7 @@ pub use http::{self, Response};
 #[cfg_attr(docsrs, doc(cfg(feature = "tracing")))]
 pub use lambda_runtime::tracing;
 use lambda_runtime::Diagnostic;
-pub use lambda_runtime::{self, service_fn, tower, Context, Error, LambdaEvent, Service};
+pub use lambda_runtime::{self, service_fn, tower, BoxFuture, Context, Error, LambdaEvent, Service, SnapStartResource};
 use request::RequestFuture;
 use response::ResponseFuture;
 
@@ -105,9 +105,9 @@ use std::{
 };
 
 mod streaming;
+pub use streaming::{run_with_streaming_response, streaming_runtime, StreamAdapter};
 #[cfg(feature = "concurrency-tokio")]
-pub use streaming::run_with_streaming_response_concurrent;
-pub use streaming::{run_with_streaming_response, StreamAdapter};
+pub use streaming::{run_with_streaming_response_concurrent, streaming_runtime_concurrent};
 
 /// Type alias for `http::Request`s with a fixed [`Body`](enum.Body.html) type
 pub type Request = http::Request<Body>;
@@ -268,6 +268,96 @@ where
     lambda_runtime::run_concurrent(Adapter::from(handler)).await
 }
 
+/// Returns a configured [`Runtime`](lambda_runtime::Runtime) wrapping the given
+/// handler, without starting the event loop.
+///
+/// Use this when you need to register
+/// [`SnapStartResource`]s for the SnapStart
+/// snapshot/restore lifecycle. For the common case where no custom hooks are
+/// needed, use [`run()`] instead — SnapStart support works automatically.
+///
+/// # Example
+///
+/// ```no_run
+/// use lambda_http::{service_fn, BoxFuture, Error, Request, SnapStartResource};
+/// use std::sync::Arc;
+///
+/// struct Pool;
+/// impl SnapStartResource for Pool {
+///     fn before_snapshot(&self) -> BoxFuture<'_, Result<(), Error>> {
+///         Box::pin(async move { Ok(()) })
+///     }
+///     fn after_restore(&self) -> BoxFuture<'_, Result<(), Error>> {
+///         Box::pin(async move { Ok(()) })
+///     }
+/// }
+///
+/// #[tokio::main]
+/// async fn main() -> Result<(), Error> {
+///     let pool = Arc::new(Pool);
+///     let runtime = lambda_http::runtime(service_fn(handler))
+///         .register_snapstart_resource(pool.clone());
+///
+///     runtime.run().await?;
+///     Ok(())
+/// }
+///
+/// async fn handler(_req: Request) -> Result<&'static str, std::convert::Infallible> {
+///     Ok("hello")
+/// }
+/// ```
+///
+/// # Panics
+///
+/// This function panics if required Lambda environment variables are missing
+/// (`AWS_LAMBDA_FUNCTION_NAME`, `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`,
+/// `AWS_LAMBDA_FUNCTION_VERSION`, `AWS_LAMBDA_RUNTIME_API`).
+pub fn runtime<R, S, E>(
+    handler: S,
+) -> lambda_runtime::Runtime<
+    impl lambda_runtime::Service<lambda_runtime::LambdaInvocation, Response = (), Error = lambda_runtime::Error>,
+>
+where
+    S: Service<Request, Response = R, Error = E> + Send + 'static,
+    S::Future: Send + 'static,
+    R: IntoResponse + Send + Sync + 'static,
+    E: std::fmt::Debug + Into<Diagnostic> + Send + 'static,
+{
+    lambda_runtime::Runtime::new(Adapter::from(handler))
+}
+
+/// Returns a configured [`Runtime`](lambda_runtime::Runtime) wrapping the given
+/// handler for concurrent execution, without starting the event loop.
+///
+/// This is the concurrent variant of [`runtime()`]. Use it when you need SnapStart
+/// hooks AND your handler supports concurrent invocations.
+///
+/// # Panics
+///
+/// This function panics if required Lambda environment variables are missing.
+#[cfg(feature = "concurrency-tokio")]
+#[cfg_attr(docsrs, doc(cfg(feature = "concurrency-tokio")))]
+pub fn runtime_concurrent<R, S, E>(
+    handler: S,
+) -> lambda_runtime::Runtime<
+    impl lambda_runtime::Service<
+            lambda_runtime::LambdaInvocation,
+            Response = (),
+            Error = lambda_runtime::Error,
+            Future: Send,
+        > + Clone
+        + Send
+        + 'static,
+>
+where
+    S: Service<Request, Response = R, Error = E> + Clone + Send + 'static,
+    S::Future: Send + 'static,
+    R: IntoResponse + Send + Sync + 'static,
+    E: std::fmt::Debug + Into<Diagnostic> + Send + 'static,
+{
+    lambda_runtime::Runtime::new(Adapter::from(handler))
+}
+
 // In concurrent mode we must use the per-request context.
 fn update_xray_trace_id_header(headers: &mut http::HeaderMap, context: &Context) {
     if let Some(trace_id) = context.xray_trace_id.as_deref() {
@@ -330,5 +420,36 @@ mod test_adapter {
             .layer_fn(Adapter::from)
             .service_fn(|_event: Request| async move { Response::builder().status(StatusCode::OK).body(Body::Empty) })
             .boxed();
+    }
+
+    async fn http_handler(_req: Request) -> Result<&'static str, std::convert::Infallible> {
+        Ok("hello")
+    }
+
+    /// `runtime()` accepts a (non-`Clone`) handler for the sequential path. This
+    /// is a compile-time check that the helper's bounds are satisfiable.
+    #[test]
+    fn runtime_helper_accepts_handler() {
+        let _ = || {
+            let _runtime = crate::runtime(crate::service_fn(http_handler));
+        };
+    }
+
+    /// `runtime_concurrent()` requires a `Clone` handler (Lambda Managed
+    /// Instances). `service_fn` over an `async fn` is `Clone`, so this compiles;
+    /// it guards against the `Clone` bound regressing on the concurrent helper.
+    ///
+    /// Crucially, this also calls `.run_concurrent()` on the result: that method
+    /// requires the wrapped service to be `Clone + Send + 'static` with a `Send`
+    /// future, so this compiling proves the helper's return type exposes those
+    /// bounds (without them, the chained call would not type-check).
+    #[cfg(feature = "concurrency-tokio")]
+    #[test]
+    fn runtime_concurrent_helper_exposes_lmi_bounds() {
+        let _ = || async {
+            let _ = crate::runtime_concurrent(crate::service_fn(http_handler))
+                .run_concurrent()
+                .await;
+        };
     }
 }

@@ -1,7 +1,10 @@
+// `Client` is referenced only as the default for the `C` generic parameter, kept
+// for backward compatibility of the public `RuntimeApiClientService`/future types.
+
 use crate::LambdaInvocation;
 use futures::{future::BoxFuture, ready, FutureExt, TryFutureExt};
 use hyper::body::Incoming;
-use lambda_runtime_api_client::{body::Body, BoxError, Client};
+use lambda_runtime_api_client::{body::Body, BoxError, Client, RuntimeApiClient};
 use pin_project::pin_project;
 use std::{future::Future, pin::Pin, sync::Arc, task};
 use tower::Service;
@@ -13,25 +16,26 @@ use tracing::error;
 /// This type is only meant for internal use in the Lambda runtime crate. It neither augments the
 /// inner service's request type nor its error type. However, this service returns an empty
 /// response `()` as the Lambda request has been completed.
-pub struct RuntimeApiClientService<S> {
+pub struct RuntimeApiClientService<S, C = Client> {
     inner: S,
-    client: Arc<Client>,
+    client: Arc<C>,
 }
 
-impl<S> RuntimeApiClientService<S> {
-    pub fn new(inner: S, client: Arc<Client>) -> Self {
+impl<S, C> RuntimeApiClientService<S, C> {
+    pub fn new(inner: S, client: Arc<C>) -> Self {
         Self { inner, client }
     }
 }
 
-impl<S> Service<LambdaInvocation> for RuntimeApiClientService<S>
+impl<S, C> Service<LambdaInvocation> for RuntimeApiClientService<S, C>
 where
     S: Service<LambdaInvocation, Error = BoxError>,
     S::Future: Future<Output = Result<http::Request<Body>, BoxError>>,
+    C: RuntimeApiClient,
 {
     type Response = ();
     type Error = S::Error;
-    type Future = RuntimeApiClientFuture<S::Future>;
+    type Future = RuntimeApiClientFuture<S::Future, C>;
 
     fn poll_ready(&mut self, cx: &mut task::Context<'_>) -> task::Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
@@ -44,7 +48,7 @@ where
     }
 }
 
-impl<S> Clone for RuntimeApiClientService<S>
+impl<S, C> Clone for RuntimeApiClientService<S, C>
 where
     S: Clone,
 {
@@ -57,14 +61,15 @@ where
 }
 
 #[pin_project(project = RuntimeApiClientFutureProj)]
-pub enum RuntimeApiClientFuture<F> {
-    First(#[pin] F, Arc<Client>),
+pub enum RuntimeApiClientFuture<F, C = Client> {
+    First(#[pin] F, Arc<C>),
     Second(#[pin] BoxFuture<'static, Result<http::Response<Incoming>, BoxError>>),
 }
 
-impl<F> Future for RuntimeApiClientFuture<F>
+impl<F, C> Future for RuntimeApiClientFuture<F, C>
 where
     F: Future<Output = Result<http::Request<Body>, BoxError>>,
+    C: RuntimeApiClient,
 {
     type Output = Result<(), BoxError>;
 

@@ -13,6 +13,7 @@ use std::{
     env,
     fmt::{self, Debug},
     future::Future,
+    pin::Pin,
     sync::Arc,
 };
 use tokio_stream::Stream;
@@ -31,6 +32,8 @@ mod deserializer;
 pub mod layers;
 mod requests;
 mod runtime;
+/// SnapStart snapshot/restore lifecycle support.
+pub mod snapstart;
 /// Utilities for Lambda Streaming functions.
 pub mod streaming;
 
@@ -44,7 +47,13 @@ mod types;
 
 use requests::EventErrorRequest;
 pub use runtime::{LambdaInvocation, Runtime};
+pub use snapstart::SnapStartResource;
 pub use types::{Context, FunctionResponse, IntoFunctionResponse, LambdaEvent, MetadataPrelude, StreamResponse};
+
+/// A boxed, `Send` future with a bound lifetime — the return type of
+/// [`SnapStartResource`] hooks. Inlined (rather than re-exported from `futures`)
+/// to avoid leaking the `futures` crate into this crate's public type surface.
+pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 /// Error type that lambdas may result in
 pub type Error = lambda_runtime_api_client::BoxError;
