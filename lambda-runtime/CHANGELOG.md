@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_runtime-v1.2.1...lambda_runtime-v1.3.0) - 2026-07-09
+
+### Added
+
+- add SnapStart support via SnapStartResource trait ([#1150](https://github.com/aws/aws-lambda-rust-runtime/pull/1150))
+
 ## [1.2.1](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_runtime-v1.2.0...lambda_runtime-v1.2.1) - 2026-05-25
 
 ### Other

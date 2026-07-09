@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_runtime_api_client-v1.0.3...lambda_runtime_api_client-v1.1.0) - 2026-07-09
+
+### Added
+
+- add SnapStart support via SnapStartResource trait ([#1150](https://github.com/aws/aws-lambda-rust-runtime/pull/1150))
+
 ### Added
 
 - `PooledClient`: a Runtime API client that can rebuild its connection pool after a
