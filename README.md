@@ -554,36 +554,33 @@ See the [examples directory](https://github.com/aws/aws-lambda-rust-runtime/tree
 To serialize and deserialize events and responses, we suggest using the [`serde`](https://github.com/serde-rs/serde) library. To receive custom events, annotate your structure with Serde's macros:
 
 ```rust,no_run
-use serde::{Serialize, Deserialize};
-use serde_json::json;
-use std::error::Error;
+use lambda_runtime::{service_fn, Error, LambdaEvent};
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct NewIceCreamEvent {
-  pub flavors: Vec<String>,
+    pub flavors: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize)]
 pub struct NewIceCreamResponse {
-  pub flavors_added_count: usize,
+    pub flavors_added_count: usize,
 }
 
-fn main() -> Result<(), Box<Error>> {
-    let flavors = json!({
-      "flavors": [
-        "Nocciola",
-        "抹茶",
-        "आम"
-      ]
-    });
-
-    let event: NewIceCreamEvent = serde_json::from_value(flavors)?;
-    let response = NewIceCreamResponse {
-        flavors_added_count: event.flavors.len(),
-    };
-    serde_json::to_string(&response)?;
-
+#[tokio::main]
+async fn main() -> Result<(), Error> {
+    lambda_runtime::run(service_fn(handler)).await?;
     Ok(())
+}
+
+async fn handler(
+    event: LambdaEvent<NewIceCreamEvent>,
+) -> Result<NewIceCreamResponse, Error> {
+    println!("Received ice cream event: {:?}", event.payload);
+
+    Ok(NewIceCreamResponse {
+        flavors_added_count: event.payload.flavors.len(),
+    })
 }
 ```
 
