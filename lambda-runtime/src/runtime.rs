@@ -790,7 +790,11 @@ mod endpoint_tests {
         let base = server.base_url().parse().expect("Invalid mock server Uri");
         let client = Client::builder().with_endpoint(base).build();
 
-        let req = EventCompletionRequest::new("156cb537-e2d4-11e8-9b34-d36013741fb9", "{}");
+        let req = EventCompletionRequest::new(
+            "156cb537-e2d4-11e8-9b34-d36013741fb9",
+            Option::Some("invocation_id"),
+            "{}",
+        );
         let req = req.into_req()?;
 
         let rsp = client.call(req).await?;
@@ -822,6 +826,7 @@ mod endpoint_tests {
 
         let req = EventErrorRequest {
             request_id: "156cb537-e2d4-11e8-9b34-d36013741fb9",
+            invocation_id: Option::Some("invocation_id"),
             diagnostic,
         };
         let req = req.into_req()?;

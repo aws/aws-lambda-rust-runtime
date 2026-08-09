@@ -123,9 +123,10 @@ where
         };
 
         let request_id = req.context.request_id.clone();
+        let invocation_id = req.context.invocation_id.clone();
         let lambda_event = match deserializer::deserialize::<EventPayload>(&req.body, req.context) {
             Ok(lambda_event) => lambda_event,
-            Err(err) => match build_event_error_request(&request_id, err) {
+            Err(err) => match build_event_error_request(request_id, invocation_id, err) {
                 Ok(request) => return RuntimeApiResponseFuture::Ready(Box::new(Some(Ok(request)))),
                 Err(err) => {
                     error!(error = ?err, "failed to build error response for Lambda Runtime API");
@@ -137,16 +138,20 @@ where
         // Once the handler input has been generated successfully, pass it through to inner services
         // allowing processing both before reaching the handler function and after the handler completes.
         let fut = self.inner.call(lambda_event);
-        RuntimeApiResponseFuture::Future(fut, request_id, PhantomData)
+        RuntimeApiResponseFuture::Future(fut, request_id, invocation_id, PhantomData)
     }
 }
 
-fn build_event_error_request<T>(request_id: &str, err: T) -> Result<http::Request<Body>, BoxError>
+fn build_event_error_request<T>(
+    request_id: String,
+    invocation_id: Option<String>,
+    err: T,
+) -> Result<http::Request<Body>, BoxError>
 where
     T: Into<Diagnostic> + Debug,
 {
     error!(error = ?err, "Request payload deserialization into LambdaEvent<T> failed. The handler will not be called. Log at TRACE level to see the payload.");
-    EventErrorRequest::new(request_id, err).into_req()
+    EventErrorRequest::new(&request_id, invocation_id.as_deref(), err).into_req()
 }
 
 #[pin_project(project = RuntimeApiResponseFutureProj)]
@@ -154,6 +159,7 @@ pub enum RuntimeApiResponseFuture<F, Response, BufferedResponse, StreamingRespon
     Future(
         #[pin] F,
         String,
+        Option<String>,
         PhantomData<(
             (),
             Response,
@@ -183,9 +189,9 @@ where
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> task::Poll<Self::Output> {
         task::Poll::Ready(match self.as_mut().project() {
-            RuntimeApiResponseFutureProj::Future(fut, request_id, _) => match ready!(fut.poll(cx)) {
-                Ok(ok) => EventCompletionRequest::new(request_id, ok).into_req(),
-                Err(err) => EventErrorRequest::new(request_id, err).into_req(),
+            RuntimeApiResponseFutureProj::Future(fut, request_id, invocation_id, _) => match ready!(fut.poll(cx)) {
+                Ok(ok) => EventCompletionRequest::new(request_id, invocation_id.as_deref(), ok).into_req(),
+                Err(err) => EventErrorRequest::new(request_id, invocation_id.as_deref(), err).into_req(),
             },
             RuntimeApiResponseFutureProj::Ready(ready) => ready.take().expect("future polled after completion"),
         })

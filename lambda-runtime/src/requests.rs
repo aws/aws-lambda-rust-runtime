@@ -1,4 +1,7 @@
-use crate::{types::ToStreamErrorTrailer, Diagnostic, Error, FunctionResponse, IntoFunctionResponse};
+use crate::{
+    constants::LAMBDA_RUNTIME_INVOCATION_ID, types::ToStreamErrorTrailer, Diagnostic, Error, FunctionResponse,
+    IntoFunctionResponse,
+};
 use bytes::Bytes;
 use http::{header::CONTENT_TYPE, Method, Request, Uri};
 use lambda_runtime_api_client::{body::Body, build_request};
@@ -88,6 +91,7 @@ where
     E: Into<Error> + Send + Debug,
 {
     pub(crate) request_id: &'a str,
+    pub(crate) invocation_id: Option<&'a str>,
     pub(crate) body: R,
     pub(crate) _unused_b: PhantomData<B>,
     pub(crate) _unused_s: PhantomData<S>,
@@ -102,9 +106,14 @@ where
     E: Into<Error> + Send + Debug,
 {
     /// Initialize a new EventCompletionRequest
-    pub(crate) fn new(request_id: &'a str, body: R) -> EventCompletionRequest<'a, R, B, S, D, E> {
+    pub(crate) fn new(
+        request_id: &'a str,
+        invocation_id: Option<&'a str>,
+        body: R,
+    ) -> EventCompletionRequest<'a, R, B, S, D, E> {
         EventCompletionRequest {
             request_id,
+            invocation_id,
             body,
             _unused_b: PhantomData::<B>,
             _unused_s: PhantomData::<S>,
@@ -129,7 +138,15 @@ where
                 let body = serde_json::to_vec(&body)?;
                 let body = Body::from(body);
 
-                let req = build_request().method(Method::POST).uri(uri).body(body)?;
+                let mut req = build_request()
+                    .method(Method::POST)
+                    .uri(uri)
+                    .body(body)?;
+
+                if let Some(id) = self.invocation_id {
+                    req.headers_mut().insert(LAMBDA_RUNTIME_INVOCATION_ID, id.parse()?);
+                }
+
                 Ok(req)
             }
             FunctionResponse::StreamingResponse(mut response) => {
@@ -145,6 +162,11 @@ where
                 // See the details in Lambda Developer Doc: https://docs.aws.amazon.com/lambda/latest/dg/runtimes-custom.html#runtimes-custom-response-streaming
                 req_headers.append("Trailer", "Lambda-Runtime-Function-Error-Type".parse()?);
                 req_headers.append("Trailer", "Lambda-Runtime-Function-Error-Body".parse()?);
+
+                if let Some(id) = self.invocation_id {
+                    req_headers.append(LAMBDA_RUNTIME_INVOCATION_ID, id.parse()?);
+                }
+
                 req_headers.insert(
                     "Content-Type",
                     "application/vnd.awslambda.http-integration-response".parse()?,
@@ -193,29 +215,22 @@ where
     }
 }
 
-#[test]
-fn test_event_completion_request() {
-    let req = EventCompletionRequest::new("id", "hello, world!");
-    let req = req.into_req().unwrap();
-    let expected = Uri::from_static("/2018-06-01/runtime/invocation/id/response");
-    assert_eq!(req.method(), Method::POST);
-    assert_eq!(req.uri(), &expected);
-    assert!(match req.headers().get("User-Agent") {
-        Some(header) => header.to_str().unwrap().starts_with("aws-lambda-rust/"),
-        None => false,
-    });
-}
-
 // /runtime/invocation/{AwsRequestId}/error
 pub(crate) struct EventErrorRequest<'a> {
     pub(crate) request_id: &'a str,
+    pub(crate) invocation_id: Option<&'a str>,
     pub(crate) diagnostic: Diagnostic,
 }
 
 impl<'a> EventErrorRequest<'a> {
-    pub(crate) fn new(request_id: &'a str, diagnostic: impl Into<Diagnostic>) -> EventErrorRequest<'a> {
+    pub(crate) fn new(
+        request_id: &'a str,
+        invocation_id: Option<&'a str>,
+        diagnostic: impl Into<Diagnostic>,
+    ) -> EventErrorRequest<'a> {
         EventErrorRequest {
             request_id,
+            invocation_id,
             diagnostic: diagnostic.into(),
         }
     }
@@ -228,11 +243,16 @@ impl IntoRequest for EventErrorRequest<'_> {
         let body = serde_json::to_vec(&self.diagnostic)?;
         let body = Body::from(body);
 
-        let req = build_request()
+        let mut req = build_request()
             .method(Method::POST)
             .uri(uri)
             .header("lambda-runtime-function-error-type", "unhandled")
             .body(body)?;
+
+        if let Some(id) = self.invocation_id {
+            req.headers_mut().insert(LAMBDA_RUNTIME_INVOCATION_ID, id.parse()?);
+        }
+
         Ok(req)
     }
 }
@@ -254,9 +274,92 @@ mod tests {
     }
 
     #[test]
+    fn test_event_completion_request() {
+        let req = EventCompletionRequest::new("id", Option::Some("invocation_id"), "hello, world!");
+        let req = req.into_req().unwrap();
+        let expected = Uri::from_static("/2018-06-01/runtime/invocation/id/response");
+        assert_eq!(req.method(), Method::POST);
+        assert_eq!(req.uri(), &expected);
+
+        assert!(req
+            .headers()
+            .get("User-Agent")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .starts_with("aws-lambda-rust/"));
+
+        assert_eq!(
+            req.headers().get(LAMBDA_RUNTIME_INVOCATION_ID).unwrap(),
+            "invocation_id"
+        );
+    }
+
+    #[test]
+    fn test_event_completion_request_invocation_id_not_added_when_none() {
+        let req = EventCompletionRequest::new("id", Option::None, "hello, world!");
+        let req = req.into_req().unwrap();
+
+        assert!(req.headers().get(LAMBDA_RUNTIME_INVOCATION_ID).is_none());
+    }
+
+    #[test]
+    fn test_streaming_event_completion_request_with_invocation_id() {
+        use crate::StreamResponse;
+
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+
+        runtime.block_on(async {
+            let stream = tokio_stream::iter(vec![Ok::<Bytes, Error>(Bytes::from_static(b"chunk"))]);
+            let stream_response: StreamResponse<_> = stream.into();
+            let response = FunctionResponse::StreamingResponse(stream_response);
+
+            let req: EventCompletionRequest<'_, _, (), _, _, _> =
+                EventCompletionRequest::new("id", Some("invocation_id"), response);
+
+            let http_req = req.into_req().expect("into_req should succeed");
+            let expected = Uri::from_static("/2018-06-01/runtime/invocation/id/response");
+            assert_eq!(http_req.method(), Method::POST);
+            assert_eq!(http_req.uri(), &expected);
+
+            assert_eq!(
+                http_req.headers().get(LAMBDA_RUNTIME_INVOCATION_ID).unwrap(),
+                "invocation_id"
+            );
+        });
+    }
+
+    #[test]
+    fn test_streaming_event_completion_request_invocation_id_not_added_when_none() {
+        use crate::StreamResponse;
+
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+
+        runtime.block_on(async {
+            let stream = tokio_stream::iter(vec![Ok::<Bytes, Error>(Bytes::from_static(b"chunk"))]);
+            let stream_response: StreamResponse<_> = stream.into();
+            let response = FunctionResponse::StreamingResponse(stream_response);
+
+            let req: EventCompletionRequest<'_, _, (), _, _, _> =
+                EventCompletionRequest::new("id", None, response);
+
+            let http_req = req.into_req().expect("into_req should succeed");
+
+            assert!(http_req.headers().get(LAMBDA_RUNTIME_INVOCATION_ID).is_none());
+        });
+    }
+
+    #[test]
     fn test_event_error_request() {
         let req = EventErrorRequest {
             request_id: "id",
+            invocation_id: Option::Some("invocation_id"),
             diagnostic: Diagnostic {
                 error_type: "InvalidEventDataError".into(),
                 error_message: "Error parsing event data".into(),
@@ -270,6 +373,26 @@ mod tests {
             Some(header) => header.to_str().unwrap().starts_with("aws-lambda-rust/"),
             None => false,
         });
+
+        assert!(match req.headers().get(LAMBDA_RUNTIME_INVOCATION_ID) {
+            Some(header) => header.to_str().unwrap() == "invocation_id",
+            None => false,
+        });
+    }
+
+    #[test]
+    fn test_event_error_request_invocation_id_not_added_when_none() {
+        let req = EventErrorRequest {
+            request_id: "id",
+            invocation_id: None,
+            diagnostic: Diagnostic {
+                error_type: "InvalidEventDataError".into(),
+                error_message: "Error parsing event data".into(),
+            },
+        };
+        let req = req.into_req().unwrap();
+
+        assert!(req.headers().get(LAMBDA_RUNTIME_INVOCATION_ID).is_none());
     }
 
     #[test]
