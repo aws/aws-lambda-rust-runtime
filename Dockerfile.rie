@@ -4,8 +4,20 @@ RUN dnf install -y gcc
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie /usr/local/bin/aws-lambda-rie
-RUN chmod +x /usr/local/bin/aws-lambda-rie
+ARG TARGETARCH
+ENV RIE_VERSION=1.36 \
+    RIE_SHA256_AMD64=ba57f2683260127135ad5ba9bafea141f90492143cbaeb9312cde6dae8d1c08e \
+    RIE_SHA256_ARM64=7826415f278663274e279085ff96d7c9da210a30213fa72279e56e59f028ce76 \
+    RIE_PATH=/usr/local/bin/aws-lambda-rie
+
+COPY scripts/download-rie.sh /tmp/download-rie.sh
+RUN sh /tmp/download-rie.sh \
+    "${TARGETARCH}" \
+    "${RIE_VERSION}" \
+    "${RIE_SHA256_AMD64}" \
+    "${RIE_SHA256_ARM64}" \
+    "${RIE_PATH}" \
+    && rm /tmp/download-rie.sh
 
 ARG EXAMPLE=basic-lambda
 
