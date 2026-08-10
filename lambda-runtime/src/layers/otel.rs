@@ -77,6 +77,7 @@ where
                 "Lambda function invocation",
                 "otel.name" = req.context.env_config.function_name,
                 "otel.kind" = field::Empty,
+                { attribute::FAAS_NAME } = req.context.env_config.function_name,
                 { attribute::FAAS_TRIGGER } = &self.otel_attribute_trigger,
                 { attribute::FAAS_INVOCATION_ID } = req.context.request_id,
                 { attribute::FAAS_COLDSTART } = self.coldstart,
@@ -87,6 +88,7 @@ where
                 "Lambda function invocation",
                 "otel.name" = req.context.env_config.function_name,
                 "otel.kind" = field::Empty,
+                { attribute::FAAS_NAME } = req.context.env_config.function_name,
                 { attribute::FAAS_TRIGGER } = &self.otel_attribute_trigger,
                 { attribute::FAAS_INVOCATION_ID } = req.context.request_id,
                 { attribute::FAAS_COLDSTART } = self.coldstart
@@ -169,5 +171,59 @@ impl Display for OpenTelemetryFaasTrigger {
             OpenTelemetryFaasTrigger::Timer => write!(f, "timer"),
             OpenTelemetryFaasTrigger::Other => write!(f, "other"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Config, Context};
+    use lambda_runtime_api_client::BoxError;
+    use std::sync::Arc;
+    use tower::service_fn;
+    use tracing_capture::{CaptureLayer, SharedStorage};
+    use tracing_subscriber::layer::SubscriberExt;
+
+    fn invocation_with_function_name(function_name: &str) -> LambdaInvocation {
+        let (parts, _) = http::Response::new(()).into_parts();
+        LambdaInvocation {
+            parts,
+            body: bytes::Bytes::new(),
+            context: Context {
+                env_config: Arc::new(Config {
+                    function_name: function_name.to_owned(),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+        }
+    }
+
+    #[tokio::test]
+    async fn should_record_faas_name_from_the_function_configuration() {
+        // given
+        let storage = SharedStorage::default();
+        let subscriber = tracing_subscriber::registry().with(CaptureLayer::new(&storage));
+        let _guard = tracing::subscriber::set_default(subscriber);
+        let inner = service_fn(|_req: LambdaInvocation| async { Ok::<(), BoxError>(()) });
+        let mut service = OpenTelemetryLayer::new(|| {}).layer(inner);
+
+        // when
+        service
+            .call(invocation_with_function_name("my-function"))
+            .await
+            .expect("invocation should succeed");
+
+        // then
+        let storage = storage.lock();
+        let span = storage
+            .all_spans()
+            .find(|span| span.metadata().name() == "Lambda function invocation")
+            .expect("otel span should be recorded");
+        let faas_name = span.value("faas.name").expect("faas.name attribute should be recorded");
+        assert_eq!(
+            *faas_name, "my-function",
+            "faas.name should match the function's configured name"
+        );
     }
 }
