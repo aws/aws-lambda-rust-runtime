@@ -9,12 +9,8 @@ RIE_MAX_CONCURRENCY ?= 4
 TEST_RUNNER_BRANCH ?= main
 CONTAINER_READY_DELAY_SECS ?= 5
 OUTPUT_DIR ?= test/dockerized/tasks
-HANDLERS_TO_BUILD ?=
-HANDLER ?=
-
-# Load environment variables from .env file if it exists
--include .env
-export
+HANDLERS_TO_BUILD ?= basic-lambda basic-sqs http-basic-lambda basic-lambda-concurrent
+HANDLER ?= basic-lambda
 
 .PHONY: help pr-check integration-tests check-event-features fmt build-examples build-test-runner test-rie test-rie-lmi nuke test-dockerized test-dockerized-concurrent
 
