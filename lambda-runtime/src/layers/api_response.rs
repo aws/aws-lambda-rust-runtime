@@ -1,4 +1,5 @@
 use crate::{
+    constants::LAMBDA_RUNTIME_INVOCATION_ID,
     deserializer,
     requests::{EventCompletionRequest, IntoRequest},
     runtime::LambdaInvocation,
@@ -123,7 +124,17 @@ where
         };
 
         let request_id = req.context.request_id.clone();
-        let invocation_id = req.context.invocation_id.clone();
+
+        // The invocation ID assigned by the Lambda runtime for cross-wiring protection.
+        // Echoed back on `/response` and `/error` to allow RAPID to reject stale responses
+        // from timed-out invocations. `None` when running against older RAPID versions
+        // that don't send this header
+        let invocation_id = req
+            .parts
+            .headers
+            .get(LAMBDA_RUNTIME_INVOCATION_ID)
+            .map(|v| String::from_utf8_lossy(v.as_bytes()).to_string());
+
         let lambda_event = match deserializer::deserialize::<EventPayload>(&req.body, req.context) {
             Ok(lambda_event) => lambda_event,
             Err(err) => match build_event_error_request(request_id, invocation_id, err) {
@@ -195,5 +206,41 @@ where
             },
             RuntimeApiResponseFutureProj::Ready(ready) => ready.take().expect("future polled after completion"),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{constants::LAMBDA_RUNTIME_INVOCATION_ID, runtime::LambdaInvocation, Context};
+    use http::{HeaderValue, Response};
+    use serde_json::json;
+    use tower::{service_fn, Service};
+
+    #[tokio::test]
+    async fn forwards_invocation_id_from_next_response_headers() {
+        let mut response = Response::new(());
+        response
+            .headers_mut()
+            .insert(LAMBDA_RUNTIME_INVOCATION_ID, HeaderValue::from_static("invocation-123"));
+        let (parts, _) = response.into_parts();
+
+        let mut service = RuntimeApiResponseService::new(service_fn(|_event: LambdaEvent<serde_json::Value>| async {
+            Ok::<_, Diagnostic>(json!({"ok": true}))
+        }));
+
+        let request = service
+            .call(LambdaInvocation {
+                parts,
+                body: bytes::Bytes::from_static(b"{}"),
+                context: Context::default(),
+            })
+            .await
+            .expect("response request should be created");
+
+        assert_eq!(
+            request.headers().get(LAMBDA_RUNTIME_INVOCATION_ID),
+            Some(&HeaderValue::from_static("invocation-123")),
+        );
     }
 }

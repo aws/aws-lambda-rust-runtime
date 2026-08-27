@@ -1,8 +1,8 @@
 use crate::{
     constants::{
         LAMBDA_RUNTIME_CLIENT_CONTEXT, LAMBDA_RUNTIME_COGNITO_IDENTITY, LAMBDA_RUNTIME_DEADLINE_MS,
-        LAMBDA_RUNTIME_INVOCATION_ID, LAMBDA_RUNTIME_INVOKED_FUNCTION_ARN, LAMBDA_RUNTIME_REQUEST_ID,
-        LAMBDA_RUNTIME_TENANT_ID, LAMBDA_RUNTIME_TRACE_ID,
+        LAMBDA_RUNTIME_INVOKED_FUNCTION_ARN, LAMBDA_RUNTIME_REQUEST_ID, LAMBDA_RUNTIME_TENANT_ID,
+        LAMBDA_RUNTIME_TRACE_ID,
     },
     Error, RefConfig,
 };
@@ -92,11 +92,6 @@ pub struct Context {
     /// Includes information such as the function name, memory allocation,
     /// version, and log streams.
     pub env_config: RefConfig,
-    /// The invocation ID assigned by the Lambda runtime for cross-wiring protection.
-    /// Echoed back on `/response` and `/error` to allow RAPID to reject stale responses
-    /// from timed-out invocations. `None` when running against older RAPID versions
-    /// that don't send this header.
-    pub invocation_id: Option<String>,
 }
 
 impl Default for Context {
@@ -110,7 +105,6 @@ impl Default for Context {
             identity: None,
             tenant_id: None,
             env_config: std::sync::Arc::new(crate::Config::default()),
-            invocation_id: None,
         }
     }
 }
@@ -164,9 +158,6 @@ impl Context {
                 .get(LAMBDA_RUNTIME_TENANT_ID)
                 .map(|v| String::from_utf8_lossy(v.as_bytes()).to_string()),
             env_config,
-            invocation_id: headers
-                .get(LAMBDA_RUNTIME_INVOCATION_ID)
-                .map(|v| String::from_utf8_lossy(v.as_bytes()).to_string()),
         };
 
         Ok(ctx)
@@ -551,27 +542,5 @@ mod test {
 
         let context = Context::new("id", config, &headers).unwrap();
         assert_eq!(context.tenant_id, None);
-    }
-
-    #[test]
-    fn context_with_invocation_id_resolves() {
-        let config = Arc::new(Config::default());
-        let mut headers = HeaderMap::new();
-        headers.insert("lambda-runtime-aws-request-id", HeaderValue::from_static("my-id"));
-        headers.insert("lambda-runtime-deadline-ms", HeaderValue::from_static("123"));
-
-        let context = Context::new("id", config, &headers).unwrap();
-
-        assert_eq!(context.invocation_id, None);
-
-        let config = Arc::new(Config::default());
-        headers.insert(
-            "lambda-runtime-invocation-id",
-            HeaderValue::from_static("invocation-123"),
-        );
-
-        let context = Context::new("id", config, &headers).unwrap();
-
-        assert_eq!(context.invocation_id, Some("invocation-123".to_string()));
     }
 }

@@ -82,7 +82,7 @@ def get_invocation_id_scenarios():
         )],
         [Request.create(
             payload={"command": "invoke-B", "sleep": TIMEOUT - 1},
-            assertions=[{"transform": ".req_id", "response": SAME_REQUEST_ID}],
+            assertions=[{"response": {"from": "invoke-B"}}],
             headers={"X-Amzn-RequestId": SAME_REQUEST_ID},
         )],
     ]

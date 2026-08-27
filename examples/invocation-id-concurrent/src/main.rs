@@ -13,8 +13,7 @@ struct Request {
 
 #[derive(Serialize, Debug, PartialEq)]
 struct Response {
-    req_id: String,
-    inv_id: Option<String>,
+    from: String,
 }
 
 #[derive(Debug)]
@@ -70,12 +69,9 @@ pub(crate) async fn my_handler(event: LambdaEvent<Request>) -> Result<Response, 
         tokio::time::sleep(tokio::time::Duration::from_secs(event.payload.sleep.into())).await;
     }
 
-    let resp = Response {
-        req_id: event.context.request_id,
-        inv_id: event.context.invocation_id,
-    };
-
-    Ok(resp)
+    Ok(Response {
+        from: event.payload._command,
+    })
 }
 
 #[cfg(test)]
@@ -84,46 +80,17 @@ mod tests {
     use lambda_runtime::{Context, LambdaEvent};
 
     #[tokio::test]
-    async fn handler_returns_request_and_invocation_ids() {
-        let mut context = Context::default();
-        context.request_id = "req-123".to_string();
-        context.invocation_id = Some("inv-456".to_string());
-
-        let payload = Request {
-            _command: "test".to_string(),
-            sleep: 0,
+    async fn handler_echoes_marker() {
+        let event = LambdaEvent {
+            payload: Request {
+                _command: "invoke-B".into(),
+                sleep: 0,
+            },
+            context: Context::default(),
         };
-        let event = LambdaEvent { payload, context };
+
         let result = my_handler(event).await.unwrap();
 
-        assert_eq!(
-            result,
-            Response {
-                req_id: "req-123".to_string(),
-                inv_id: Some("inv-456".to_string()),
-            }
-        );
-    }
-
-    #[tokio::test]
-    async fn handler_works_without_invocation_id() {
-        let mut context = Context::default();
-        context.request_id = "req-789".to_string();
-        // invocation_id defaults to None
-
-        let payload = Request {
-            _command: "test".to_string(),
-            sleep: 0,
-        };
-        let event = LambdaEvent { payload, context };
-        let result = my_handler(event).await.unwrap();
-
-        assert_eq!(
-            result,
-            Response {
-                req_id: "req-789".to_string(),
-                inv_id: None,
-            }
-        );
+        assert_eq!(result, Response { from: "invoke-B".into() });
     }
 }
