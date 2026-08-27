@@ -307,7 +307,6 @@ where
 
 #[cfg(test)]
 mod test {
-    use http::HeaderName;
 
     use super::*;
     use crate::Config;
@@ -558,6 +557,8 @@ mod test {
     fn context_with_invocation_id_resolves() {
         let config = Arc::new(Config::default());
         let mut headers = HeaderMap::new();
+        headers.insert("lambda-runtime-aws-request-id", HeaderValue::from_static("my-id"));
+        headers.insert("lambda-runtime-deadline-ms", HeaderValue::from_static("123"));
 
         let context = Context::new("id", config, &headers).unwrap();
 

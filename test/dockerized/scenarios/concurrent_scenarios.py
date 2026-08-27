@@ -9,7 +9,9 @@ import os
 from containerized_test_runner.models import Request, ConcurrentTest
 
 HANDLER = "basic-lambda-concurrent"
+INVOCATION_ID_HANDLER = "invocation-id-concurrent"
 IMAGE = os.environ.get("TEST_IMAGE", "local/test-base")
+SAME_REQUEST_ID = "shared-request-id"
 DEFAULT_CONCURRENCY = 10
 TIMEOUT = 5
 
@@ -23,7 +25,7 @@ def _make_env(concurrency: int = DEFAULT_CONCURRENCY) -> dict:
 
 
 def _invocation_id_env(concurrency: int = DEFAULT_CONCURRENCY, timeout: int = TIMEOUT) -> dict:
-    return  _make_env | {
+    return _make_env(concurrency) | {
         "AWS_LAMBDA_FUNCTION_TIMEOUT": str(timeout),
     }
 
@@ -71,16 +73,16 @@ def get_concurrent_scenarios():
     return scenarios
 
 
-def invocation_id_scenarios():
+def get_invocation_id_scenarios():
     batches = [
         [Request.create(
-            payload={"name": "invoke-A", "sleep": TIMEOUT + 2},
+            payload={"command": "invoke-A", "sleep": TIMEOUT + 2},
             assertions=[{"transform": ".errorType", "error": "Sandbox.Timedout"}],
             headers={"X-Amzn-RequestId": SAME_REQUEST_ID},
         )],
         [Request.create(
-            payload={"name": "invoke-B", "sleep": TIMEOUT - 1},
-            assertions={"response": {"from": "invoke-B"}},
+            payload={"command": "invoke-B", "sleep": TIMEOUT - 1},
+            assertions=[{"transform": ".req_id", "response": SAME_REQUEST_ID}],
             headers={"X-Amzn-RequestId": SAME_REQUEST_ID},
         )],
     ]
@@ -88,8 +90,8 @@ def invocation_id_scenarios():
 
     return [ConcurrentTest(
         name="invocation_id",
-        handler="invocation-id-concurrent",
-        environment_variables=_invocation_id_env(timeout=1),
+        handler=INVOCATION_ID_HANDLER,
+        environment_variables=_invocation_id_env(timeout=TIMEOUT),
         request_batches=batches,
         image=IMAGE,
     )]

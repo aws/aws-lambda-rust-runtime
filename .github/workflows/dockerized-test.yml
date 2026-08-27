@@ -57,7 +57,9 @@ jobs:
     - name: Build Lambda artifacts for testing
       run: |
         mkdir -p test/dockerized/tasks
-        HANDLERS_TO_BUILD="basic-lambda-concurrent" OUTPUT_DIR="$(pwd)/test/dockerized/tasks" make build-examples
+        HANDLERS_TO_BUILD="basic-lambda-concurrent invocation-id-concurrent" OUTPUT_DIR="$(pwd)/test/dockerized/tasks" make build-examples
+        test -x test/dockerized/tasks/basic-lambda-concurrent
+        test -x test/dockerized/tasks/invocation-id-concurrent
         ls -la test/dockerized/tasks/
 
     - name: Build base test image with RIE and custom entrypoint
@@ -68,6 +70,8 @@ jobs:
 
     - name: Run concurrent scenarios
       uses: aws/containerized-test-runner-for-aws-lambda@main
+      env:
+        CONTAINER_READY_DELAY_SECS: 5
       with:
         suiteFileArray: '[]'
         dockerImageName: 'local/test-base'

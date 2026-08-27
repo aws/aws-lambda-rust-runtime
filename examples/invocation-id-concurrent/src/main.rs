@@ -6,8 +6,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 struct Request {
-    command: String,
-    sleep: u32
+    #[serde(rename = "command")]
+    _command: String,
+    sleep: u32,
 }
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -89,7 +90,7 @@ mod tests {
         context.invocation_id = Some("inv-456".to_string());
 
         let payload = Request {
-            command: "test".to_string(),
+            _command: "test".to_string(),
             sleep: 0,
         };
         let event = LambdaEvent { payload, context };
@@ -111,7 +112,7 @@ mod tests {
         // invocation_id defaults to None
 
         let payload = Request {
-            command: "test".to_string(),
+            _command: "test".to_string(),
             sleep: 0,
         };
         let event = LambdaEvent { payload, context };

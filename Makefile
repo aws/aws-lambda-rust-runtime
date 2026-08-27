@@ -7,6 +7,7 @@ INTEG_EXTENSIONS := extension-fn extension-trait logs-trait
 INTEG_ARCH := x86_64-unknown-linux-musl
 RIE_MAX_CONCURRENCY ?= 4
 TEST_RUNNER_BRANCH ?= main
+CONTAINER_READY_DELAY_SECS ?= 5
 OUTPUT_DIR ?= test/dockerized/tasks
 HANDLERS_TO_BUILD ?=
 HANDLER ?=
@@ -125,7 +126,7 @@ fmt:
 	cargo +nightly fmt --all
 
 build-examples:
-	HANDLERS_TO_BUILD=${HANDLERS_TO_BUILD} OUTPUT_DIR=${OUTPUT_DIR} ./scripts/build-examples.sh
+	HANDLERS_TO_BUILD="$(subst ",,$(HANDLERS_TO_BUILD))" OUTPUT_DIR="$(OUTPUT_DIR)" ./scripts/build-examples.sh
 
 nuke:
 	docker kill $$(docker ps -q)
@@ -145,6 +146,7 @@ build-test-runner: build-examples
 	@echo "Building test runner Docker image..."
 	@docker build -t test-runner:local -f .test-runner/Dockerfile .test-runner
 
+test-dockerized-concurrent: HANDLERS_TO_BUILD := basic-lambda-concurrent invocation-id-concurrent
 test-dockerized-concurrent: build-test-runner
 	@echo "Running concurrent scenarios in Docker..."
 	@docker network rm concurrent-test-net 2>/dev/null || true
@@ -156,6 +158,7 @@ test-dockerized-concurrent: build-test-runner
 		-e TASK_FOLDER=./test/dockerized/tasks \
 		-e GITHUB_WORKSPACE=/workspace \
 		-e DOCKER_SHARED_NETWORK=concurrent-test-net \
+		-e CONTAINER_READY_DELAY_SECS=$(CONTAINER_READY_DELAY_SECS) \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v "$(CURDIR):/workspace" \
 		-w /workspace \

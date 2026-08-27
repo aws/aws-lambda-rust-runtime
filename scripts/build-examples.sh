@@ -11,13 +11,25 @@ echo "Building handlers: ${HANDLERS_TO_BUILD}"
 
 for handler in ${HANDLERS_TO_BUILD}; do
     dir="examples/$handler"
-    [ ! -f "$dir/Cargo.toml" ] && echo "✗ $handler not found" && continue
-    
+    if [ ! -f "$dir/Cargo.toml" ]; then
+        echo "✗ $handler not found"
+        continue
+    fi
+
     echo "Building $handler..."
-    (cd "$dir" && cargo build --release) || continue
-    
-    [ -f "$dir/target/release/$handler" ] && cp "$dir/target/release/$handler" "$OUTPUT_DIR/" && echo "✓ $handler"
+    if ! (cd "$dir" && cargo build --release); then
+        continue
+    fi
+
+    if [ ! -f "$dir/target/release/$handler" ]; then
+        echo "✗ $handler artifact not found"
+        continue
+    fi
+
+    cp "$dir/target/release/$handler" "$OUTPUT_DIR/"
+    echo "✓ $handler"
 done
 
 echo ""
 ls -lh "$OUTPUT_DIR/" 2>/dev/null || echo "No binaries built"
+exit 0

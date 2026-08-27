@@ -138,10 +138,7 @@ where
                 let body = serde_json::to_vec(&body)?;
                 let body = Body::from(body);
 
-                let mut req = build_request()
-                    .method(Method::POST)
-                    .uri(uri)
-                    .body(body)?;
+                let mut req = build_request().method(Method::POST).uri(uri).body(body)?;
 
                 if let Some(id) = self.invocation_id {
                     req.headers_mut().insert(LAMBDA_RUNTIME_INVOCATION_ID, id.parse()?);
@@ -346,8 +343,7 @@ mod tests {
             let stream_response: StreamResponse<_> = stream.into();
             let response = FunctionResponse::StreamingResponse(stream_response);
 
-            let req: EventCompletionRequest<'_, _, (), _, _, _> =
-                EventCompletionRequest::new("id", None, response);
+            let req: EventCompletionRequest<'_, _, (), _, _, _> = EventCompletionRequest::new("id", None, response);
 
             let http_req = req.into_req().expect("into_req should succeed");
 
@@ -466,7 +462,7 @@ mod tests {
                 let stream_response: StreamResponse<_> = stream.into();
                 let response = FunctionResponse::StreamingResponse(stream_response);
 
-                let req: EventCompletionRequest<'_, _, (), _, _, _> = EventCompletionRequest::new("id", response);
+                let req: EventCompletionRequest<'_, _, (), _, _, _> = EventCompletionRequest::new("id", None, response);
 
                 let http_req = req.into_req().expect("into_req should succeed");
 
