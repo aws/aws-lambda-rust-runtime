@@ -11,7 +11,7 @@ use pin_project::pin_project;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, future::Future, marker::PhantomData, pin::Pin, task};
 use tower::Service;
-use tracing::{error, trace};
+use tracing::{error, trace, warn};
 
 /// Tower service that turns the result or an error of a handler function into a Lambda Runtime API
 /// response.
@@ -128,12 +128,17 @@ where
         // The invocation ID assigned by the Lambda runtime for cross-wiring protection.
         // Echoed back on `/response` and `/error` to allow RAPID to reject stale responses
         // from timed-out invocations. `None` when running against older RAPID versions
-        // that don't send this header
-        let invocation_id = req
-            .parts
-            .headers
-            .get(LAMBDA_RUNTIME_INVOCATION_ID)
-            .map(|v| String::from_utf8_lossy(v.as_bytes()).to_string());
+        // that don't send this header.
+        let invocation_id = match req.parts.headers.get(LAMBDA_RUNTIME_INVOCATION_ID) {
+            Some(value) => match value.to_str() {
+                Ok(value) => Some(value.to_owned()),
+                Err(error) => {
+                    warn!(error = ?error, "Ignoring malformed Lambda runtime invocation ID header");
+                    None
+                }
+            },
+            None => None,
+        };
 
         let lambda_event = match deserializer::deserialize::<EventPayload>(&req.body, req.context) {
             Ok(lambda_event) => lambda_event,
@@ -242,5 +247,34 @@ mod tests {
             request.headers().get(LAMBDA_RUNTIME_INVOCATION_ID),
             Some(&HeaderValue::from_static("invocation-123")),
         );
+    }
+
+    #[tokio::test]
+    async fn malformed_invocation_id_does_not_block_deserialization_error_response() {
+        let mut response = Response::new(());
+        response.headers_mut().insert(
+            LAMBDA_RUNTIME_INVOCATION_ID,
+            HeaderValue::from_bytes(&[0xff]).expect("header value should accept opaque bytes"),
+        );
+        let (parts, _) = response.into_parts();
+
+        let mut service = RuntimeApiResponseService::new(service_fn(|_event: LambdaEvent<serde_json::Value>| async {
+            Ok::<_, Diagnostic>(json!({"ok": true}))
+        }));
+
+        let request = service
+            .call(LambdaInvocation {
+                parts,
+                body: bytes::Bytes::from_static(b"{"),
+                context: Context {
+                    request_id: "request-123".to_owned(),
+                    ..Context::default()
+                },
+            })
+            .await
+            .expect("deserialization errors should produce an error request");
+
+        assert_eq!(request.uri().path(), "/2018-06-01/runtime/invocation/request-123/error",);
+        assert!(request.headers().get(LAMBDA_RUNTIME_INVOCATION_ID).is_none());
     }
 }
