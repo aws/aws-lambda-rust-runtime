@@ -1,17 +1,16 @@
 use crate::{
-    constants::LAMBDA_RUNTIME_INVOCATION_ID,
-    deserializer,
-    requests::{EventCompletionRequest, IntoRequest},
-    runtime::LambdaInvocation,
-    Diagnostic, EventErrorRequest, IntoFunctionResponse, LambdaEvent,
+    Diagnostic, EventErrorRequest, IntoFunctionResponse, LambdaEvent, constants::LAMBDA_RUNTIME_INVOCATION_ID, deserializer, rate_limiter::RateLimiter, requests::{EventCompletionRequest, IntoRequest}, runtime::LambdaInvocation,
 };
 use futures::{ready, Stream};
 use lambda_runtime_api_client::{body::Body, BoxError};
 use pin_project::pin_project;
 use serde::{Deserialize, Serialize};
-use std::{fmt::Debug, future::Future, marker::PhantomData, pin::Pin, task};
+use std::{fmt::Debug, future::Future, marker::PhantomData, pin::Pin, task, time::Duration};
 use tower::Service;
 use tracing::{error, trace, warn};
+
+
+static MALFORMED_INVOCATION_ID_LIMITER: RateLimiter = RateLimiter::new(Duration::from_secs(60));
 
 /// Tower service that turns the result or an error of a handler function into a Lambda Runtime API
 /// response.
@@ -133,7 +132,14 @@ where
             Some(value) => match value.to_str() {
                 Ok(value) => Some(value.to_owned()),
                 Err(error) => {
-                    warn!(error = ?error, "Ignoring malformed Lambda runtime invocation ID header");
+
+                    if MALFORMED_INVOCATION_ID_LIMITER.allow() {
+                        warn!(
+                            error = ?error,
+                            rate_limit_interval_ms = MALFORMED_INVOCATION_ID_LIMITER.interval().as_millis(),
+                            "Ignoring malformed Lambda runtime invocation ID header; this warning is rate limited"
+                        );
+                    }
                     None
                 }
             },

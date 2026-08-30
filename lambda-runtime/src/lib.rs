@@ -29,6 +29,8 @@ mod constants;
 pub mod diagnostic;
 pub use diagnostic::Diagnostic;
 
+mod rate_limiter;
+
 mod deserializer;
 /// Tower middleware to be applied to runtime invocations.
 pub mod layers;
