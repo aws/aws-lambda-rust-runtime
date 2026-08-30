@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 struct Request {
-    #[serde(rename = "command")]
+    #[serde(default, rename = "command")]
     _command: String,
     sleep: u32,
 }
@@ -92,5 +92,12 @@ mod tests {
         let result = my_handler(event).await.unwrap();
 
         assert_eq!(result, Response { from: "invoke-B".into() });
+    }
+
+    #[test]
+    fn request_defaults_missing_command() {
+        let request: Request = serde_json::from_str(r#"{"sleep": 0}"#).unwrap();
+
+        assert_eq!(request._command, "");
     }
 }
