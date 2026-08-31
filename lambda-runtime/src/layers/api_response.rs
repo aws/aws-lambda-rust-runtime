@@ -1,5 +1,10 @@
 use crate::{
-    Diagnostic, EventErrorRequest, IntoFunctionResponse, LambdaEvent, constants::LAMBDA_RUNTIME_INVOCATION_ID, deserializer, rate_limiter::RateLimiter, requests::{EventCompletionRequest, IntoRequest}, runtime::LambdaInvocation,
+    constants::LAMBDA_RUNTIME_INVOCATION_ID,
+    deserializer,
+    rate_limiter::RateLimiter,
+    requests::{EventCompletionRequest, IntoRequest},
+    runtime::LambdaInvocation,
+    Diagnostic, EventErrorRequest, IntoFunctionResponse, LambdaEvent,
 };
 use futures::{ready, Stream};
 use lambda_runtime_api_client::{body::Body, BoxError};
@@ -8,7 +13,6 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, future::Future, marker::PhantomData, pin::Pin, task, time::Duration};
 use tower::Service;
 use tracing::{error, trace, warn};
-
 
 static MALFORMED_INVOCATION_ID_LIMITER: RateLimiter = RateLimiter::new(Duration::from_secs(60));
 
@@ -132,7 +136,6 @@ where
             Some(value) => match value.to_str() {
                 Ok(value) => Some(value.to_owned()),
                 Err(error) => {
-
                     if MALFORMED_INVOCATION_ID_LIMITER.allow() {
                         warn!(
                             error = ?error,

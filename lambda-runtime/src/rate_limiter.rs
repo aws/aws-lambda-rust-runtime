@@ -66,8 +66,10 @@ impl RateLimiter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::panic::{catch_unwind, AssertUnwindSafe};
-    use std::thread;
+    use std::{
+        panic::{catch_unwind, AssertUnwindSafe},
+        thread,
+    };
 
     #[test]
     fn allows_first_call() {

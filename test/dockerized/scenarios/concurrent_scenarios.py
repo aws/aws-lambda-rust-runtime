@@ -1,12 +1,7 @@
-"""
-Multi-concurrency test scenarios for basic-lambda-concurrent.
-
-The handler expects: { "command": "<string>" }
-and responds with:   { "req_id": "<id>", "msg": "Command <command> executed." }
-"""
+"""Multi-concurrency test scenarios."""
 
 import os
-from containerized_test_runner.models import Request, ConcurrentTest
+from containerized_test_runner.models import ConcurrentTest, Request
 
 HANDLER = "basic-lambda-concurrent"
 INVOCATION_ID_HANDLER = "invocation-id-concurrent"
@@ -16,16 +11,20 @@ DEFAULT_CONCURRENCY = 10
 TIMEOUT = 5
 
 
-def _make_env(concurrency: int = DEFAULT_CONCURRENCY) -> dict:
+def _make_env(handler: str = HANDLER, concurrency: int = DEFAULT_CONCURRENCY) -> dict:
     return {
-        "_HANDLER": HANDLER,
+        "_HANDLER": handler,
         "AWS_LAMBDA_MAX_CONCURRENCY": str(concurrency),
         "AWS_LAMBDA_LOG_FORMAT": "JSON",
     }
 
 
-def _invocation_id_env(concurrency: int = DEFAULT_CONCURRENCY, timeout: int = TIMEOUT) -> dict:
-    return _make_env(concurrency) | {
+def _invocation_id_env(
+    handler: str = INVOCATION_ID_HANDLER,
+    concurrency: int = DEFAULT_CONCURRENCY,
+    timeout: int = TIMEOUT,
+) -> dict:
+    return _make_env(handler, concurrency) | {
         "AWS_LAMBDA_FUNCTION_TIMEOUT": str(timeout),
     }
 
@@ -91,7 +90,7 @@ def get_invocation_id_scenarios():
     return [ConcurrentTest(
         name="invocation_id",
         handler=INVOCATION_ID_HANDLER,
-        environment_variables=_invocation_id_env(timeout=TIMEOUT),
+        environment_variables=_invocation_id_env(handler=INVOCATION_ID_HANDLER, timeout=TIMEOUT),
         request_batches=batches,
         image=IMAGE,
     )]
