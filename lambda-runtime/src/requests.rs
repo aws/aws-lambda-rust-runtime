@@ -161,7 +161,7 @@ where
                 req_headers.append("Trailer", "Lambda-Runtime-Function-Error-Body".parse()?);
 
                 if let Some(id) = self.invocation_id {
-                    req_headers.append(LAMBDA_RUNTIME_INVOCATION_ID, id.parse()?);
+                    req_headers.insert(LAMBDA_RUNTIME_INVOCATION_ID, id.parse()?);
                 }
 
                 req_headers.insert(
