@@ -1,111 +1,88 @@
-//! Thread-safe, process-local rate limiting for infrequent runtime events.
+//! Internal call-site rate limiting for infrequent runtime events.
 
 use std::{
-    sync::Mutex,
+    sync::OnceLock,
     time::{Duration, Instant},
 };
 
-/// Allows an operation at most once during each configured interval.
+/// Returns monotonic process-relative time for the rate limiter.
+pub(crate) fn time_since_epoch() -> Duration {
+    static EPOCH: OnceLock<Instant> = OnceLock::new();
+
+    Instant::now().duration_since(*EPOCH.get_or_init(Instant::now))
+}
+
+/// Evaluates a call at most once per interval at each macro call site.
 ///
-/// A `RateLimiter` is intended to be shared by concurrent runtime tasks. When
-/// stored in a `static`, it is initialized once per Lambda execution environment
-/// and retains its state across warm invocations. A new cold-started environment
-/// receives a new limiter.
-pub(crate) struct RateLimiter {
-    /// Minimum duration between allowed operations.
-    interval: Duration,
-    /// Timestamp of the most recent allowed operation.
-    last_allowed: Mutex<Option<Instant>>,
-}
+/// The limiter state is local to the call site and persists for the lifetime of
+/// the process. It is therefore shared across warm invocations in one Lambda
+/// execution environment and reset by a cold start.
+macro_rules! rate_limited {
+    ($interval:expr, $call:expr) => {{
+        use std::sync::atomic::{AtomicU64, Ordering};
 
-impl RateLimiter {
-    /// Creates a rate limiter with the specified minimum interval.
-    pub(crate) const fn new(interval: Duration) -> RateLimiter {
-        RateLimiter {
-            interval,
-            last_allowed: Mutex::new(None),
-        }
-    }
+        static NEXT_CALL: AtomicU64 = AtomicU64::new(u64::MIN);
+        let interval: std::time::Duration = $interval;
+        let time = $crate::rate_limiter::time_since_epoch();
+        let next = NEXT_CALL.load(Ordering::Relaxed);
 
-    /// Returns the minimum duration between allowed operations.
-    pub(crate) const fn interval(&self) -> Duration {
-        self.interval
-    }
+        if next <= time.as_secs() {
+            let new_next = time.checked_add(interval).unwrap_or(std::time::Duration::MAX).as_secs();
 
-    ///
-    /// The first call is allowed. Subsequent calls are rejected until the
-    /// configured interval has elapsed since the previous allowed call.
-    /// Concurrent callers are serialized while checking and updating the last
-    /// allowed timestamp so only one caller crosses the interval boundary.
-    pub(crate) fn allow(&self) -> bool {
-        let mut last_allowed = match self.last_allowed.lock() {
-            Ok(guard) => guard,
-            Err(poisoned) => {
-                // The limiter state is disposable, so reset it and recover instead of
-                // allowing a poisoned mutex to crash the runtime or suppress future logs.
-                let mut guard = poisoned.into_inner();
-                *guard = None;
-                self.last_allowed.clear_poison();
-                guard
+            if NEXT_CALL
+                .compare_exchange(next, new_next, Ordering::Relaxed, Ordering::Relaxed)
+                .is_ok()
+            {
+                $call;
             }
-        };
-
-        if last_allowed
-            .as_ref()
-            .is_some_and(|value| value.elapsed() < self.interval)
-        {
-            return false;
         }
-
-        *last_allowed = Some(Instant::now());
-
-        true
-    }
+    }};
 }
+
+pub(crate) use rate_limited;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::{
-        panic::{catch_unwind, AssertUnwindSafe},
+        sync::{
+            atomic::{AtomicUsize, Ordering},
+            Arc,
+        },
         thread,
     };
 
     #[test]
-    fn allows_first_call() {
-        let limiter = RateLimiter::new(Duration::from_secs(60));
+    fn allows_first_call_and_rejects_calls_inside_interval() {
+        let mut calls = 0;
 
-        assert!(limiter.allow());
+        for _ in 0..2 {
+            rate_limited!(Duration::from_secs(60), {
+                calls += 1;
+            });
+        }
+
+        assert_eq!(calls, 1);
     }
 
     #[test]
-    fn rejects_calls_inside_interval() {
-        let limiter = RateLimiter::new(Duration::from_secs(60));
+    fn allows_only_one_concurrent_call() {
+        let calls = Arc::new(AtomicUsize::new(0));
+        let handles = (0..8)
+            .map(|_| {
+                let calls = Arc::clone(&calls);
+                thread::spawn(move || {
+                    rate_limited!(Duration::from_secs(60), {
+                        calls.fetch_add(1, Ordering::Relaxed);
+                    });
+                })
+            })
+            .collect::<Vec<_>>();
 
-        assert!(limiter.allow());
-        assert!(!limiter.allow());
-    }
+        for handle in handles {
+            handle.join().unwrap();
+        }
 
-    #[test]
-    fn allows_call_after_interval() {
-        let limiter = RateLimiter::new(Duration::from_millis(10));
-
-        assert!(limiter.allow());
-        thread::sleep(Duration::from_millis(15));
-
-        assert!(limiter.allow());
-    }
-
-    #[test]
-    fn recovers_from_poisoned_mutex() {
-        let limiter = RateLimiter::new(Duration::from_secs(60));
-
-        let _ = catch_unwind(AssertUnwindSafe(|| {
-            let _guard = limiter.last_allowed.lock().unwrap();
-            panic!("poison the limiter mutex");
-        }));
-
-        assert!(limiter.allow());
-        assert!(!limiter.allow());
+        assert_eq!(calls.load(Ordering::Relaxed), 1);
     }
 }
