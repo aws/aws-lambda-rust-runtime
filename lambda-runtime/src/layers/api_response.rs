@@ -140,7 +140,7 @@ where
                         warn!(
                             error = ?error,
                             rate_limit_interval_ms = MALFORMED_INVOCATION_ID_LOG_INTERVAL.as_millis(),
-                            "Ignoring malformed Lambda runtime invocation ID header; this warning is rate limited"
+                            "Ignoring malformed Lambda runtime invocation ID header"
                         );
                     });
                     None
