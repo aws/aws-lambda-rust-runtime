@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_runtime-v1.3.0...lambda_runtime-v1.4.0) - 2026-09-02
+
+### Added
+
+- add lambda-runtime-invocation-id header ([#1159](https://github.com/aws/aws-lambda-rust-runtime/pull/1159))
+
+### Other
+
+- Record faas.name on Lambda OTEL spans. ([#1163](https://github.com/aws/aws-lambda-rust-runtime/pull/1163))
+- show custom event handler usage ([#1154](https://github.com/aws/aws-lambda-rust-runtime/pull/1154))
+- release ([#1151](https://github.com/aws/aws-lambda-rust-runtime/pull/1151))
+
 ## [1.3.0](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_runtime-v1.2.1...lambda_runtime-v1.3.0) - 2026-07-09
 
 ### Added
