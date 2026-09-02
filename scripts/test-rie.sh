@@ -18,7 +18,7 @@ fi
 CONTAINER_PID=$!
 
 echo "Container started. Test with:"
-if [ "$EXAMPLE" = "basic-lambda" ] || [ "$EXAMPLE" = "basic-lambda-concurrent" ]; then
+if [ "$EXAMPLE" = "basic-lambda" ] || [ "$EXAMPLE" = "basic-lambda-concurrent" ] || [ "$EXAMPLE" = "invocation-id-concurrent" ]; then
     echo "curl -XPOST 'http://localhost:9000/2015-03-31/functions/function/invocations' -d '{\"command\": \"test from RIE\"}' -H 'Content-Type: application/json'"
 else
     echo "For example '$EXAMPLE', check examples/$EXAMPLE/src/main.rs for the expected payload format."

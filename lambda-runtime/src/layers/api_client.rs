@@ -114,8 +114,12 @@ where
                         // Adding more information on top of 410 Gone, to make it more clear since we cannot access the body of the message
                         if status == 410 {
                             log_or_print!(
-                                tracing: tracing::error!("Lambda function timeout!"),
-                                fallback: eprintln!("Lambda function timeout!")
+                                tracing: tracing::error!(
+                                    "Lambda Runtime API rejected the response: invocation timed out or response was stale"
+                                ),
+                                fallback: eprintln!(
+                                    "Lambda Runtime API rejected the response: invocation timed out or response was stale"
+                                )
                             );
                         }
 
@@ -219,7 +223,9 @@ mod tests {
 
         // Verify the error was logged
         assert!(logs_contain("Lambda Runtime API returned non-200 response"));
-        assert!(logs_contain("Lambda function timeout!"));
+        assert!(logs_contain(
+            "Lambda Runtime API rejected the response: invocation timed out or response was stale"
+        ));
     }
 
     #[tokio::test]

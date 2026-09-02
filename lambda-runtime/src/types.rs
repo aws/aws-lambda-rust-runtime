@@ -1,4 +1,11 @@
-use crate::{Error, RefConfig};
+use crate::{
+    constants::{
+        LAMBDA_RUNTIME_CLIENT_CONTEXT, LAMBDA_RUNTIME_COGNITO_IDENTITY, LAMBDA_RUNTIME_DEADLINE_MS,
+        LAMBDA_RUNTIME_INVOKED_FUNCTION_ARN, LAMBDA_RUNTIME_REQUEST_ID, LAMBDA_RUNTIME_TENANT_ID,
+        LAMBDA_RUNTIME_TRACE_ID,
+    },
+    Error, RefConfig,
+};
 use base64::prelude::*;
 use bytes::Bytes;
 use http::{header::ToStrError, HeaderMap, HeaderValue, StatusCode};
@@ -106,7 +113,7 @@ impl Context {
     /// Create a new [Context] struct based on the function configuration
     /// and the incoming request data.
     pub fn new(request_id: &str, env_config: RefConfig, headers: &HeaderMap) -> Result<Self, Error> {
-        let client_context: Option<ClientContext> = if let Some(value) = headers.get("lambda-runtime-client-context") {
+        let client_context: Option<ClientContext> = if let Some(value) = headers.get(LAMBDA_RUNTIME_CLIENT_CONTEXT) {
             let raw = value.to_str()?;
             if raw.is_empty() {
                 None
@@ -117,7 +124,7 @@ impl Context {
             None
         };
 
-        let identity: Option<CognitoIdentity> = if let Some(value) = headers.get("lambda-runtime-cognito-identity") {
+        let identity: Option<CognitoIdentity> = if let Some(value) = headers.get(LAMBDA_RUNTIME_COGNITO_IDENTITY) {
             let raw = value.to_str()?;
             if raw.is_empty() {
                 None
@@ -131,24 +138,24 @@ impl Context {
         let ctx = Context {
             request_id: request_id.to_owned(),
             deadline: headers
-                .get("lambda-runtime-deadline-ms")
+                .get(LAMBDA_RUNTIME_DEADLINE_MS)
                 .expect("missing lambda-runtime-deadline-ms header")
                 .to_str()?
                 .parse::<u64>()?,
             invoked_function_arn: headers
-                .get("lambda-runtime-invoked-function-arn")
+                .get(LAMBDA_RUNTIME_INVOKED_FUNCTION_ARN)
                 .unwrap_or(&HeaderValue::from_static(
                     "No header lambda-runtime-invoked-function-arn found.",
                 ))
                 .to_str()?
                 .to_owned(),
             xray_trace_id: headers
-                .get("lambda-runtime-trace-id")
+                .get(LAMBDA_RUNTIME_TRACE_ID)
                 .map(|v| String::from_utf8_lossy(v.as_bytes()).to_string()),
             client_context,
             identity,
             tenant_id: headers
-                .get("lambda-runtime-aws-tenant-id")
+                .get(LAMBDA_RUNTIME_TENANT_ID)
                 .map(|v| String::from_utf8_lossy(v.as_bytes()).to_string()),
             env_config,
         };
@@ -165,7 +172,7 @@ impl Context {
 /// Extract the invocation request id from the incoming request.
 pub(crate) fn invoke_request_id(headers: &HeaderMap) -> Result<&str, ToStrError> {
     headers
-        .get("lambda-runtime-aws-request-id")
+        .get(LAMBDA_RUNTIME_REQUEST_ID)
         .expect("missing lambda-runtime-aws-request-id header")
         .to_str()
 }
@@ -291,6 +298,7 @@ where
 
 #[cfg(test)]
 mod test {
+
     use super::*;
     use crate::Config;
     use std::sync::Arc;

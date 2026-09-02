@@ -1,0 +1,12 @@
+[package]
+name = "invocation-id-concurrent"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lambda_runtime = { path = "../../lambda-runtime", features = ["concurrency-tokio"] }
+serde = "1"
+tokio = { version = "1", features = ["macros", "rt", "time"] }
+
+[dev-dependencies]
+serde_json = "1.0"

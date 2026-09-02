@@ -19,20 +19,10 @@ jobs:
 
     - uses: dtolnay/rust-toolchain@stable
     - uses: Swatinem/rust-cache@v2
-    - name: Load environment variables
-      run: |
-        if [ -f .env ]; then
-          set -a
-          source .env
-          set +a
-          echo "HANDLERS_TO_BUILD=${HANDLERS_TO_BUILD}" >> $GITHUB_ENV
-          echo "OUTPUT_DIR=${OUTPUT_DIR}" >> $GITHUB_ENV
-        fi
-    
     - name: Build Lambda artifacts for testing
       run: |
         mkdir -p test/dockerized/tasks
-        OUTPUT_DIR="$(pwd)/test/dockerized/tasks" make build-examples
+        HANDLERS_TO_BUILD="basic-lambda basic-sqs http-basic-lambda basic-lambda-concurrent" OUTPUT_DIR="$(pwd)/test/dockerized/tasks" ./scripts/build-examples.sh
         ls -la test/dockerized/tasks/
     
     - name: Build base test image with RIE and custom entrypoint
@@ -57,7 +47,7 @@ jobs:
     - name: Build Lambda artifacts for testing
       run: |
         mkdir -p test/dockerized/tasks
-        HANDLERS_TO_BUILD="basic-lambda-concurrent" OUTPUT_DIR="$(pwd)/test/dockerized/tasks" make build-examples
+        HANDLERS_TO_BUILD="basic-lambda-concurrent invocation-id-concurrent" OUTPUT_DIR="$(pwd)/test/dockerized/tasks" ./scripts/build-examples.sh
         ls -la test/dockerized/tasks/
 
     - name: Build base test image with RIE and custom entrypoint
@@ -68,6 +58,8 @@ jobs:
 
     - name: Run concurrent scenarios
       uses: aws/containerized-test-runner-for-aws-lambda@main
+      env:
+        CONTAINER_READY_DELAY_SECS: 5
       with:
         suiteFileArray: '[]'
         dockerImageName: 'local/test-base'
