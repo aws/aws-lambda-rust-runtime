@@ -256,6 +256,13 @@ where
     ) -> Result<(), BoxError> {
         let limit = concurrency_limit as usize;
 
+        debug!(
+            event = "runtime_worker_pool_initializing",
+            worker_count = limit,
+            execution_environment_max_concurrency = limit,
+            "runtime worker pool initializing",
+        );
+
         // Use FuturesUnordered so we can observe worker exits as they happen,
         // rather than waiting for all workers to finish (join_all).
         let mut workers: FuturesUnordered<tokio::task::JoinHandle<(tokio::task::Id, Result<(), BoxError>)>> =
