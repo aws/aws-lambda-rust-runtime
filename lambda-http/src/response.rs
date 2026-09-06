@@ -20,6 +20,7 @@ use http_body_util::BodyExt;
 use mime::{Mime, CHARSET};
 use serde::Serialize;
 use std::{
+    any::type_name,
     borrow::Cow,
     fmt,
     future::{ready, Future},
@@ -216,7 +217,12 @@ where
         let (parts, body) = self.into_parts();
         let headers = parts.headers.clone();
 
-        let fut = async { Response::from_parts(parts, body.convert(headers).await) };
+        let fut = async {
+            match body.convert(headers).await {
+                Ok(body) => Response::from_parts(parts, body),
+                Err(error) => error.into_response(),
+            }
+        };
 
         Box::pin(fut)
     }
@@ -328,7 +334,29 @@ impl IntoResponse for (StatusCode, serde_json::Value) {
 
 pub type ResponseFuture = Pin<Box<dyn Future<Output = Response<Body>> + Send>>;
 
-pub trait ConvertBody {
+#[derive(Clone, Debug)]
+pub(crate) struct BodyConversionError {
+    pub(crate) error_type: &'static str,
+    pub(crate) error_message: String,
+}
+
+impl BodyConversionError {
+    fn new<E: fmt::Debug>(error: E) -> Self {
+        Self {
+            error_type: type_name::<E>(),
+            error_message: format!("unable to read bytes from response body: {error:?}"),
+        }
+    }
+
+    fn into_response(self) -> Response<Body> {
+        let mut response = Response::new(Body::Empty);
+        *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+        response.extensions_mut().insert(self);
+        response
+    }
+}
+
+pub(crate) trait ConvertBody {
     fn convert(self, parts: HeaderMap) -> BodyFuture;
 }
 
@@ -381,13 +409,8 @@ where
     B::Error: fmt::Debug,
 {
     Box::pin(async move {
-        Body::from(
-            body.collect()
-                .await
-                .expect("unable to read bytes from body")
-                .to_bytes()
-                .to_vec(),
-        )
+        let bytes = body.collect().await.map_err(BodyConversionError::new)?.to_bytes();
+        Ok(Body::from(bytes.to_vec()))
     })
 }
 
@@ -409,29 +432,44 @@ where
 
     // assumes utf-8
     Box::pin(async move {
-        let bytes = body.collect().await.expect("unable to read bytes from body").to_bytes();
+        let bytes = body.collect().await.map_err(BodyConversionError::new)?.to_bytes();
         let (content, _, _) = encoding.decode(&bytes);
 
-        match content {
+        Ok(match content {
             Cow::Borrowed(content) => Body::from(content),
             Cow::Owned(content) => Body::from(content),
-        }
+        })
     })
 }
 
-pub type BodyFuture = Pin<Box<dyn Future<Output = Body> + Send>>;
+pub(crate) type BodyFuture = Pin<Box<dyn Future<Output = Result<Body, BodyConversionError>> + Send>>;
 
 #[cfg(test)]
 mod tests {
     use super::{Body, IntoResponse, LambdaResponse, RequestOrigin, X_LAMBDA_HTTP_CONTENT_ENCODING};
+    use bytes::Bytes;
+    use futures_util::stream;
     use http::{
         header::{CONTENT_ENCODING, CONTENT_TYPE},
         Response, StatusCode,
     };
+    use http_body::Frame;
+    use http_body_util::StreamBody;
     use lambda_runtime_api_client::body::Body as HyperBody;
     use serde_json::{self, json};
+    use std::io::{self, ErrorKind};
 
     const SVG_LOGO: &str = include_str!("../tests/data/svg_logo.svg");
+
+    fn fallible_body() -> impl http_body::Body<Data = Bytes, Error = io::Error> + Unpin {
+        StreamBody::new(stream::iter([
+            Ok(Frame::data(Bytes::from_static(b"partial response"))),
+            Err(io::Error::new(
+                ErrorKind::UnexpectedEof,
+                "simulated truncated response body",
+            )),
+        ]))
+    }
 
     #[tokio::test]
     async fn json_into_response() {
@@ -465,6 +503,34 @@ mod tests {
             Body::Binary(data) => assert_eq!(data, "text".as_bytes()),
             _ => panic!("invalid body"),
         }
+    }
+
+    #[tokio::test]
+    async fn fallible_text_body_returns_internal_server_error() {
+        let response = Response::builder()
+            .header(CONTENT_TYPE, "text/plain; charset=utf-8")
+            .body(fallible_body())
+            .expect("unable to build http::Response")
+            .into_response()
+            .await;
+
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(response.headers().is_empty());
+        assert!(matches!(response.body(), Body::Empty));
+    }
+
+    #[tokio::test]
+    async fn fallible_binary_body_returns_internal_server_error() {
+        let response = Response::builder()
+            .header(CONTENT_TYPE, "application/octet-stream")
+            .body(fallible_body())
+            .expect("unable to build http::Response")
+            .into_response()
+            .await;
+
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(response.headers().is_empty());
+        assert!(matches!(response.body(), Body::Empty));
     }
 
     #[tokio::test]
