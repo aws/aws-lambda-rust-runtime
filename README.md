@@ -185,6 +185,21 @@ cargo lambda build --release
 
 There are other ways of building your function: manually with the AWS CLI, with [AWS SAM](https://github.com/aws/aws-sam-cli), and with the [Serverless framework](https://serverless.com/framework/).
 
+### CPU jitter entropy and cold starts
+
+The AWS SDK for Rust commonly uses AWS-LC as its TLS provider. Starting with AWS-LC 1.60 (`aws-lc-rs` 1.14.1), AWS-LC collects CPU jitter as an additional entropy source. This happens once per process and can add anywhere from several milliseconds to about a second of cold-start latency. The effect is most noticeable on smaller functions.
+
+If that tradeoff does not suit your workload, you can disable CPU jitter entropy at build time in `.cargo/config.toml`:
+
+```toml
+[env]
+AWS_LC_SYS_NO_JITTER_ENTROPY = "1"
+```
+
+The setting requires `aws-lc-sys` 0.32.3 or newer and must be present when the function is compiled. It does not change an already-built binary. AWS-LC will continue to use traditional entropy sources such as `RD_RAND` or `/dev/urandom`, but disabling jitter reduces the number of entropy sources. Consider the security and cold-start requirements of your application before opting out.
+
+See the [AWS SDK announcement](https://github.com/smithy-lang/smithy-rs/discussions/4541) and the [AWS-LC entropy configuration documentation](https://aws.github.io/aws-lc-rs/resources.html#entropy-configuration) for more detail. The setting applies to `aws-lc-sys`, not `aws-lc-fips-sys`.
+
 ### 1. Cross-compiling your Lambda functions
 
 By default, Cargo Lambda builds your functions to run on x86_64 architectures. If you'd like to use a different architecture, use the options described below.
