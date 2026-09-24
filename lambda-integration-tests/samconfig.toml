@@ -3,7 +3,7 @@ version = 0.1
 [default]
 [default.build.parameters]
 cached = true
-parallel = true
+parallel = false
 build_in_source = true
 
 [default.validate.parameters]
