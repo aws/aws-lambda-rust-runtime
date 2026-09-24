@@ -136,6 +136,7 @@ pub struct SimpleEmailHeader {
 #[serde(rename_all = "camelCase")]
 pub struct SimpleEmailCommonHeaders {
     pub from: Vec<String>,
+    #[serde(default)]
     pub to: Vec<String>,
     #[serde(default)]
     pub return_path: Option<String>,
