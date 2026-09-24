@@ -2,6 +2,7 @@ use base64::Engine;
 use serde::{
     de::{Deserialize, Deserializer, Error as DeError},
     ser::Serializer,
+    Serialize,
 };
 
 #[cfg(feature = "codebuild")]
@@ -55,6 +56,14 @@ where
     S: Serializer,
 {
     serializer.serialize_str(&base64::engine::general_purpose::STANDARD.encode(value))
+}
+
+pub(crate) fn serialize_non_null<S, T>(values: &[Option<T>], serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: Serialize,
+{
+    serializer.collect_seq(values.iter().flatten())
 }
 
 /// Deserializes any `Default` type, mapping JSON `null` to `T::default()`.
