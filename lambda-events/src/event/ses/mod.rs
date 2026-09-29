@@ -136,6 +136,7 @@ pub struct SimpleEmailHeader {
 #[serde(rename_all = "camelCase")]
 pub struct SimpleEmailCommonHeaders {
     pub from: Vec<String>,
+    #[serde(default)]
     pub to: Vec<String>,
     #[serde(default)]
     pub return_path: Option<String>,
@@ -250,6 +251,16 @@ mod test {
     #[cfg(feature = "ses")]
     fn example_ses_sns_event() {
         let data = include_bytes!("../../fixtures/example-ses-sns-event.json");
+        let parsed: SimpleEmailEvent = serde_json::from_slice(data).unwrap();
+        let output: String = serde_json::to_string(&parsed).unwrap();
+        let reparsed: SimpleEmailEvent = serde_json::from_slice(output.as_bytes()).unwrap();
+        assert_eq!(parsed, reparsed);
+    }
+
+    #[test]
+    #[cfg(feature = "ses")]
+    fn example_ses_bcc_event() {
+        let data = include_bytes!("../../fixtures/example-ses-bcc-event.json");
         let parsed: SimpleEmailEvent = serde_json::from_slice(data).unwrap();
         let output: String = serde_json::to_string(&parsed).unwrap();
         let reparsed: SimpleEmailEvent = serde_json::from_slice(output.as_bytes()).unwrap();
