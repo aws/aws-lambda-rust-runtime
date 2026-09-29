@@ -88,7 +88,7 @@ pub use crate::{
 };
 use crate::{
     request::{LambdaRequest, RequestOrigin},
-    response::LambdaResponse,
+    response::{BodyConversionError, LambdaResponse},
 };
 
 // Reexported in its entirety, regardless of what feature flags are enabled
@@ -112,9 +112,7 @@ pub use streaming::{run_with_streaming_response_concurrent, streaming_runtime_co
 /// Type alias for `http::Request`s with a fixed [`Body`](enum.Body.html) type
 pub type Request = http::Request<Body>;
 
-/// Future that will convert an [`IntoResponse`] into an actual [`LambdaResponse`]
-///
-/// This is used by the `Adapter` wrapper and is completely internal to the `lambda_http::run` function.
+/// Future used by [`Adapter`] to convert an [`IntoResponse`] into a [`LambdaResponse`].
 #[non_exhaustive]
 #[doc(hidden)]
 pub enum TransformResponse<'a, R, E> {
@@ -146,9 +144,109 @@ where
     }
 }
 
+// The public Adapter must preserve its handler's error type. The runtime helpers
+// can use Diagnostic as an internal common error channel for conversion failures.
+enum RuntimeTransformResponse<'a, R, E> {
+    Request(RequestOrigin, RequestFuture<'a, R, E>),
+    Response(RequestOrigin, ResponseFuture),
+}
+
+impl<R, E> Future for RuntimeTransformResponse<'_, R, E>
+where
+    R: IntoResponse,
+    E: Into<Diagnostic>,
+{
+    type Output = Result<LambdaResponse, Diagnostic>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut TaskContext<'_>) -> Poll<Self::Output> {
+        match *self {
+            RuntimeTransformResponse::Request(ref mut origin, ref mut request) => match request.as_mut().poll(cx) {
+                Poll::Ready(Ok(resp)) => {
+                    *self = RuntimeTransformResponse::Response(origin.clone(), resp.into_response());
+                    self.poll(cx)
+                }
+                Poll::Ready(Err(err)) => Poll::Ready(Err(err.into())),
+                Poll::Pending => Poll::Pending,
+            },
+            RuntimeTransformResponse::Response(ref mut origin, ref mut response) => match response.as_mut().poll(cx) {
+                Poll::Ready(mut resp) => {
+                    if let Some(error) = resp.extensions_mut().remove::<BodyConversionError>() {
+                        return Poll::Ready(Err(Diagnostic {
+                            error_type: error.error_type.to_owned(),
+                            error_message: error.error_message,
+                        }));
+                    }
+
+                    Poll::Ready(Ok(LambdaResponse::from_response(origin, resp)))
+                }
+                Poll::Pending => Poll::Pending,
+            },
+        }
+    }
+}
+
+struct RuntimeAdapter<'a, R, S> {
+    service: S,
+    _phantom_data: PhantomData<&'a R>,
+}
+
+impl<'a, R, S> Clone for RuntimeAdapter<'a, R, S>
+where
+    S: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            service: self.service.clone(),
+            _phantom_data: PhantomData,
+        }
+    }
+}
+
+impl<'a, R, S, E> From<S> for RuntimeAdapter<'a, R, S>
+where
+    S: Service<Request, Response = R, Error = E>,
+    S::Future: Send + 'a,
+    R: IntoResponse,
+    E: Into<Diagnostic>,
+{
+    fn from(service: S) -> Self {
+        Self {
+            service,
+            _phantom_data: PhantomData,
+        }
+    }
+}
+
+impl<'a, R, S, E> Service<LambdaEvent<LambdaRequest>> for RuntimeAdapter<'a, R, S>
+where
+    S: Service<Request, Response = R, Error = E>,
+    S::Future: Send + 'a,
+    R: IntoResponse,
+    E: Into<Diagnostic>,
+{
+    type Response = LambdaResponse;
+    type Error = Diagnostic;
+    type Future = RuntimeTransformResponse<'a, R, E>;
+
+    fn poll_ready(&mut self, cx: &mut core::task::Context<'_>) -> core::task::Poll<Result<(), Self::Error>> {
+        self.service.poll_ready(cx).map_err(Into::into)
+    }
+
+    fn call(&mut self, req: LambdaEvent<LambdaRequest>) -> Self::Future {
+        let LambdaEvent { payload, context } = req;
+        let request_origin = payload.request_origin();
+        let mut event: Request = payload.into();
+        update_xray_trace_id_header(event.headers_mut(), &context);
+        let fut = Box::pin(self.service.call(event.with_lambda_context(context)));
+
+        RuntimeTransformResponse::Request(request_origin, fut)
+    }
+}
+
 /// Wraps a `Service<Request>` in a `Service<LambdaEvent<Request>>`
 ///
-/// This is completely internal to the `lambda_http::run` function.
+/// This adapter preserves the wrapped service's error type. Response body conversion
+/// failures are returned as deterministic HTTP 500 responses.
 #[non_exhaustive]
 #[doc(hidden)]
 pub struct Adapter<'a, R, S> {
@@ -232,7 +330,7 @@ where
     R: IntoResponse,
     E: std::fmt::Debug + Into<Diagnostic>,
 {
-    lambda_runtime::run(Adapter::from(handler)).await
+    lambda_runtime::run(RuntimeAdapter::from(handler)).await
 }
 
 /// Starts the Lambda Rust runtime and begins polling for events on the [Lambda
@@ -265,7 +363,7 @@ where
     R: IntoResponse + Send + Sync + 'static,
     E: std::fmt::Debug + Into<Diagnostic> + Send + 'static,
 {
-    lambda_runtime::run_concurrent(Adapter::from(handler)).await
+    lambda_runtime::run_concurrent(RuntimeAdapter::from(handler)).await
 }
 
 /// Returns a configured [`Runtime`](lambda_runtime::Runtime) wrapping the given
@@ -323,7 +421,7 @@ where
     R: IntoResponse + Send + Sync + 'static,
     E: std::fmt::Debug + Into<Diagnostic> + Send + 'static,
 {
-    lambda_runtime::Runtime::new(Adapter::from(handler))
+    lambda_runtime::Runtime::new(RuntimeAdapter::from(handler))
 }
 
 /// Returns a configured [`Runtime`](lambda_runtime::Runtime) wrapping the given
@@ -355,7 +453,7 @@ where
     R: IntoResponse + Send + Sync + 'static,
     E: std::fmt::Debug + Into<Diagnostic> + Send + 'static,
 {
-    lambda_runtime::Runtime::new(Adapter::from(handler))
+    lambda_runtime::Runtime::new(RuntimeAdapter::from(handler))
 }
 
 // In concurrent mode we must use the per-request context.
@@ -369,16 +467,34 @@ fn update_xray_trace_id_header(headers: &mut http::HeaderMap, context: &Context)
 
 #[cfg(test)]
 mod test_adapter {
-    use std::task::{Context, Poll};
+    use bytes::Bytes;
+    use futures_util::stream;
+    use http_body::Frame;
+    use http_body_util::StreamBody;
+    use std::{
+        io::{self, ErrorKind},
+        task::{Context, Poll},
+    };
 
     use crate::{
+        aws_lambda_events::apigw::ApiGatewayV2httpRequest,
         http::{Response, StatusCode},
         lambda_runtime::LambdaEvent,
         request::LambdaRequest,
         response::LambdaResponse,
         tower::{util::BoxService, Service, ServiceBuilder, ServiceExt},
-        Adapter, Body, Request,
+        Adapter, Body, Request, RuntimeAdapter,
     };
+
+    fn fallible_body() -> impl http_body::Body<Data = Bytes, Error = io::Error> + Unpin {
+        StreamBody::new(stream::iter([
+            Ok(Frame::data(Bytes::from_static(b"partial response"))),
+            Err(io::Error::new(
+                ErrorKind::UnexpectedEof,
+                "simulated truncated response body",
+            )),
+        ]))
+    }
 
     // A middleware that logs requests before forwarding them to another service
     struct LogService<S> {
@@ -420,6 +536,32 @@ mod test_adapter {
             .layer_fn(Adapter::from)
             .service_fn(|_event: Request| async move { Response::builder().status(StatusCode::OK).body(Body::Empty) })
             .boxed();
+    }
+
+    #[tokio::test]
+    async fn runtime_adapter_propagates_body_errors() {
+        for content_type in ["text/plain; charset=utf-8", "application/octet-stream"] {
+            let handler = crate::service_fn(move |_event: Request| async move {
+                Ok::<_, std::convert::Infallible>(
+                    Response::builder()
+                        .header(http::header::CONTENT_TYPE, content_type)
+                        .body(fallible_body())
+                        .expect("unable to build http::Response"),
+                )
+            });
+            let event = LambdaEvent::new(
+                LambdaRequest::ApiGatewayV2(ApiGatewayV2httpRequest::default()),
+                crate::Context::default(),
+            );
+
+            let error = RuntimeAdapter::from(handler)
+                .oneshot(event)
+                .await
+                .expect_err("body collection error should be propagated");
+
+            assert_eq!(error.error_type, std::any::type_name::<io::Error>());
+            assert!(error.error_message.contains("simulated truncated response body"));
+        }
     }
 
     async fn http_handler(_req: Request) -> Result<&'static str, std::convert::Infallible> {
