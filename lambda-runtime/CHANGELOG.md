@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_runtime-v1.4.0...lambda_runtime-v1.5.0) - 2026-09-29
+
+### Added
+
+- log worker count and max concurrency ([#1167](https://github.com/aws/aws-lambda-rust-runtime/pull/1167))
+
+### Other
+
+- explain AWS-LC cold-start tradeoff ([#1172](https://github.com/aws/aws-lambda-rust-runtime/pull/1172))
+- Add #[serde(default)] to `to` field of SimpleEmailCommonHeaders ([#1171](https://github.com/aws/aws-lambda-rust-runtime/pull/1171))
+
 ## [1.4.0](https://github.com/aws/aws-lambda-rust-runtime/compare/lambda_runtime-v1.3.0...lambda_runtime-v1.4.0) - 2026-09-02
 
 ### Added
