@@ -49,7 +49,8 @@ fn invoke(payload: &serde_json::Value, client_context_json: Option<&serde_json::
     let response_json: serde_json::Value = serde_json::from_str(&response).expect("Failed to parse response JSON");
 
     assert_eq!(
-        response_json["statusCode"], 200,
+        response_json["statusCode"],
+        200,
         "handler returned non-200: {}",
         serde_json::to_string_pretty(&response_json).unwrap()
     );
