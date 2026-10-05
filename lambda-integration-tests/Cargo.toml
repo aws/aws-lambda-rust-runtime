@@ -21,6 +21,7 @@ tracing = "0.1"
 
 [dev-dependencies]
 reqwest = { version = "0.13.1", features = ["blocking"] }
+base64 = "0.22.1"
 
 [features]
 catch-all-fields = ["aws_lambda_events/catch-all-fields"]
@@ -36,3 +37,7 @@ path = "src/authorizer.rs"
 [[bin]]
 name = "tenant-id-test"
 path = "src/tenant_id_test.rs"
+
+[[bin]]
+name = "w3c-test"
+path = "src/w3c_test.rs"
