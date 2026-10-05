@@ -2,7 +2,7 @@ use crate::{
     constants::{
         LAMBDA_RUNTIME_CLIENT_CONTEXT, LAMBDA_RUNTIME_COGNITO_IDENTITY, LAMBDA_RUNTIME_DEADLINE_MS,
         LAMBDA_RUNTIME_INVOKED_FUNCTION_ARN, LAMBDA_RUNTIME_REQUEST_ID, LAMBDA_RUNTIME_TENANT_ID,
-        LAMBDA_RUNTIME_TRACE_ID,
+        LAMBDA_RUNTIME_TRACE_ID, W3C_ALLOWED_FIELDS,
     },
     Error, RefConfig,
 };
@@ -92,6 +92,10 @@ pub struct Context {
     /// Includes information such as the function name, memory allocation,
     /// version, and log streams.
     pub env_config: RefConfig,
+    /// Allowlisted W3C trace-context fields (`traceparent`, `tracestate`,
+    /// `baggage`) carried on `clientContext.w3c` at invoke time.
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub(crate) w3c_fields: HashMap<String, String>,
 }
 
 impl Default for Context {
@@ -105,6 +109,7 @@ impl Default for Context {
             identity: None,
             tenant_id: None,
             env_config: std::sync::Arc::new(crate::Config::default()),
+            w3c_fields: HashMap::new(),
         }
     }
 }
@@ -113,15 +118,22 @@ impl Context {
     /// Create a new [Context] struct based on the function configuration
     /// and the incoming request data.
     pub fn new(request_id: &str, env_config: RefConfig, headers: &HeaderMap) -> Result<Self, Error> {
-        let client_context: Option<ClientContext> = if let Some(value) = headers.get(LAMBDA_RUNTIME_CLIENT_CONTEXT) {
-            let raw = value.to_str()?;
-            if raw.is_empty() {
-                None
+        let mut client_context_value: Option<serde_json::Value> =
+            if let Some(value) = headers.get(LAMBDA_RUNTIME_CLIENT_CONTEXT) {
+                let raw = value.to_str()?;
+                if raw.is_empty() {
+                    None
+                } else {
+                    Some(serde_json::from_str(raw)?)
+                }
             } else {
-                Some(serde_json::from_str(raw)?)
-            }
-        } else {
-            None
+                None
+            };
+
+        let w3c_fields = Self::extract_and_strip_w3c(client_context_value.as_mut());
+        let client_context: Option<ClientContext> = match client_context_value {
+            Some(v) => Some(serde_json::from_value(v)?),
+            None => None,
         };
 
         let identity: Option<CognitoIdentity> = if let Some(value) = headers.get(LAMBDA_RUNTIME_COGNITO_IDENTITY) {
@@ -158,6 +170,7 @@ impl Context {
                 .get(LAMBDA_RUNTIME_TENANT_ID)
                 .map(|v| String::from_utf8_lossy(v.as_bytes()).to_string()),
             env_config,
+            w3c_fields,
         };
 
         Ok(ctx)
@@ -166,6 +179,37 @@ impl Context {
     /// The execution deadline for the current invocation.
     pub fn deadline(&self) -> SystemTime {
         SystemTime::UNIX_EPOCH + Duration::from_millis(self.deadline)
+    }
+
+    /// Return the W3C trace-context fields (`traceparent`, `tracestate`,
+    /// `baggage`) carried on `clientContext.w3c` at invoke time.
+    pub fn w3c(&self) -> HashMap<String, String> {
+        self.w3c_fields.clone()
+    }
+
+    /// Pop `w3c` out of the parsed `clientContext` and return a normalized
+    /// map of the allowlisted string fields (see `W3C_ALLOWED_FIELDS`).
+    fn extract_and_strip_w3c(client_context: Option<&mut serde_json::Value>) -> HashMap<String, String> {
+        let Some(client_context) = client_context else {
+            return HashMap::new();
+        };
+        let Some(obj) = client_context.as_object_mut() else {
+            return HashMap::new();
+        };
+        let Some(raw_w3c) = obj.remove("w3c") else {
+            return HashMap::new();
+        };
+        let Some(w3c_obj) = raw_w3c.as_object() else {
+            return HashMap::new();
+        };
+
+        let mut fields = HashMap::new();
+        for key in W3C_ALLOWED_FIELDS {
+            if let Some(serde_json::Value::String(s)) = w3c_obj.get(*key) {
+                fields.insert((*key).to_string(), s.clone());
+            }
+        }
+        fields
     }
 }
 
@@ -542,5 +586,142 @@ mod test {
 
         let context = Context::new("id", config, &headers).unwrap();
         assert_eq!(context.tenant_id, None);
+    }
+
+    // ----- W3C trace-context (`context.w3c()`) tests ---------------------------------
+    //
+    // These mirror the Python RIC tests at
+    //   tests/test_lambda_context.py::TestLambdaContextW3C
+    // and the Node.js RIC tests at
+    //   src/context/context-builder.test.ts::describe("w3c", ...)
+    // Consolidated: each test covers one distinct behavior rather than one
+    // input shape.
+
+    fn w3c_headers_with_client_context(client_context: &serde_json::Value) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert("lambda-runtime-aws-request-id", HeaderValue::from_static("my-id"));
+        headers.insert("lambda-runtime-deadline-ms", HeaderValue::from_static("123"));
+        headers.insert(
+            "lambda-runtime-client-context",
+            HeaderValue::from_str(&serde_json::to_string(client_context).unwrap()).unwrap(),
+        );
+        headers
+    }
+
+    #[test]
+    fn w3c_is_empty_when_no_w3c_is_present() {
+        let config = Arc::new(Config::default());
+
+        let mut no_header = HeaderMap::new();
+        no_header.insert("lambda-runtime-aws-request-id", HeaderValue::from_static("my-id"));
+        no_header.insert("lambda-runtime-deadline-ms", HeaderValue::from_static("123"));
+        let ctx = Context::new("id", config.clone(), &no_header).unwrap();
+        assert!(ctx.w3c().is_empty());
+
+        let no_w3c = w3c_headers_with_client_context(&serde_json::json!({
+            "custom": { "value": "test" }
+        }));
+        let ctx = Context::new("id", config, &no_w3c).unwrap();
+        assert!(ctx.w3c().is_empty());
+        let cc = ctx.client_context.expect("client_context should be set");
+        assert_eq!(cc.custom.get("value"), Some(&"test".to_string()));
+    }
+
+    #[test]
+    fn w3c_returns_all_allowlisted_fields_and_strips_source() {
+        let config = Arc::new(Config::default());
+        let headers = w3c_headers_with_client_context(&serde_json::json!({
+            "custom": { "value": "test" },
+            "w3c": {
+                "traceparent": "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+                "tracestate": "rojo=00f067aa0ba902b7",
+                "baggage": "userId=alice"
+            }
+        }));
+
+        let ctx = Context::new("id", config, &headers).unwrap();
+        let fields = ctx.w3c();
+        assert_eq!(fields.len(), 3);
+        assert_eq!(
+            fields.get("traceparent"),
+            Some(&"00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01".to_string())
+        );
+        assert_eq!(fields.get("tracestate"), Some(&"rojo=00f067aa0ba902b7".to_string()));
+        assert_eq!(fields.get("baggage"), Some(&"userId=alice".to_string()));
+
+        let cc = ctx.client_context.expect("client_context should be set");
+        assert_eq!(cc.custom.get("value"), Some(&"test".to_string()));
+    }
+
+    #[test]
+    fn w3c_drops_non_string_and_absent_allowlisted_keys() {
+        let config = Arc::new(Config::default());
+        let headers = w3c_headers_with_client_context(&serde_json::json!({
+            "w3c": {
+                "baggage": "abc",
+                "traceparent": 42,
+                "tracestate": null,
+            }
+        }));
+
+        let ctx = Context::new("id", config, &headers).unwrap();
+        let fields = ctx.w3c();
+        assert_eq!(fields.len(), 1);
+        assert_eq!(fields.get("baggage"), Some(&"abc".to_string()));
+        assert!(!fields.contains_key("traceparent"));
+        assert!(!fields.contains_key("tracestate"));
+    }
+
+    #[test]
+    fn w3c_treats_non_object_as_empty_and_still_strips_source() {
+        let config = Arc::new(Config::default());
+        for bad_w3c in [serde_json::json!("not-an-object"), serde_json::json!(["baggage=abc"])] {
+            let headers = w3c_headers_with_client_context(&serde_json::json!({
+                "w3c": bad_w3c,
+                "custom": { "k": "v" }
+            }));
+            let ctx = Context::new("id", config.clone(), &headers).unwrap();
+            assert!(ctx.w3c().is_empty());
+            let cc = ctx.client_context.expect("client_context should be set");
+            assert_eq!(cc.custom.get("k"), Some(&"v".to_string()));
+        }
+    }
+
+    #[test]
+    fn w3c_drops_non_allowlisted_keys() {
+        let config = Arc::new(Config::default());
+        let headers = w3c_headers_with_client_context(&serde_json::json!({
+            "w3c": {
+                "baggage": "keep=me",
+                "unknownField": "should-not-appear",
+                "x-custom-trace": "should-not-appear",
+                "__proto__": "should-not-appear",
+                "constructor": "should-not-appear",
+                "toString": "should-not-appear"
+            }
+        }));
+
+        let ctx = Context::new("id", config, &headers).unwrap();
+        let fields = ctx.w3c();
+        assert_eq!(fields.len(), 1);
+        assert_eq!(fields.get("baggage"), Some(&"keep=me".to_string()));
+    }
+
+    #[test]
+    fn w3c_returned_map_is_a_defensive_copy() {
+        let config = Arc::new(Config::default());
+        let headers = w3c_headers_with_client_context(&serde_json::json!({
+            "w3c": { "baggage": "abc" }
+        }));
+
+        let ctx = Context::new("id", config, &headers).unwrap();
+        let mut first = ctx.w3c();
+        first.insert("baggage".to_string(), "tampered".to_string());
+        first.insert("injected".to_string(), "nope".to_string());
+
+        let second = ctx.w3c();
+        assert_eq!(second.len(), 1);
+        assert_eq!(second.get("baggage"), Some(&"abc".to_string()));
+        assert!(!second.contains_key("injected"));
     }
 }

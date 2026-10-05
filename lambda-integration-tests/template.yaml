@@ -53,6 +53,18 @@ Resources:
       Runtime: provided.al2023
       Role: !Ref LambdaRole
 
+  W3CTestFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: rust-cargolambda
+      BuildProperties:
+        Binary: w3c-test
+    Properties:
+      CodeUri: ./
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Role: !Ref LambdaRole
+
   AuthorizerFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -75,3 +87,6 @@ Outputs:
   TenantIdTestFunction:
     Description: "Tenant ID test function name"
     Value: !Ref TenantIdTestFunction
+  W3CTestFunction:
+    Description: "W3C trace-context test function name"
+    Value: !Ref W3CTestFunction
