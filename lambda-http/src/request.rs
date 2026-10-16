@@ -533,6 +533,19 @@ fn x_forwarded_proto() -> HeaderName {
     HeaderName::from_static("x-forwarded-proto")
 }
 
+/// Builds a query string from `query` with its keys sorted.
+///
+/// `QueryMap` is backed by a `HashMap`, so iterating it directly yields the parameters in a
+/// different order for each deserialized event. Sorting by key makes the same request always
+/// produce the same URI. The sort is stable, so multiple values for one key keep their order.
+fn sorted_query_string(query: &QueryMap) -> String {
+    let mut pairs: Vec<(&str, &str)> = query.iter().collect();
+    pairs.sort_by_key(|&(key, _)| key);
+    url::form_urlencoded::Serializer::new(String::new())
+        .extend_pairs(pairs)
+        .finish()
+}
+
 fn build_request_uri(
     path: &str,
     headers: &HeaderMap,
@@ -557,10 +570,10 @@ fn build_request_uri(
     if let Some((mv, sv)) = queries {
         if !mv.is_empty() {
             url.push('?');
-            url.push_str(&mv.to_query_string());
+            url.push_str(&sorted_query_string(mv));
         } else if !sv.is_empty() {
             url.push('?');
-            url.push_str(&sv.to_query_string());
+            url.push_str(&sorted_query_string(sv));
         }
     }
 
@@ -718,6 +731,32 @@ mod tests {
             matches!(req_context, &RequestContext::Alb(_)),
             "expected Alb context, got {req_context:?}"
         );
+    }
+
+    #[test]
+    #[cfg(feature = "alb")]
+    fn alb_request_query_string_order_is_deterministic() {
+        // `QueryMap` is backed by a `HashMap`, so iterating it directly yields the parameters in a
+        // different order for each deserialized event. The rebuilt URI must not depend on that.
+        let input = r#"{
+            "requestContext": { "elb": { "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/lambda-target/abcdef" } },
+            "httpMethod": "GET",
+            "path": "/add",
+            "queryStringParameters": { "parent_id": "1", "type": "leader_employee", "a": "1", "b": "2" },
+            "multiValueQueryStringParameters": { "parent_id": ["1"], "type": ["leader_employee"], "a": ["1"], "b": ["2", "1"] },
+            "headers": { "host": "example.com", "x-forwarded-proto": "https" },
+            "multiValueHeaders": { "host": ["example.com"], "x-forwarded-proto": ["https"] },
+            "body": "",
+            "isBase64Encoded": false
+        }"#;
+
+        for _ in 0..64 {
+            let req = from_str(input).expect("failed to parse request");
+            assert_eq!(
+                req.uri(),
+                "https://example.com/add?a=1&b=2&b=1&parent_id=1&type=leader_employee"
+            );
+        }
     }
 
     #[test]
