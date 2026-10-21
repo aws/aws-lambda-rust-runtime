@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1](https://github.com/aws/aws-lambda-rust-runtime/compare/aws_lambda_events-v1.2.0...aws_lambda_events-v1.2.1) - 2026-09-29
+
+### Other
+
+- Add #[serde(default)] to `to` field of SimpleEmailCommonHeaders ([#1171](https://github.com/aws/aws-lambda-rust-runtime/pull/1171))
+
 ## [1.2.0](https://github.com/aws/aws-lambda-rust-runtime/compare/aws_lambda_events-v1.1.3...aws_lambda_events-v1.2.0) - 2026-05-08
 
 ### Added
