@@ -1,4 +1,8 @@
-use crate::{custom_serde::serialize_headers, encodings::Base64Data, iam::IamPolicyDocument};
+use crate::{
+    custom_serde::{serialize_headers, serialize_non_null},
+    encodings::Base64Data,
+    iam::IamPolicyDocument,
+};
 #[cfg(feature = "builders")]
 use bon::Builder;
 use http::HeaderMap;
@@ -141,6 +145,9 @@ pub struct IoTCoreCustomAuthorizerResponse {
     pub principal_id: Option<String>,
     pub disconnect_after_in_seconds: u32,
     pub refresh_after_in_seconds: u32,
+    /// Policy documents returned to AWS IoT. `None` entries are omitted during serialization because AWS IoT rejects
+    /// null policy documents.
+    #[serde(serialize_with = "serialize_non_null")]
     pub policy_documents: Vec<Option<IamPolicyDocument>>,
     /// Catchall to catch any additional fields that were present but not explicitly defined by this struct.
     /// Enabled with Cargo feature `catch-all-fields`.
@@ -155,6 +162,28 @@ pub struct IoTCoreCustomAuthorizerResponse {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    fn custom_auth_response_with_policy_documents(
+        policy_documents: Vec<Option<IamPolicyDocument>>,
+    ) -> IoTCoreCustomAuthorizerResponse {
+        let data = include_bytes!("../../fixtures/example-iot-custom-auth-response.json");
+        let mut response: IoTCoreCustomAuthorizerResponse = serde_json::from_slice(data).unwrap();
+        response.policy_documents = policy_documents;
+        response
+    }
+
+    fn policy_document(version: &str) -> IamPolicyDocument {
+        serde_json::from_value(serde_json::json!({
+            "Version": version,
+            "Statement": []
+        }))
+        .unwrap()
+    }
+
+    fn serialized_policy_documents(policy_documents: Vec<Option<IamPolicyDocument>>) -> serde_json::Value {
+        let response = custom_auth_response_with_policy_documents(policy_documents);
+        serde_json::to_value(response).unwrap()["policyDocuments"].clone()
+    }
 
     #[test]
     #[cfg(feature = "iot")]
@@ -184,5 +213,47 @@ mod test {
         let output: String = serde_json::to_string(&parsed).unwrap();
         let reparsed: IoTCoreCustomAuthorizerResponse = serde_json::from_slice(output.as_bytes()).unwrap();
         assert_eq!(parsed, reparsed);
+    }
+
+    #[test]
+    fn iot_custom_auth_response_serializes_policy_document() {
+        let policy = policy_document("2012-10-17");
+
+        assert_eq!(
+            serde_json::json!([policy]),
+            serialized_policy_documents(vec![Some(policy)])
+        );
+    }
+
+    #[test]
+    fn iot_custom_auth_response_filters_none_policy_documents() {
+        let first_policy = policy_document("2012-10-17");
+        let second_policy = policy_document("2008-10-17");
+
+        assert_eq!(
+            serde_json::json!([first_policy, second_policy]),
+            serialized_policy_documents(vec![Some(first_policy), None, Some(second_policy)])
+        );
+    }
+
+    #[test]
+    fn iot_custom_auth_response_serializes_only_none_as_empty_array() {
+        assert_eq!(serde_json::json!([]), serialized_policy_documents(vec![None]));
+    }
+
+    #[test]
+    fn iot_custom_auth_response_serializes_empty_policy_documents_as_empty_array() {
+        assert_eq!(serde_json::json!([]), serialized_policy_documents(vec![]));
+    }
+
+    #[test]
+    fn iot_custom_auth_response_deserializes_null_policy_document() {
+        let response = custom_auth_response_with_policy_documents(vec![None]);
+        let mut serialized = serde_json::to_value(response).unwrap();
+        serialized["policyDocuments"] = serde_json::json!([null]);
+
+        let deserialized: IoTCoreCustomAuthorizerResponse = serde_json::from_value(serialized).unwrap();
+
+        assert_eq!(vec![None], deserialized.policy_documents);
     }
 }
