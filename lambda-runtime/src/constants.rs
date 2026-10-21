@@ -7,3 +7,4 @@ pub(crate) const LAMBDA_RUNTIME_CLIENT_CONTEXT: &str = "lambda-runtime-client-co
 pub(crate) const LAMBDA_RUNTIME_COGNITO_IDENTITY: &str = "lambda-runtime-cognito-identity";
 pub(crate) const LAMBDA_RUNTIME_TENANT_ID: &str = "lambda-runtime-aws-tenant-id";
 pub(crate) const LAMBDA_RUNTIME_INVOCATION_ID: &str = "lambda-runtime-invocation-id";
+pub(crate) const W3C_ALLOWED_FIELDS: &[&str] = &["traceparent", "tracestate", "baggage"];
