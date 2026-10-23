@@ -1,12 +1,19 @@
 #[cfg(feature = "builders")]
 use bon::Builder;
-use chrono::{DateTime, Utc};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use chrono::{DateTime, SecondsFormat, Utc};
+use serde::{de::DeserializeOwned, Deserialize, Serialize, Serializer};
 #[cfg(feature = "catch-all-fields")]
 use serde_json::Value;
 use std::collections::HashMap;
 
 use crate::custom_serde::deserialize_nullish;
+
+fn serialize_timestamp<S>(timestamp: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_str(&timestamp.to_rfc3339_opts(SecondsFormat::Millis, true))
+}
 
 /// The `Event` notification event handled by Lambda
 ///
@@ -85,6 +92,7 @@ pub struct SnsMessage {
     pub subject: Option<String>,
 
     /// The time (UTC) when the notification was published.
+    #[serde(serialize_with = "serialize_timestamp")]
     pub timestamp: DateTime<Utc>,
 
     /// Version of the Amazon SNS signature used.
@@ -166,6 +174,7 @@ pub struct SnsSubscriptionMessage {
     pub subject: Option<String>,
 
     /// The time (UTC) when the message was sent.
+    #[serde(serialize_with = "serialize_timestamp")]
     pub timestamp: DateTime<Utc>,
 
     /// Version of the Amazon SNS signature used.
@@ -289,6 +298,7 @@ pub struct SnsMessageObj<T: Serialize> {
     pub subject: Option<String>,
 
     /// The time (UTC) when the notification was published.
+    #[serde(serialize_with = "serialize_timestamp")]
     pub timestamp: DateTime<Utc>,
 
     /// Version of the Amazon SNS signature used.
@@ -594,5 +604,38 @@ mod test {
         let output: String = serde_json::to_string(&parsed).unwrap();
         let reparsed: SnsSubscriptionMessage = serde_json::from_slice(output.as_bytes()).unwrap();
         assert_eq!(parsed, reparsed);
+    }
+
+    #[test]
+    #[cfg(feature = "sns")]
+    fn sns_timestamps_serialize_with_millisecond_precision() {
+        let mut data: serde_json::Value =
+            serde_json::from_slice(include_bytes!("../../fixtures/example-sns-event.json")).unwrap();
+        data["Records"][0]["Sns"]["Timestamp"] = serde_json::json!("2019-01-02T12:45:07.000Z");
+        let parsed: SnsEvent = serde_json::from_value(data).unwrap();
+        let serialized = serde_json::to_value(parsed).unwrap();
+        assert_eq!(
+            serialized["Records"][0]["Sns"]["Timestamp"].as_str(),
+            Some("2019-01-02T12:45:07.000Z")
+        );
+
+        #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+        struct Message {
+            foo: String,
+            bar: i32,
+        }
+
+        let data = include_bytes!("../../fixtures/example-sns-event-obj.json");
+        let parsed: SnsEventObj<Message> = serde_json::from_slice(data).unwrap();
+        let serialized = serde_json::to_value(parsed).unwrap();
+        assert_eq!(
+            serialized["Records"][0]["Sns"]["Timestamp"].as_str(),
+            Some("2015-08-18T18:02:32.111Z")
+        );
+
+        let data = include_bytes!("../../fixtures/example-sns-subscription-confirmation.json");
+        let parsed: SnsSubscriptionMessage = serde_json::from_slice(data).unwrap();
+        let serialized = serde_json::to_value(parsed).unwrap();
+        assert_eq!(serialized["Timestamp"].as_str(), Some("2012-04-26T20:45:04.751Z"));
     }
 }
