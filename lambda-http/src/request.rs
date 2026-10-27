@@ -216,8 +216,7 @@ fn into_proxy_request(ag: ApiGatewayProxyRequest) -> http::Request<Body> {
 
     // merge headers into multi_value_headers and make
     // multi-value_headers our cannoncial source of request headers
-    let mut headers = ag.multi_value_headers;
-    headers.extend(ag.headers);
+    let headers = merge_headers(ag.multi_value_headers, ag.headers);
 
     let base64 = ag.is_base64_encoded;
     let mut req = builder
@@ -266,8 +265,7 @@ fn into_alb_request(alb: AlbTargetGroupRequest) -> http::Request<Body> {
 
     // merge headers into multi_value_headers and make
     // multi-value_headers our cannoncial source of request headers
-    let mut headers = alb.multi_value_headers;
-    headers.extend(alb.headers);
+    let headers = merge_headers(alb.multi_value_headers, alb.headers);
 
     let base64 = alb.is_base64_encoded;
 
@@ -330,8 +328,7 @@ fn into_websocket_request(ag: ApiGatewayWebsocketProxyRequest) -> http::Request<
 
     // merge headers into multi_value_headers and make
     // multi-value_headers our canonical source of request headers
-    let mut headers = ag.multi_value_headers;
-    headers.extend(ag.headers);
+    let headers = merge_headers(ag.multi_value_headers, ag.headers);
 
     let base64 = ag.is_base64_encoded;
     let mut req = builder
@@ -527,6 +524,23 @@ where
 /// ```
 pub fn from_str(s: &str) -> Result<crate::Request, JsonError> {
     serde_json::from_str(s).map(LambdaRequest::into)
+}
+
+/// Combine the two header maps that REST API Gateway, ALB and WebSocket events carry.
+///
+/// A repeated header appears in both: `headers` holds only its last value and
+/// `multi_value_headers` holds all of them. `HeaderMap::extend` replaces existing
+/// keys, so extending the multi-value map with the single-value one drops every
+/// value but the last. Keep the multi-value entries and take a single-value entry
+/// only for a name the multi-value map lacks.
+fn merge_headers(multi_value_headers: HeaderMap, headers: HeaderMap) -> HeaderMap {
+    let mut merged = multi_value_headers;
+    for (name, value) in &headers {
+        if !merged.contains_key(name) {
+            merged.append(name.clone(), value.clone());
+        }
+    }
+    merged
 }
 
 fn x_forwarded_proto() -> HeaderName {
@@ -773,6 +787,24 @@ mod tests {
         let (parts, _) = request.into_parts();
         assert!(parts.uri.to_string().contains("name=me"));
         assert!(parts.uri.to_string().contains("multiValueName=you&multiValueName=me"));
+    }
+
+    #[test]
+    fn keeps_every_value_of_a_header_repeated_in_apigw_multi_value_headers() {
+        // API Gateway REST sends a repeated header in both maps: `headers` holds
+        // only the last value, `multiValueHeaders` holds all of them.
+        let input = include_str!("../tests/data/apigw_multi_value_proxy_request_repeated_header.json");
+        let req = from_str(input).expect("failed to parse request");
+        let values: Vec<_> = req.headers().get_all("x-repeated").iter().collect();
+        assert_eq!(values, vec!["first", "second"]);
+    }
+
+    #[test]
+    fn keeps_every_value_of_a_header_repeated_in_alb_multi_value_headers() {
+        let input = include_str!("../tests/data/alb_multi_value_request_repeated_header.json");
+        let req = from_str(input).expect("failed to parse request");
+        let values: Vec<_> = req.headers().get_all("x-repeated").iter().collect();
+        assert_eq!(values, vec!["first", "second"]);
     }
 
     #[test]
