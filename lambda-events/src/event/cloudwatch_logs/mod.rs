@@ -107,10 +107,18 @@ impl<'de> Deserialize<'de> for AwsLogs {
             {
                 use base64::Engine;
 
+                // An identifier enum accepts both borrowed and owned keys
+                // (e.g. `serde_json::from_value`) without allocating.
+                #[derive(Deserialize)]
+                #[serde(field_identifier, rename_all = "lowercase")]
+                enum Field {
+                    Data,
+                }
+
                 let mut data = None;
                 while let Some(key) = map.next_key()? {
                     match key {
-                        "data" => {
+                        Field::Data => {
                             let bytes = map.next_value::<String>().and_then(|string| {
                                 base64::engine::general_purpose::STANDARD
                                     .decode(string)
@@ -121,7 +129,6 @@ impl<'de> Deserialize<'de> for AwsLogs {
                             let mut de = serde_json::Deserializer::from_reader(BufReader::new(bytes));
                             data = Some(LogData::deserialize(&mut de).map_err(Error::custom)?);
                         }
-                        _ => return Err(Error::unknown_field(key, FIELDS)),
                     }
                 }
 
@@ -140,7 +147,7 @@ impl Serialize for AwsLogs {
     where
         S: Serializer,
     {
-        let base = base64::write::EncoderWriter::new(Vec::new(), &base64::engine::general_purpose::STANDARD_NO_PAD);
+        let base = base64::write::EncoderWriter::new(Vec::new(), &base64::engine::general_purpose::STANDARD);
         let mut gzip = flate2::write::GzEncoder::new(base, flate2::Compression::default());
 
         serde_json::to_writer(&mut gzip, &self.data).map_err(SeError::custom)?;
@@ -196,5 +203,47 @@ mod test {
         let output: String = serde_json::to_string(&parsed).unwrap();
         let reparsed: LogsEvent = serde_json::from_slice(output.as_bytes()).unwrap();
         assert_eq!(parsed, reparsed);
+    }
+
+    #[test]
+    #[cfg(feature = "cloudwatch_logs")]
+    fn example_cloudwatch_logs_event_from_value_and_reader() {
+        let data = include_bytes!("../../fixtures/example-cloudwatch_logs-event.json");
+        let parsed: LogsEvent = serde_json::from_slice(data).unwrap();
+
+        let value: serde_json::Value = serde_json::from_slice(data).unwrap();
+        let from_value: LogsEvent = serde_json::from_value(value).unwrap();
+        assert_eq!(parsed, from_value);
+
+        let from_reader: LogsEvent = serde_json::from_reader(&data[..]).unwrap();
+        assert_eq!(parsed, from_reader);
+    }
+
+    #[test]
+    #[cfg(feature = "cloudwatch_logs")]
+    fn test_serialize_round_trip_pads_base64() {
+        use base64::Engine;
+
+        let data = include_bytes!("../../fixtures/example-cloudwatch_logs-event.json");
+        let mut event: LogsEvent = serde_json::from_slice(data).unwrap();
+
+        // The gzip output length changes with the message; make sure lengths that are not a
+        // multiple of 3 (where base64 needs padding) are covered.
+        let mut saw_padded = false;
+        for _ in 0..16 {
+            event.aws_logs.data.log_events[0].message.push('x');
+            let json = serde_json::to_string(&event).unwrap();
+
+            let reparsed: LogsEvent = serde_json::from_str(&json).unwrap();
+            assert_eq!(event, reparsed);
+
+            let value: serde_json::Value = serde_json::from_str(&json).unwrap();
+            let encoded = value["awslogs"]["data"].as_str().unwrap();
+            let decoded = base64::engine::general_purpose::STANDARD
+                .decode(encoded)
+                .expect("awslogs.data must be standard padded base64");
+            saw_padded |= decoded.len() % 3 != 0;
+        }
+        assert!(saw_padded);
     }
 }
