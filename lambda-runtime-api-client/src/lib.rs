@@ -167,6 +167,18 @@ fn build_hyper_client(
     builder.build(connector.clone())
 }
 
+/// Build the default HTTP connector for the Runtime API.
+///
+/// `TCP_NODELAY` is enabled to turn off Nagle's algorithm. A streaming response is sent as
+/// several small writes (request head, metadata prelude, delimiter, body chunks). With Nagle's
+/// algorithm on, the kernel holds a small write until earlier data is acknowledged, and the
+/// Runtime API can delay that ACK by 40 ms or more.
+fn default_connector() -> HttpConnector {
+    let mut connector = HttpConnector::new();
+    connector.set_nodelay(true);
+    connector
+}
+
 /// Rewrite a request's URI against the client's base (scheme/authority/base path).
 fn set_origin<B>(base: &Uri, req: Request<B>) -> Result<Request<B>, BoxError> {
     let (mut parts, body) = req.into_parts();
@@ -200,13 +212,16 @@ pub struct ClientBuilder {
 impl ClientBuilder {
     fn new() -> ClientBuilder {
         ClientBuilder {
-            connector: HttpConnector::new(),
+            connector: default_connector(),
             uri: None,
             pool_size: None,
         }
     }
 
     /// Create a new builder with a given HTTP connector.
+    ///
+    /// The connector is used as-is. The default connector enables `TCP_NODELAY`.
+    /// To keep that behavior, call `set_nodelay(true)` on the given connector.
     pub fn with_connector(self, connector: HttpConnector) -> ClientBuilder {
         ClientBuilder {
             connector,
@@ -255,13 +270,16 @@ pub struct PooledClientBuilder {
 impl PooledClientBuilder {
     fn new() -> PooledClientBuilder {
         PooledClientBuilder {
-            connector: HttpConnector::new(),
+            connector: default_connector(),
             uri: None,
             pool_size: None,
         }
     }
 
     /// Use a given HTTP connector.
+    ///
+    /// The connector is used as-is. The default connector enables `TCP_NODELAY`.
+    /// To keep that behavior, call `set_nodelay(true)` on the given connector.
     pub fn with_connector(self, connector: HttpConnector) -> PooledClientBuilder {
         PooledClientBuilder { connector, ..self }
     }
@@ -378,5 +396,37 @@ mod tests {
             .build();
         client.reset_pool();
         assert_eq!(client.base, base.parse::<Uri>().unwrap());
+    }
+
+    /// Open a TCP connection with the given connector and return whether `TCP_NODELAY` is set.
+    async fn connection_has_nodelay(connector: HttpConnector) -> bool {
+        use tower::ServiceExt;
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let uri: Uri = format!("http://{}", listener.local_addr().unwrap()).parse().unwrap();
+        let io = connector.oneshot(uri).await.unwrap();
+        io.inner().nodelay().unwrap()
+    }
+
+    #[tokio::test]
+    async fn default_connectors_enable_nodelay() {
+        assert!(connection_has_nodelay(ClientBuilder::new().connector).await);
+
+        let client = PooledClient::builder()
+            .with_endpoint("http://localhost:9001".parse().unwrap())
+            .build();
+        assert!(connection_has_nodelay(client.connector).await);
+    }
+
+    #[tokio::test]
+    async fn custom_connector_is_used_as_is() {
+        let mut connector = HttpConnector::new();
+        connector.set_nodelay(false);
+
+        let builder = ClientBuilder::new().with_connector(connector.clone());
+        assert!(!connection_has_nodelay(builder.connector).await);
+
+        let builder = PooledClient::builder().with_connector(connector);
+        assert!(!connection_has_nodelay(builder.connector).await);
     }
 }

@@ -53,6 +53,26 @@ Resources:
       Runtime: provided.al2023
       Role: !Ref LambdaRole
 
+  ResponseStreamingFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: rust-cargolambda
+      BuildProperties:
+        Binary: response-streaming
+    Properties:
+      CodeUri: ./
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Role: !Ref LambdaRole
+      Events:
+        Stream:
+          Type: Api
+          Properties:
+            RestApiId: !Ref API
+            Path: /stream
+            Method: get
+            ResponseTransferMode: RESPONSE_STREAM
+
   AuthorizerFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -67,6 +87,12 @@ Resources:
       Environment:
         Variables:
           SECRET_TOKEN: !Ref SecretToken
+          # API Gateway caches the authorizer policy by token and uses it for every route of the API.
+          # Thus the policy must allow all routes. A policy for only the first route (for example,
+          # /hello) denies the next route (/stream) until the cache expires.
+          # The API ID is a wildcard. The API refers to this function, so a reference to the API
+          # makes a circular dependency.
+          ALLOWED_RESOURCE: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:*/integ-test/*/*"
 
 Outputs:
   HelloApiEndpoint:
@@ -75,3 +101,6 @@ Outputs:
   TenantIdTestFunction:
     Description: "Tenant ID test function name"
     Value: !Ref TenantIdTestFunction
+  StreamApiEndpoint:
+    Description: "API Gateway endpoint URL for the response streaming function"
+    Value: !Sub "https://${API}.execute-api.${AWS::Region}.amazonaws.com/integ-test/stream/"

@@ -36,3 +36,7 @@ path = "src/authorizer.rs"
 [[bin]]
 name = "tenant-id-test"
 path = "src/tenant_id_test.rs"
+
+[[bin]]
+name = "response-streaming"
+path = "src/response_streaming.rs"

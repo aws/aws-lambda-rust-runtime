@@ -12,7 +12,6 @@ use serde_json::json;
 #[serde(rename_all = "camelCase")]
 struct APIGatewayCustomAuthorizerRequest {
     authorization_token: String,
-    method_arn: String,
 }
 
 #[tokio::main]
@@ -28,16 +27,19 @@ async fn func(
 ) -> Result<ApiGatewayCustomAuthorizerResponse, Error> {
     let expected_token = env::var("SECRET_TOKEN").expect("could not read the secret token");
     if event.payload.authorization_token == expected_token {
-        return Ok(allow(&event.payload.method_arn));
+        // The policy allows every route of the API, not only the called method, because API Gateway
+        // caches it by token. See ALLOWED_RESOURCE in template.yaml.
+        let allowed_resource = env::var("ALLOWED_RESOURCE").expect("could not read the allowed resource");
+        return Ok(allow(&allowed_resource));
     }
     panic!("token is not valid");
 }
 
-fn allow(method_arn: &str) -> ApiGatewayCustomAuthorizerResponse {
+fn allow(resource: &str) -> ApiGatewayCustomAuthorizerResponse {
     let stmt = {
         let mut statement = IamPolicyStatement::default();
         statement.action = vec!["execute-api:Invoke".to_string()];
-        statement.resource = vec![method_arn.to_owned()];
+        statement.resource = vec![resource.to_owned()];
         statement.effect = aws_lambda_events::iam::IamPolicyEffect::Allow;
         statement.condition = None;
         #[cfg(feature = "catch-all-fields")]
