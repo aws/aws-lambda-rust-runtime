@@ -28,16 +28,26 @@ async fn func(
 ) -> Result<ApiGatewayCustomAuthorizerResponse, Error> {
     let expected_token = env::var("SECRET_TOKEN").expect("could not read the secret token");
     if event.payload.authorization_token == expected_token {
-        return Ok(allow(&event.payload.method_arn));
+        // API Gateway caches the policy by token and uses it for every route of the API.
+        // Thus the policy allows every route in the stage, not only the called method.
+        let resource = stage_arn(&event.payload.method_arn).ok_or("unexpected method ARN")?;
+        return Ok(allow(&resource));
     }
     panic!("token is not valid");
 }
 
-fn allow(method_arn: &str) -> ApiGatewayCustomAuthorizerResponse {
+/// Returns the ARN for all methods in the stage of `method_arn`. A method ARN has the format
+/// `arn:<partition>:execute-api:<region>:<account>:<api-id>/<stage>/<verb>/<path>`.
+fn stage_arn(method_arn: &str) -> Option<String> {
+    let mut parts = method_arn.splitn(3, '/');
+    Some(format!("{}/{}/*/*", parts.next()?, parts.next()?))
+}
+
+fn allow(resource: &str) -> ApiGatewayCustomAuthorizerResponse {
     let stmt = {
         let mut statement = IamPolicyStatement::default();
         statement.action = vec!["execute-api:Invoke".to_string()];
-        statement.resource = vec![method_arn.to_owned()];
+        statement.resource = vec![resource.to_owned()];
         statement.effect = aws_lambda_events::iam::IamPolicyEffect::Allow;
         statement.condition = None;
         #[cfg(feature = "catch-all-fields")]
@@ -66,4 +76,18 @@ fn allow(method_arn: &str) -> ApiGatewayCustomAuthorizerResponse {
         response.other = Default::default();
     }
     response
+}
+
+#[cfg(test)]
+mod tests {
+    use super::stage_arn;
+
+    #[test]
+    fn stage_arn_allows_all_methods_in_the_stage() {
+        assert_eq!(
+            stage_arn("arn:aws:execute-api:us-west-2:123456789012:abc123/integ-test/GET/hello").as_deref(),
+            Some("arn:aws:execute-api:us-west-2:123456789012:abc123/integ-test/*/*")
+        );
+        assert_eq!(stage_arn("arn:aws:execute-api:us-west-2:123456789012:abc123"), None);
+    }
 }

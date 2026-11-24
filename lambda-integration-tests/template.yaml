@@ -53,6 +53,26 @@ Resources:
       Runtime: provided.al2023
       Role: !Ref LambdaRole
 
+  ResponseStreamingFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: rust-cargolambda
+      BuildProperties:
+        Binary: response-streaming
+    Properties:
+      CodeUri: ./
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Role: !Ref LambdaRole
+      Events:
+        Stream:
+          Type: Api
+          Properties:
+            RestApiId: !Ref API
+            Path: /stream
+            Method: get
+            ResponseTransferMode: RESPONSE_STREAM
+
   AuthorizerFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -75,3 +95,6 @@ Outputs:
   TenantIdTestFunction:
     Description: "Tenant ID test function name"
     Value: !Ref TenantIdTestFunction
+  StreamApiEndpoint:
+    Description: "API Gateway endpoint URL for the response streaming function"
+    Value: !Sub "https://${API}.execute-api.${AWS::Region}.amazonaws.com/integ-test/stream/"
