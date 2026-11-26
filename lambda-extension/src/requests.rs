@@ -42,11 +42,31 @@ pub(crate) enum Api {
     TelemetryApi,
 }
 
+/// Environment variable Lambda sets to the function's initialization type
+const AWS_LAMBDA_INITIALIZATION_TYPE: &str = "AWS_LAMBDA_INITIALIZATION_TYPE";
+/// Value of `AWS_LAMBDA_INITIALIZATION_TYPE` for functions running on Lambda Managed Instances
+const LAMBDA_MANAGED_INSTANCES_INIT_TYPE: &str = "lambda-managed-instances";
+
+/// Telemetry API schema version for functions running on the default (on-demand) Lambda compute
+const TELEMETRY_SCHEMA_VERSION_ON_DEMAND: &str = "2022-07-01";
+/// Telemetry API schema version required by functions running on Lambda Managed Instances
+const TELEMETRY_SCHEMA_VERSION_MANAGED_INSTANCES: &str = "2025-01-29";
+
+/// Returns the Telemetry API schema version matching the function's initialization type
+fn telemetry_schema_version(initialization_type: Option<&str>) -> &'static str {
+    match initialization_type {
+        Some(LAMBDA_MANAGED_INSTANCES_INIT_TYPE) => TELEMETRY_SCHEMA_VERSION_MANAGED_INSTANCES,
+        _ => TELEMETRY_SCHEMA_VERSION_ON_DEMAND,
+    }
+}
+
 impl Api {
     pub(crate) fn schema_version(&self) -> &str {
         match *self {
             Api::LogsApi => "2021-03-18",
-            Api::TelemetryApi => "2022-07-01",
+            Api::TelemetryApi => {
+                telemetry_schema_version(std::env::var(AWS_LAMBDA_INITIALIZATION_TYPE).ok().as_deref())
+            }
         }
     }
 
@@ -137,4 +157,22 @@ fn error_request(
         .header(EXTENSION_ERROR_TYPE_HEADER, error_str)
         .body(body)?;
     Ok(req)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn telemetry_schema_version_defaults_to_on_demand() {
+        assert_eq!(telemetry_schema_version(None), "2022-07-01");
+        assert_eq!(telemetry_schema_version(Some("on-demand")), "2022-07-01");
+        assert_eq!(telemetry_schema_version(Some("provisioned-concurrency")), "2022-07-01");
+        assert_eq!(telemetry_schema_version(Some("snap-start")), "2022-07-01");
+    }
+
+    #[test]
+    fn telemetry_schema_version_for_managed_instances() {
+        assert_eq!(telemetry_schema_version(Some("lambda-managed-instances")), "2025-01-29");
+    }
 }

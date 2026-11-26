@@ -189,6 +189,10 @@ where
     /// By default, telemetry log records are deserialized as `String`, but
     /// it's possible to configure Lambda functions to emit logs in JSON format.
     /// For more information, refer to [`Self::with_telemetry_record_type`].
+    ///
+    /// The Telemetry API schema version is selected automatically: `2025-01-29` when the
+    /// function runs on Lambda Managed Instances (`AWS_LAMBDA_INITIALIZATION_TYPE` is
+    /// `lambda-managed-instances`), `2022-07-01` otherwise.
     pub fn with_telemetry_processor<N, NS>(self, lp: N) -> Extension<'a, E, L, N, TL>
     where
         N: Service<()>,
