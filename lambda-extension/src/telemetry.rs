@@ -167,6 +167,8 @@ pub enum InitType {
     ProvisionedConcurrency,
     /// SnapStart
     SnapStart,
+    /// Lambda Managed Instances
+    LambdaManagedInstances,
 }
 
 /// Phase in which initialization occurs
@@ -234,9 +236,34 @@ pub struct InitReportMetrics {
 }
 
 /// Report metrics
+///
+/// The fields Lambda reports depend on the compute type the function runs on.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(untagged)]
+pub enum ReportMetrics {
+    /// Metrics reported by functions running on the default (on-demand) Lambda compute.
+    ///
+    /// This variant must stay first: untagged deserialization tries variants in order,
+    /// and an on-demand payload would also match [`ReportMetrics::LambdaManagedInstances`].
+    OnDemand(OnDemandReportMetrics),
+    /// Metrics reported by functions running on Lambda Managed Instances.
+    LambdaManagedInstances(LambdaManagedInstancesReportMetrics),
+}
+
+impl ReportMetrics {
+    /// Duration in milliseconds, reported by every compute type
+    pub fn duration_ms(&self) -> f64 {
+        match self {
+            ReportMetrics::OnDemand(metrics) => metrics.duration_ms,
+            ReportMetrics::LambdaManagedInstances(metrics) => metrics.duration_ms,
+        }
+    }
+}
+
+/// Report metrics for functions running on the default (on-demand) Lambda compute
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct ReportMetrics {
+pub struct OnDemandReportMetrics {
     /// Duration in milliseconds
     pub duration_ms: f64,
     /// Billed duration in milliseconds
@@ -253,6 +280,14 @@ pub struct ReportMetrics {
     /// Restore duration in milliseconds
     #[serde(default = "Option::default", skip_serializing_if = "Option::is_none")]
     pub restore_duration_ms: Option<f64>,
+}
+
+/// Report metrics for functions running on Lambda Managed Instances
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LambdaManagedInstancesReportMetrics {
+    /// Duration in milliseconds
+    pub duration_ms: f64,
 }
 
 /// Runtime done metrics
@@ -381,6 +416,47 @@ mod deserialization_tests {
                 runtime_version_arn: None,
             },
         ),
+        // platform.initStart - Lambda Managed Instances
+        platform_init_start_managed_instances: (
+            r#"{"time":"2025-09-19T19:36:50.000Z","type":"platform.initStart","record":{"initializationType":"lambda-managed-instances","phase":"init"}}"#,
+            LambdaTelemetryRecord::PlatformInitStart {
+                initialization_type: InitType::LambdaManagedInstances,
+                phase: InitPhase::Init,
+                runtime_version: None,
+                runtime_version_arn: None,
+            },
+        ),
+        // platform.report - Lambda Managed Instances
+        platform_report_managed_instances: (
+            r#"{"time":"2025-09-19T19:36:50.881Z","type":"platform.report","record":{"requestId":"13d1305b-a2f5-440c-bfbe-686ccff3d3e0","status":"success","metrics":{"durationMs":1.148},"spans":[{"name":"responseLatency","start":"2025-09-19T19:36:50.880Z","durationMs":0.847},{"name":"responseDuration","start":"2025-09-19T19:36:50.880Z","durationMs":0.127}]}}"#,
+            LambdaTelemetryRecord::PlatformReport {
+                request_id: "13d1305b-a2f5-440c-bfbe-686ccff3d3e0".to_string(),
+                status: Status::Success,
+                error_type: None,
+                metrics: ReportMetrics::LambdaManagedInstances(LambdaManagedInstancesReportMetrics { duration_ms: 1.148 }),
+                spans: vec!(
+                    Span {
+                        name: "responseLatency".to_string(),
+                        start: Utc
+                            .with_ymd_and_hms(2025, 9, 19, 19, 36, 50)
+                            .unwrap()
+                            .checked_add_signed(TimeDelta::try_milliseconds(880).unwrap())
+                            .unwrap(),
+                        duration_ms: 0.847
+                    },
+                    Span {
+                        name: "responseDuration".to_string(),
+                        start: Utc
+                            .with_ymd_and_hms(2025, 9, 19, 19, 36, 50)
+                            .unwrap()
+                            .checked_add_signed(TimeDelta::try_milliseconds(880).unwrap())
+                            .unwrap(),
+                        duration_ms: 0.127
+                    },
+                ),
+                tracing: None,
+            },
+        ),
         // platform.runtimeDone
         platform_runtime_done: (
             r#"{"time":"2022-10-21T14:05:05.764Z","type":"platform.runtimeDone","record":{"requestId":"459921b5-681c-4a96-beb0-81e0aa586026","status":"success","tracing":{"spanId":"24cd7d670fa455f0","type":"X-Amzn-Trace-Id","value":"Root=1-6352a70e-1e2c502e358361800241fd45;Parent=35465b3a9e2f7c6a;Sampled=1"},"spans":[{"name":"responseLatency","start":"2022-10-21T14:05:03.165Z","durationMs":2598.0},{"name":"responseDuration","start":"2022-10-21T14:05:05.763Z","durationMs":0.0}],"metrics":{"durationMs":2599.0,"producedBytes":8}}}"#,
@@ -426,14 +502,14 @@ mod deserialization_tests {
                 request_id: "459921b5-681c-4a96-beb0-81e0aa586026".to_string(),
                 status: Status::Success,
                 error_type: None,
-                metrics: ReportMetrics {
+                metrics: ReportMetrics::OnDemand(OnDemandReportMetrics {
                     duration_ms: 2599.4,
                     billed_duration_ms: 2600,
                     memory_size_mb:128,
                     max_memory_used_mb:94,
                     init_duration_ms: Some(549.04),
                     restore_duration_ms: None,
-                },
+                }),
                 spans: Vec::new(),
                 tracing: Some(TraceContext {
                     span_id: Some("24cd7d670fa455f0".to_string()),
@@ -568,6 +644,34 @@ mod serialization_tests {
             },
             r#"{"time":"2023-11-28T12:00:09Z","type":"platform.initStart","record":{"initializationType":"on-demand","phase":"init"}}"#,
         ),
+        // platform.initStart - Lambda Managed Instances
+        platform_init_start_managed_instances: (
+            LambdaTelemetry{
+                time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
+                record: LambdaTelemetryRecord::PlatformInitStart {
+                        initialization_type: InitType::LambdaManagedInstances,
+                        phase: InitPhase::Init,
+                        runtime_version: None,
+                        runtime_version_arn: None,
+                },
+            },
+            r#"{"time":"2023-11-28T12:00:09Z","type":"platform.initStart","record":{"initializationType":"lambda-managed-instances","phase":"init"}}"#,
+        ),
+        // platform.report - Lambda Managed Instances
+        platform_report_managed_instances: (
+            LambdaTelemetry{
+                time: Utc.with_ymd_and_hms(2023, 11, 28, 12, 0, 9).unwrap(),
+                record: LambdaTelemetryRecord::PlatformReport {
+                    request_id: "13d1305b-a2f5-440c-bfbe-686ccff3d3e0".to_string(),
+                    status: Status::Success,
+                    error_type: None,
+                    metrics: ReportMetrics::LambdaManagedInstances(LambdaManagedInstancesReportMetrics { duration_ms: 1.148 }),
+                    spans: Vec::new(),
+                    tracing: None,
+                },
+            },
+            r#"{"time":"2023-11-28T12:00:09Z","type":"platform.report","record":{"requestId":"13d1305b-a2f5-440c-bfbe-686ccff3d3e0","status":"success","metrics":{"durationMs":1.148},"spans":[]}}"#,
+        ),
         // platform.runtimeDone
         platform_runtime_done: (
             LambdaTelemetry{
@@ -617,14 +721,14 @@ mod serialization_tests {
                     request_id: "459921b5-681c-4a96-beb0-81e0aa586026".to_string(),
                     status: Status::Success,
                     error_type: None,
-                    metrics: ReportMetrics {
+                    metrics: ReportMetrics::OnDemand(OnDemandReportMetrics {
                         duration_ms: 2599.4,
                         billed_duration_ms: 2600,
                         memory_size_mb:128,
                         max_memory_used_mb:94,
                         init_duration_ms: Some(549.04),
                         restore_duration_ms: None,
-                    },
+                    }),
                     spans: Vec::new(),
                     tracing: Some(TraceContext {
                         span_id: Some("24cd7d670fa455f0".to_string()),
